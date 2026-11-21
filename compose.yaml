@@ -1,0 +1,30 @@
+name: table-de-saison
+services:
+  db:
+    image: postgres:17-alpine@sha256:f9cf3e1f0066f0eb0c48707d864f0ac5941e9ff454a072077d97a4d278d07d73
+    environment:
+      POSTGRES_USER: table
+      POSTGRES_DB: table
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+    volumes:
+      - database:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U table -d table']
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  app:
+    build: .
+    environment:
+      DATABASE_URL: postgres://table:${POSTGRES_PASSWORD}@db:5432/table
+      APP_PASSWORD_HASH: ${APP_PASSWORD_HASH:?}
+      APP_ORIGIN: ${APP_ORIGIN:-http://localhost:3180}
+      MEDIA_DIR: /data/media
+    ports: ['127.0.0.1:3180:3000']
+    volumes: ['media:/data/media']
+    depends_on:
+      db:
+        condition: service_healthy
+volumes:
+  database:
+  media:

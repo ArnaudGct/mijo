@@ -1,0 +1,10 @@
+{
+  "name": "Table de saison",
+  "short_name": "Table de saison",
+  "lang": "fr",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#faf8f2",
+  "theme_color": "#354c38",
+  "icons": [{ "src": "/icon.png", "sizes": "512x512", "type": "image/png" }]
+}
