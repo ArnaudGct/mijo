@@ -26,7 +26,8 @@ import { today, monday, addDays, labelDate, inWeek, money } from '@/lib/dates';
 import { marketBasket } from '@/lib/market';
 import { Feedback, Brand, WeekNav, Photo, Field, Form, str, api, type UI } from './common';
 import { Catalog, RecipeDetail, RecipeCard, RecipeEditor } from './recipes';
-import { Planner, Cooking } from './weekly';
+import { Planner } from './weekly';
+import { Cooking } from './cooking';
 import { Shopping, Preferences } from './supplies';
 const nav = [
   { p: '', n: 'Accueil', i: LayoutGrid },
