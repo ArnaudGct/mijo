@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, type DragEvent, type PointerEvent } from 'react';
 import { Plus, GripVertical, X } from 'lucide-react';
 import { monday, addDays, labelDate, inWeek, today } from '@/lib/dates';
 import { type State, type Prep } from '@/lib/model';
@@ -282,17 +282,108 @@ export function Planner({ ui }: { ui: UI }) {
     </>
   );
 }
+type MealSlot = State['meals'][number]['slot'];
+function destination(hit: EventTarget | null, originalSlot: MealSlot) {
+  if (!(hit instanceof Element)) return null;
+  const cell = hit.closest<HTMLElement>('[data-mealslot]');
+  if (cell) return cell;
+  // Dropping on the day label keeps the original mealtime.
+  const day = hit.closest('.calday > header')?.parentElement;
+  return day?.querySelector<HTMLElement>('[data-slot="' + originalSlot + '"]') ?? null;
+}
+function acceptsMeal(element: HTMLElement | null, id: string): element is HTMLElement {
+  return !!element && !!id && element.dataset.mealId !== id && element.dataset.consumed !== 'true';
+}
+
 function MealPlanning({ ui, batch }: { ui: UI; batch: boolean }) {
-  const [moving, setMoving] = useState('');
+  const [picked, setPicked] = useState('');
   const [over, setOver] = useState('');
-  const touch = useRef<{ x: number; y: number } | null>(null);
-  const finishMove = (id: string, day: string, slot: 'midi' | 'soir') => {
-    setMoving('');
+  const [touchDragging, setTouchDragging] = useState(false);
+  const nativeMeal = useRef<{ id: string; slot: MealSlot } | null>(null);
+  const touch = useRef<{
+    id: string;
+    slot: MealSlot;
+    pointer: number;
+    startX: number;
+    startY: number;
+    x: number;
+    y: number;
+    moved: boolean;
+  } | null>(null);
+  const ignoreClick = useRef(false);
+  const calendar = useRef<HTMLDivElement>(null);
+
+  function clearDrag() {
+    nativeMeal.current = null;
+    touch.current = null;
+    setTouchDragging(false);
     setOver('');
-    if (id) void ui.run({ action: 'moveMeal', id, day, slot }, 'Planning réorganisé');
-  };
-  const locate = (x: number, y: number) =>
-    document.elementFromPoint(x, y)?.closest<HTMLElement>('[data-mealslot]');
+    setPicked('');
+  }
+  function finishMove(id: string, element: HTMLElement | null) {
+    clearDrag();
+    if (!acceptsMeal(element, id)) return;
+    const { day, slot, mealId } = element.dataset;
+    if (day && (slot === 'midi' || slot === 'soir'))
+      void ui.run(
+        { action: 'moveMeal', id, day, slot },
+        mealId ? 'Repas échangés.' : 'Repas déplacé.',
+      );
+  }
+  function acceptDrag(e: DragEvent<HTMLDivElement>) {
+    // The browser cancels mouse pointer events when a native drag starts.
+    // Use its synchronous source, independently of touch and keyboard selection.
+    const source = nativeMeal.current;
+    if (!source) return;
+    const target = destination(e.target, source.slot);
+    if (acceptsMeal(target, source.id)) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      setOver(target.dataset.mealslot ?? '');
+    } else {
+      setOver('');
+    }
+  }
+  function touchMove(e: PointerEvent<HTMLButtonElement>) {
+    const g = touch.current;
+    if (!g || e.pointerId !== g.pointer) return;
+    g.x = e.clientX;
+    g.y = e.clientY;
+    if (!g.moved) {
+      if (Math.hypot(g.x - g.startX, g.y - g.startY) < 6) return;
+      g.moved = true;
+      setPicked('');
+      setTouchDragging(true);
+    }
+    const target = destination(document.elementFromPoint(g.x, g.y), g.slot);
+    setOver(acceptsMeal(target, g.id) ? (target.dataset.mealslot ?? '') : '');
+  }
+  useEffect(() => {
+    if (!touchDragging) return;
+    let frame = 0;
+    function scroll() {
+      const g = touch.current,
+        grid = calendar.current;
+      if (!g || !grid) return;
+      const bounds = grid.getBoundingClientRect(),
+        edge = 96;
+      const up = Math.max(0, edge - g.y),
+        down = Math.max(0, g.y - (window.innerHeight - edge));
+      const speed =
+        down && bounds.bottom > window.innerHeight ? down : up && bounds.top < 0 ? -up : 0;
+      if (speed) {
+        window.scrollBy({
+          top: Math.sign(speed) * Math.min(15, Math.ceil(Math.abs(speed) / 5)),
+          behavior: 'instant',
+        });
+        const target = destination(document.elementFromPoint(g.x, g.y), g.slot);
+        setOver(acceptsMeal(target, g.id) ? (target.dataset.mealslot ?? '') : '');
+      }
+      frame = requestAnimationFrame(scroll);
+    }
+    frame = requestAnimationFrame(scroll);
+    return () => cancelAnimationFrame(frame);
+  }, [touchDragging]);
 
   const { s, w } = ui;
   const preps = s.preps.filter((p) => inWeek(p.day, w));
@@ -325,20 +416,40 @@ function MealPlanning({ ui, batch }: { ui: UI; batch: boolean }) {
           </p>
         </section>
       )}
-      {moving && (
+      {picked && (
         <div className="move-help" role="status">
-          Choisir le créneau de destination. Deux repas occupés seront échangés.{' '}
-          <button
-            onClick={() => {
-              setMoving('');
-              setOver('');
-            }}
-          >
-            Annuler
-          </button>
+          Choisis le créneau où déposer le repas. <button onClick={clearDrag}>Annuler</button>
         </div>
       )}
-      <div className="calendar">
+      <div
+        className="calendar"
+        ref={calendar}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') clearDrag();
+        }}
+        onPointerDownCapture={() => {
+          ignoreClick.current = false;
+        }}
+        onClickCapture={(e) => {
+          if (ignoreClick.current && e.detail !== 0) {
+            e.preventDefault();
+            e.stopPropagation();
+            ignoreClick.current = false;
+          }
+        }}
+        onDragEnter={acceptDrag}
+        onDragOver={acceptDrag}
+        onDrop={(e) => {
+          const source = nativeMeal.current;
+          if (!source) return;
+          e.preventDefault();
+          finishMove(source.id, destination(e.target, source.slot));
+        }}
+        onDragLeave={(e) => {
+          if (!(e.relatedTarget instanceof Node) || !e.currentTarget.contains(e.relatedTarget))
+            setOver('');
+        }}
+      >
         {Array.from({ length: 7 }, (_, i) => {
           const day = addDays(w, i);
           return (
@@ -357,21 +468,22 @@ function MealPlanning({ ui, batch }: { ui: UI; batch: boolean }) {
                     data-day={day}
                     data-slot={slot}
                     className={'slot' + (over === day + slot ? ' drop-over' : '')}
-                    onDragOver={(e) => {
-                      if (moving) {
-                        e.preventDefault();
-                        setOver(day + slot);
-                      }
-                    }}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      finishMove(e.dataTransfer.getData('text/meal-id') || moving, day, slot);
-                    }}
+                    data-meal-id={m?.id}
+                    data-consumed={m?.consumed || undefined}
+                    data-drop-label={m ? 'Échanger ici' : 'Déplacer ici'}
                   >
                     <small>{slot === 'midi' ? 'Déjeuner' : 'Dîner'}</small>
-                    {moving && moving !== m?.id && !m?.consumed && (
-                      <button className="drop-target" onClick={() => finishMove(moving, day, slot)}>
-                        {m ? 'Échanger ici' : 'Déplacer ici'}
+                    {picked && picked !== m?.id && !m?.consumed && (
+                      <button
+                        className="drop-target"
+                        aria-label={
+                          (m ? 'Échanger avec ' : 'Déplacer vers ') +
+                          labelDate(day) +
+                          (slot === 'midi' ? ' déjeuner' : ' dîner')
+                        }
+                        onClick={(e) => finishMove(picked, e.currentTarget.parentElement)}
+                      >
+                        <span>{m ? 'Échanger ici' : 'Déplacer ici'}</span>
                       </button>
                     )}
                     {m ? (
@@ -379,62 +491,58 @@ function MealPlanning({ ui, batch }: { ui: UI; batch: boolean }) {
                         className="meal-card"
                         draggable={!m.consumed}
                         onDragStart={(e) => {
-                          e.dataTransfer.setData('text/meal-id', m.id);
+                          if (m.consumed || touch.current) {
+                            e.preventDefault();
+                            return;
+                          }
+                          nativeMeal.current = { id: m.id, slot };
+                          e.dataTransfer.setData('text/plain', m.id);
                           e.dataTransfer.effectAllowed = 'move';
-                          setMoving(m.id);
+                          setPicked('');
                         }}
-                        onDragEnd={() => {
-                          setMoving('');
-                          setOver('');
-                        }}
+                        onDragEnd={clearDrag}
                       >
                         {!m.consumed && (
                           <button
                             className="move-grip"
                             aria-label={'Déplacer ' + (p?.snapshot.title ?? 'le repas')}
                             title="Déplacer le repas"
-                            onClick={() => setMoving(moving === m.id ? '' : m.id)}
+                            aria-pressed={picked === m.id}
+                            onClick={() => setPicked(picked === m.id ? '' : m.id)}
                             onPointerDown={(e) => {
-                              if (e.pointerType === 'mouse') return;
-                              touch.current = { x: e.clientX, y: e.clientY };
+                              if (e.pointerType === 'mouse' || !e.isPrimary || e.button !== 0)
+                                return;
+                              touch.current = {
+                                id: m.id,
+                                slot,
+                                pointer: e.pointerId,
+                                startX: e.clientX,
+                                startY: e.clientY,
+                                x: e.clientX,
+                                y: e.clientY,
+                                moved: false,
+                              };
                               e.currentTarget.setPointerCapture(e.pointerId);
                             }}
-                            onPointerMove={(e) => {
-                              if (
-                                !touch.current ||
-                                Math.hypot(
-                                  e.clientX - touch.current.x,
-                                  e.clientY - touch.current.y,
-                                ) < 8
-                              )
-                                return;
-                              setMoving(m.id);
-                              setOver(locate(e.clientX, e.clientY)?.dataset.mealslot ?? '');
+                            onPointerMove={touchMove}
+                            onPointerCancel={(e) => {
+                              if (touch.current?.pointer === e.pointerId) clearDrag();
                             }}
-                            onPointerCancel={() => {
-                              touch.current = null;
-                              setMoving('');
-                              setOver('');
+                            onLostPointerCapture={(e) => {
+                              if (touch.current?.pointer === e.pointerId) clearDrag();
                             }}
                             onPointerUp={(e) => {
-                              const start = touch.current;
+                              const g = touch.current;
+                              if (!g || g.pointer !== e.pointerId) return;
                               touch.current = null;
-                              if (
-                                !start ||
-                                Math.hypot(e.clientX - start.x, e.clientY - start.y) < 8
-                              )
-                                return;
-                              const d = locate(e.clientX, e.clientY)?.dataset;
-                              if (d?.day && (d.slot === 'midi' || d.slot === 'soir'))
-                                finishMove(m.id, d.day, d.slot);
-                              else {
-                                setMoving('');
-                                setOver('');
-                              }
-                              e.currentTarget.addEventListener(
-                                'click',
-                                (ev) => ev.stopPropagation(),
-                                { once: true },
+                              if (!g.moved) return;
+                              ignoreClick.current = true;
+                              finishMove(
+                                g.id,
+                                destination(
+                                  document.elementFromPoint(e.clientX, e.clientY),
+                                  g.slot,
+                                ),
                               );
                             }}
                           >

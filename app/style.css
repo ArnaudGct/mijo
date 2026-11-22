@@ -1440,6 +1440,18 @@ html {
   align-items: start;
   gap: 2px;
 }
+.meal-card[draggable='true'] {
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: grab;
+}
+.meal-card[draggable='true'] .scheduled {
+  cursor: grab;
+}
+.meal-card .scheduled .photo {
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
 .meal-card .scheduled {
   min-width: 0;
   flex: 1;
@@ -1466,9 +1478,36 @@ html {
   outline-offset: -2px;
 }
 .drop-target {
-  float: right;
-  padding: 1px 5px;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  border: 0;
+  border-radius: 0;
+  padding: 4px 6px;
+  background: transparent;
+}
+.drop-target:hover,
+.drop-target:focus-visible {
+  background: rgb(219 231 214 / 40%);
+}
+.drop-target span,
+.drop-over::after {
+  border-radius: 4px;
+  padding: 2px 6px;
   font-size: 11px;
+  font-weight: 600;
+  background: var(--sage);
+  color: var(--olive);
+  pointer-events: none;
+}
+.drop-over::after {
+  content: attr(data-drop-label);
+  position: absolute;
+  top: 4px;
+  right: 6px;
 }
 .move-help {
   margin-block: 8px;
