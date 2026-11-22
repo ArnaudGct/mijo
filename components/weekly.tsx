@@ -6,7 +6,21 @@ import { monday, addDays, labelDate, inWeek, today } from '@/lib/dates';
 import { duration, type State, type Prep } from '@/lib/model';
 import { sessionTasks, storageAlert, commonMeasures } from '@/lib/planner';
 import { rounded } from '@/lib/ingredients';
-import { Dialog, Form, Field, WeekNav, Empty, Photo, str, num, quantity, type UI } from './common';
+import {
+  Dialog,
+  Form,
+  Field,
+  WeekNav,
+  PageTabs,
+  usePageTab,
+  Empty,
+  Photo,
+  str,
+  num,
+  quantity,
+  type UI,
+} from './common';
+import { Breakfast } from './breakfast';
 import { PlanForm } from './recipes';
 const ANSES =
   'https://www.anses.fr/fr/actualite/eviter-toxi-infections-alimentaires-confinement-bonnes-pratiques';
@@ -228,8 +242,51 @@ function BatchForm({ ui, group }: { ui: UI; group?: State['sessions'][number] })
     </Dialog>
   );
 }
+const weekTabs = [
+  ['planning', 'Planning des repas'],
+  ['batch-cooking', 'Batch cooking'],
+  ['petit-dejeuner', 'Petit-déjeuner'],
+] as const;
 export function Planner({ ui }: { ui: UI }) {
-  const [batch, setBatch] = useState(false);
+  const { s, w } = ui;
+  const active = usePageTab(weekTabs);
+  return (
+    <>
+      <header className="page-heading">
+        <h1>Ma semaine</h1>
+        <WeekNav ui={ui} />
+      </header>
+      <div className="toolbar wrap">
+        <PageTabs options={weekTabs} active={active} />
+        {active !== 'petit-dejeuner' && (
+          <div className="actions">
+            {w >= monday(today()) && s.meals.filter((m) => inWeek(m.day, w)).length < 14 && (
+              <button
+                onClick={() =>
+                  ui.run(
+                    { action: 'fillWeek', week: w },
+                    'Les dîners disponibles ont été planifiés selon votre objectif.',
+                  )
+                }
+              >
+                Compléter la semaine
+              </button>
+            )}
+            <button className="primary" onClick={() => ui.open(<PlanForm ui={ui} />)}>
+              <Plus size={16} /> Planifier
+            </button>
+          </div>
+        )}
+      </div>
+      {active === 'petit-dejeuner' ? (
+        <Breakfast ui={ui} />
+      ) : (
+        <MealPlanning ui={ui} batch={active === 'batch-cooking'} />
+      )}
+    </>
+  );
+}
+function MealPlanning({ ui, batch }: { ui: UI; batch: boolean }) {
   const [moving, setMoving] = useState('');
   const [over, setOver] = useState('');
   const touch = useRef<{ x: number; y: number } | null>(null);
@@ -245,37 +302,6 @@ export function Planner({ ui }: { ui: UI }) {
   const preps = s.preps.filter((p) => inWeek(p.day, w));
   return (
     <>
-      <header className="page-heading">
-        <h1>Ma semaine</h1>
-        <WeekNav ui={ui} />
-      </header>
-      <div className="toolbar wrap">
-        <div className="tabs">
-          <button className={!batch ? 'selected' : ''} onClick={() => setBatch(false)}>
-            Planning des repas
-          </button>
-          <button className={batch ? 'selected' : ''} onClick={() => setBatch(true)}>
-            Batch cooking
-          </button>
-        </div>
-        <div className="actions">
-          {w >= monday(today()) && s.meals.filter((m) => inWeek(m.day, w)).length < 14 && (
-            <button
-              onClick={() =>
-                ui.run(
-                  { action: 'fillWeek', week: w },
-                  'Les dîners disponibles ont été planifiés selon votre objectif.',
-                )
-              }
-            >
-              Compléter la semaine
-            </button>
-          )}
-          <button className="primary" onClick={() => ui.open(<PlanForm ui={ui} />)}>
-            <Plus size={16} /> Planifier
-          </button>
-        </div>
-      </div>
       {batch && (
         <section className="panel">
           <div className="split">

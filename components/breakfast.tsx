@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { useState } from 'react';
 import { ClipboardList, SlidersHorizontal } from 'lucide-react';
 import {
@@ -8,7 +9,7 @@ import {
   type Reading,
   type Routine,
 } from '@/lib/breakfast-model';
-import type { marketBasket } from '@/lib/market';
+import { marketBasket } from '@/lib/market';
 import { today, labelDate, money } from '@/lib/dates';
 import { Form, Field, Dialog, type UI } from './common';
 
@@ -174,7 +175,8 @@ function StockForm({ ui }: { ui: UI }) {
     </Dialog>
   );
 }
-export function Breakfast({ ui, cart }: { ui: UI; cart: ReturnType<typeof marketBasket> }) {
+export function Breakfast({ ui }: { ui: UI }) {
+  const cart = marketBasket(ui.s, ui.w);
   const forecast = cart.breakfast;
   const first = forecast[0],
     cfg = ui.s.prefs.breakfast;
@@ -238,8 +240,10 @@ export function Breakfast({ ui, cart }: { ui: UI; cart: ReturnType<typeof market
         </div>
       </div>
       <p className="breakfast-note">
-        Les achats ci-dessous incluent aussi les quantités utilisées par tes autres repas. Ils sont
-        déjà compris dans le panier de la semaine.
+        Ces achats tiennent compte de tes autres repas.{' '}
+        <Link className="text-link" href={'/courses?week=' + ui.w}>
+          Voir ma liste de courses
+        </Link>
       </p>
       <div className="breakfast-table">
         {forecast.map((p) => {

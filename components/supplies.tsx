@@ -1,14 +1,25 @@
 'use client';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
-import { Breakfast } from './breakfast';
 import { useState } from 'react';
 import { Plus, Download, WifiOff } from 'lucide-react';
 import { marketBasket, marketDate, priceSource, shipping } from '@/lib/market';
 import { fold, groceryName } from '@/lib/grocery-names';
 import { categories, type State } from '@/lib/model';
 import { money, labelDate } from '@/lib/dates';
-import { Form, Field, Dialog, WeekNav, Empty, quantity, api, str, num, type UI } from './common';
+import {
+  Form,
+  Field,
+  Dialog,
+  WeekNav,
+  PageTabs,
+  usePageTab,
+  Empty,
+  quantity,
+  api,
+  str,
+  num,
+  type UI,
+} from './common';
 function download(name: string, txt: string) {
   const url = URL.createObjectURL(new Blob([txt], { type: 'text/plain;charset=utf-8' }));
   const a = document.createElement('a');
@@ -112,15 +123,14 @@ function StockForm({ ui, v }: { ui: UI; v?: State['stock'][number] }) {
     </Dialog>
   );
 }
+const shoppingTabs = [
+  ['liste', 'Liste'],
+  ['placard', 'Placard'],
+] as const;
 export function Shopping({ ui }: { ui: UI }) {
   const { s, w } = ui;
-  const query = useSearchParams(),
-    tab = query.get('onglet') ?? 'liste';
-  const setTab = (value: string) => {
-    const url = new URL(window.location.href);
-    url.searchParams.set('onglet', value);
-    history.replaceState(null, '', url);
-  };
+  const tab = usePageTab(shoppingTabs);
+  const breakfastHref = '/semaine?week=' + w + '&onglet=petit-dejeuner';
   const [delivery, setDelivery] = useState(false);
   const [carrier, setCarrier] = useState<'leclerc' | 'monoprix'>('leclerc');
   const cart = marketBasket(s, w);
@@ -196,26 +206,8 @@ export function Shopping({ ui }: { ui: UI }) {
         <h1>Mes courses</h1>
         <WeekNav ui={ui} />
       </header>
-      <div className="tabs">
-        {(
-          [
-            ['liste', 'Liste'],
-            ['petit-dejeuner', 'Petit-déjeuner'],
-            ['placard', 'Placard'],
-          ] as const
-        ).map(([key, label]) => (
-          <button
-            key={key}
-            className={tab === key ? 'selected' : ''}
-            aria-pressed={tab === key}
-            onClick={() => setTab(key)}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-      {tab === 'petit-dejeuner' && <Breakfast ui={ui} cart={cart} />}
-      {!['petit-dejeuner', 'placard'].includes(tab) && (
+      <PageTabs options={shoppingTabs} active={tab} />
+      {tab === 'liste' && (
         <>
           <section className="basket-summary" aria-label="Estimation du panier">
             <div>
@@ -340,9 +332,9 @@ export function Shopping({ ui }: { ui: UI }) {
                       <small>{describe(l)}</small>
                       {l.parts.some((p) => p.stock > 0) && <small>Stock déduit du placard</small>}
                       {l.breakfast?.product.reserve && (
-                        <button className="pantry-link" onClick={() => setTab('petit-dejeuner')}>
+                        <Link className="pantry-link" href={breakfastHref}>
                           Voir la réserve du petit-déjeuner
-                        </button>
+                        </Link>
                       )}
                       {!l.breakfast?.product.reserve &&
                         !l.pantry &&
@@ -435,9 +427,9 @@ export function Shopping({ ui }: { ui: UI }) {
             <button onClick={() => ui.open(<StockForm ui={ui} />)}>+ Ingrédient</button>
           </div>
           {s.prefs.breakfast && (
-            <button onClick={() => setTab('petit-dejeuner')}>
+            <Link className="text-link" href={breakfastHref}>
               Voir le stock du petit-déjeuner
-            </button>
+            </Link>
           )}
           {s.stock.map((v) => (
             <div className="row" key={v.id}>

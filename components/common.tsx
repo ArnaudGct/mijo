@@ -8,6 +8,7 @@ import {
   type FormEvent,
   type ReactNode,
 } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { X, Leaf, Sprout, CalendarDays, ChevronLeft, ChevronRight, BookOpen } from 'lucide-react';
 import type { State } from '@/lib/model';
 import type { Command } from '@/lib/commands';
@@ -132,6 +133,39 @@ export function Empty({ title, children }: { title: string; children?: ReactNode
     </div>
   );
 }
+export function usePageTab<const T extends string>(options: ReadonlyArray<readonly [T, string]>) {
+  const requested = useSearchParams().get('onglet');
+  return options.find(([key]) => key === requested)?.[0] ?? options[0][0];
+}
+
+export function PageTabs({
+  options,
+  active,
+}: {
+  options: ReadonlyArray<readonly [string, string]>;
+  active: string;
+}) {
+  function selectTab(key: string) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('onglet', key);
+    history.replaceState(null, '', url);
+  }
+  return (
+    <div className="tabs">
+      {options.map(([key, label]) => (
+        <button
+          key={key}
+          className={active === key ? 'selected' : ''}
+          aria-pressed={active === key}
+          onClick={() => selectTab(key)}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function WeekNav({ ui }: { ui: UI }) {
   return (
     <div className="weeknav">

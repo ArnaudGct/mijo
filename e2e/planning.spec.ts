@@ -235,8 +235,20 @@ test('petit-déjeuner : portions modifiables, relevé en briques et en pots, rep
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`/courses?week=${week}&onglet=petit-dejeuner`);
+  await expect(page).toHaveURL(
+    (url) =>
+      url.pathname === '/semaine' &&
+      url.searchParams.get('week') === week &&
+      url.searchParams.get('onglet') === 'petit-dejeuner',
+  );
   await page.getByLabel('Mot de passe').fill(process.env.TABLE_TEST_PASSWORD!);
   await page.getByRole('button', { name: 'Ouvrir mon carnet' }).click();
+  await expect(page.getByRole('heading', { name: 'Ma semaine', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Planning des repas', exact: true }).click();
+  await expect(page.locator('.calday')).toHaveCount(7);
+  await page.getByRole('button', { name: 'Petit-déjeuner', exact: true }).click();
+  await expect(page.locator('.calday')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Planifier', exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Régler mon bol' }).click();
   const dialog = page.getByRole('dialog');
   await dialog
@@ -256,8 +268,26 @@ test('petit-déjeuner : portions modifiables, relevé en briques et en pots, rep
   await page.reload();
   await expect(foods.filter({ hasText: 'Lait' })).toContainText('Aucun achat');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await page.getByRole('button', { name: 'Liste', exact: true }).click();
+  await page.getByRole('button', { name: 'Semaine suivante', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Petit-déjeuner', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await page.getByRole('button', { name: 'Semaine précédente', exact: true }).click();
+  await page.getByRole('link', { name: 'Voir ma liste de courses' }).click();
+  await expect(page.getByRole('heading', { name: 'Mes courses' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Liste', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await expect(page.getByRole('button', { name: 'Petit-déjeuner', exact: true })).toHaveCount(0);
   await expect(
     page.locator('.grocery').filter({ has: page.getByText('Flocons d’avoine', { exact: true }) }),
   ).toHaveCount(1);
+  const milk = page.locator('.grocery').filter({ has: page.getByText('Lait', { exact: true }) });
+  await expect(milk).toHaveCount(1);
+  await expect(milk).toContainText('En stock');
+  await page.getByRole('button', { name: 'Placard', exact: true }).click();
+  await page.getByRole('link', { name: 'Voir le stock du petit-déjeuner' }).click();
+  await expect(foods.filter({ hasText: 'Skyr nature' })).toContainText('36 bols');
 });

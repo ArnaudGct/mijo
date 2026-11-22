@@ -3,6 +3,16 @@ export default {
   poweredByHeader: false,
   serverExternalPackages: ['postgres', 'yauzl', 'sharp'],
   experimental: { cpus: 2 },
+  async redirects() {
+    return [
+      {
+        source: '/courses',
+        has: [{ type: 'query', key: 'onglet', value: 'petit-dejeuner' }],
+        destination: '/semaine?onglet=petit-dejeuner',
+        permanent: false,
+      },
+    ];
+  },
   async headers() {
     return [
       {
