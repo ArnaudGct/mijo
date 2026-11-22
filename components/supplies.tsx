@@ -1,5 +1,7 @@
 'use client';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { Breakfast } from './breakfast';
 import { useState } from 'react';
 import { Plus, Download, WifiOff } from 'lucide-react';
 import { marketBasket, marketDate, priceSource, shipping } from '@/lib/market';
@@ -112,8 +114,14 @@ function StockForm({ ui, v }: { ui: UI; v?: State['stock'][number] }) {
 }
 export function Shopping({ ui }: { ui: UI }) {
   const { s, w } = ui;
-  const [tab, setTab] = useState('Liste'),
-    [delivery, setDelivery] = useState(false);
+  const query = useSearchParams(),
+    tab = query.get('onglet') ?? 'liste';
+  const setTab = (value: string) => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('onglet', value);
+    history.replaceState(null, '', url);
+  };
+  const [delivery, setDelivery] = useState(false);
   const [carrier, setCarrier] = useState<'leclerc' | 'monoprix'>('leclerc');
   const cart = marketBasket(s, w);
   const availableThisWeek = s.items
@@ -189,14 +197,25 @@ export function Shopping({ ui }: { ui: UI }) {
         <WeekNav ui={ui} />
       </header>
       <div className="tabs">
-        <button className={tab === 'Liste' ? 'selected' : ''} onClick={() => setTab('Liste')}>
-          Liste
-        </button>
-        <button className={tab === 'Placard' ? 'selected' : ''} onClick={() => setTab('Placard')}>
-          Placard
-        </button>
+        {(
+          [
+            ['liste', 'Liste'],
+            ['petit-dejeuner', 'Petit-déjeuner'],
+            ['placard', 'Placard'],
+          ] as const
+        ).map(([key, label]) => (
+          <button
+            key={key}
+            className={tab === key ? 'selected' : ''}
+            aria-pressed={tab === key}
+            onClick={() => setTab(key)}
+          >
+            {label}
+          </button>
+        ))}
       </div>
-      {tab === 'Liste' && (
+      {tab === 'petit-dejeuner' && <Breakfast ui={ui} cart={cart} />}
+      {!['petit-dejeuner', 'placard'].includes(tab) && (
         <>
           <section className="basket-summary" aria-label="Estimation du panier">
             <div>
@@ -320,29 +339,37 @@ export function Shopping({ ui }: { ui: UI }) {
                       <strong>{l.name}</strong>
                       <small>{describe(l)}</small>
                       {l.parts.some((p) => p.stock > 0) && <small>Stock déduit du placard</small>}
-                      {!l.pantry && (l.available || l.buy.length > 0) && (
-                        <button
-                          className="pantry-link"
-                          aria-label={
-                            (l.available ? 'Remettre sur la liste · ' : 'Déjà chez moi · ') + l.name
-                          }
-                          onClick={() =>
-                            ui.run(
-                              {
-                                action: 'pantryWeek',
-                                week: w,
-                                name: l.name,
-                                available: !l.available,
-                              },
-                              l.available
-                                ? 'Article remis dans les courses.'
-                                : 'Couvert par le placard pour cette semaine.',
-                            )
-                          }
-                        >
-                          {l.available ? 'Remettre sur la liste' : 'Déjà chez moi'}
+                      {l.breakfast?.product.reserve && (
+                        <button className="pantry-link" onClick={() => setTab('petit-dejeuner')}>
+                          Voir la réserve du petit-déjeuner
                         </button>
                       )}
+                      {!l.breakfast?.product.reserve &&
+                        !l.pantry &&
+                        (l.available || l.buy.length > 0) && (
+                          <button
+                            className="pantry-link"
+                            aria-label={
+                              (l.available ? 'Remettre sur la liste · ' : 'Déjà chez moi · ') +
+                              l.name
+                            }
+                            onClick={() =>
+                              ui.run(
+                                {
+                                  action: 'pantryWeek',
+                                  week: w,
+                                  name: l.name,
+                                  available: !l.available,
+                                },
+                                l.available
+                                  ? 'Article remis dans les courses.'
+                                  : 'Couvert par le placard pour cette semaine.',
+                              )
+                            }
+                          >
+                            {l.available ? 'Remettre sur la liste' : 'Déjà chez moi'}
+                          </button>
+                        )}
                       {s.items
                         .filter(
                           (i) => i.manual && i.week === w && fold(groceryName(i.name)) === l.key,
@@ -367,7 +394,8 @@ export function Shopping({ ui }: { ui: UI }) {
                             : money(l.cents)}
                       {l.ref && l.packs > 0 && (
                         <small>
-                          {l.packs} × {l.pack} {l.ref.unit}
+                          {l.packs} × {l.breakfast?.product.size ?? l.pack}{' '}
+                          {l.breakfast?.product.unit ?? l.ref.unit}
                         </small>
                       )}
                     </span>
@@ -400,12 +428,17 @@ export function Shopping({ ui }: { ui: UI }) {
           </div>
         </>
       )}
-      {tab === 'Placard' && (
+      {tab === 'placard' && (
         <div className="panel">
           <div className="split">
             <h2>Stock disponible</h2>
             <button onClick={() => ui.open(<StockForm ui={ui} />)}>+ Ingrédient</button>
           </div>
+          {s.prefs.breakfast && (
+            <button onClick={() => setTab('petit-dejeuner')}>
+              Voir le stock du petit-déjeuner
+            </button>
+          )}
           {s.stock.map((v) => (
             <div className="row" key={v.id}>
               <b>{v.name}</b>

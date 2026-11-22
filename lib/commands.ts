@@ -18,6 +18,7 @@ import { planned, defaultMeals, uid, suggest } from './planner';
 import { addDays, inWeek, monday, today } from './dates';
 import { sourceUrl } from './source-url';
 import { clean } from './ingredients';
+import { morningRoutine, pantryReading } from './breakfast-model';
 import { fold, groceryName } from './grocery-names';
 export class UserError extends Error {
   constructor(
@@ -93,6 +94,8 @@ export const input = z.discriminatedUnion('action', [
     name: z.string().trim().min(1).max(300),
     available: z.boolean(),
   }),
+  z.object({ action: z.literal('breakfastRoutine'), routine: morningRoutine }),
+  z.object({ action: z.literal('breakfastStock'), readings: z.array(pantryReading).min(1).max(5) }),
   z.object({ action: z.literal('stock'), data: inventory }),
   z.object({ action: z.literal('price'), data: offer }),
   z.object({ action: z.literal('item'), data: item }),
@@ -417,6 +420,25 @@ export async function execute(tx: Tx, s: State, c: z.output<typeof input>) {
       if (!c.available && stored) await del('items', stored.id);
       break;
     }
+    case 'breakfastRoutine':
+    case 'breakfastStock': {
+      const cfg = s.prefs.breakfast ?? { routines: [], readings: [] };
+      if (c.action === 'breakfastRoutine') {
+        cfg.routines = cfg.routines.filter((r) => r.from !== c.routine.from).concat(c.routine);
+      } else {
+        requireThat(cfg.routines.length, 'Activez d’abord le petit-déjeuner.');
+        requireThat(
+          c.readings.every((r) => r.day <= today()),
+          'La date du relevé doit être passée ou actuelle.',
+        );
+        for (const r of c.readings)
+          cfg.readings = cfg.readings
+            .filter((old) => old.day !== r.day || old.food !== r.food)
+            .concat(r);
+      }
+      await tx`update preferences set data=${tx.json({ ...s.prefs, breakfast: cfg })} where id=1`;
+      break;
+    }
     case 'stock':
       await put(tx, 'stock', c.data);
       break;
@@ -461,7 +483,7 @@ export async function execute(tx: Tx, s: State, c: z.output<typeof input>) {
         new Set(c.data.shops.map((x) => clean(x.name))).size === c.data.shops.length,
         'Deux magasins portent le même nom.',
       );
-      await tx`update preferences set data=${tx.json({ ...c.data, generatedWeeks: s.prefs.generatedWeeks })} where id=1`;
+      await tx`update preferences set data=${tx.json({ ...c.data, breakfast: s.prefs.breakfast, generatedWeeks: s.prefs.generatedWeeks })} where id=1`;
       break;
   }
 }

@@ -32,6 +32,7 @@ with tempfile.TemporaryDirectory() as tmp:
       select replace(tag,'en:',''),'pack',product_product_quantity_unit, price/product_product_quantity,
         product_product_quantity,date,id,location_id,product_code from fr, unnest(product_categories_tags) t(tag)
       where tag like 'en:%' and product_product_quantity_unit in ('g','ml') and product_product_quantity between 1 and 10000
+        and (tag!='en:skyrs' or not regexp_matches(strip_accents(lower(coalesce(product_product_name,''))), 'vanill|fraise|framboise|myrtill|peche|fruit|mangue|coco|chocolat|citron|caramel|ananas|boire'))
         and (tag!='en:chicken-breasts' or not regexp_matches(strip_accents(lower(coalesce(product_product_name,''))), 'roti|fume|proven[cç]ale|facon hache|pane|cuit'))
         and (tag!='en:long-grain-rices' or not (list_contains(product_categories_tags,'en:precooked-rices')
           or list_contains(product_categories_tags,'en:prepared-rices') or regexp_matches(strip_accents(lower(coalesce(product_product_name,''))), 'micro.onde|express|deja cuit|2 min')))""")
@@ -43,7 +44,7 @@ with tempfile.TemporaryDirectory() as tmp:
       from clean group by all having count(*)>=3 order by tag,kind,unit""").fetchall()
     sizes = c.sql("""select tag,unit,size,median(rate*size),count(*) n,count(distinct shop) shops
       from clean where kind='pack' group by tag,unit,size having n>=3 and shops>=2
-      qualify row_number() over(partition by tag,unit order by n desc,shops desc,size)<=4
+      qualify row_number() over(partition by tag,unit order by n desc,shops desc,size)<=4 or (tag='skyrs' and size=850)
       order by tag,unit,n desc,size""").fetchall()
     # For sparse categories retain the median-size format with its own median
     # observed price. It is still an estimate and is identified as such in the UI.

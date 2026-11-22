@@ -1,5 +1,6 @@
 import type { Ingredient, State, Offer } from './model';
 import { groceryName, fold, groceryMeasure } from './grocery-names';
+import { breakfastKey, breakfastPlan, breakfastMeasure } from './breakfast';
 import { clean, normalize, rounded } from './ingredients';
 import { inWeek, addDays, today } from './dates';
 export type Need = {
@@ -17,14 +18,36 @@ export type Need = {
   bag: string;
   manual: boolean;
 };
-export function needs(s: State, week: string) {
+export function needs(s: State, week: string, asOf = today()) {
   s = s.past?.[week] ? { ...s, ...s.past[week] } : s;
   const rows = new Map<string, Need>();
   const incomplete: string[] = [];
-  function include(i: Ingredient, factor: number | null, title: string, manualKey?: string) {
-    const [q, unit] = groceryMeasure(i.name, i.quantity ?? 0, i.unit);
+  const breakfast = breakfastPlan(s, week, asOf);
+  const byFood = new Map(breakfast.map((p) => [p.key, p]));
+  const cookedBefore = new Map<string, number>();
+  function include(
+    i: Ingredient,
+    factor: number | null,
+    title: string,
+    manualKey?: string,
+    day?: string,
+  ) {
+    const food = breakfastKey(i.name),
+      product = food && byFood.get(food);
+    const [q, unit] = product
+      ? breakfastMeasure(product.key, i.name, i.quantity ?? 0, i.unit)
+      : groceryMeasure(i.name, i.quantity ?? 0, i.unit);
     const name = groceryName(i.name);
     const key = clean(name) + '|' + unit;
+    if (
+      product?.countedOn &&
+      day &&
+      day < product.stockStart &&
+      unit === product.unit &&
+      factor !== null &&
+      i.quantity !== null
+    )
+      cookedBefore.set(key, (cookedBefore.get(key) ?? 0) + q * factor);
     const row = rows.get(key) ?? {
       key,
       name,
@@ -51,10 +74,25 @@ export function needs(s: State, week: string) {
   for (const p of s.preps.filter((p) => inWeek(p.day, week))) {
     const r = p.snapshot;
     if (!r.base || !r.ingredients.length) incomplete.push(r.title);
-    for (const i of r.ingredients) include(i, r.base ? p.servings / r.base : null, r.title);
+    for (const i of r.ingredients)
+      include(i, r.base ? p.servings / r.base : null, r.title, undefined, p.day);
   }
   for (const i of s.items.filter((i) => i.week === week && i.manual))
     include({ ...i, raw: '' }, 1, '', i.key);
+  for (const product of breakfast) {
+    if (product.quantity > 0)
+      include(
+        {
+          name: product.name,
+          raw: '',
+          quantity: product.quantity,
+          unit: product.unit,
+          category: product.category,
+        },
+        1,
+        'Petit-déjeuner',
+      );
+  }
   for (const row of rows.values()) {
     const stored = s.items.filter(
       (i) =>
@@ -72,12 +110,20 @@ export function needs(s: State, week: string) {
     row.inPantry = s.items.some(
       (i) => i.week === week && i.inPantry && fold(groceryName(i.name)) === fold(row.name),
     );
+    const food = breakfastKey(row.name),
+      product = food && byFood.get(food);
+    if (product && row.unit === product.unit) {
+      row.stock = product.stock ?? 0;
+      row.inPantry ||= product.reserve;
+    }
     row.quantity = rounded(row.quantity);
-    row.buy = row.inPantry ? 0 : rounded(Math.max(0, row.quantity - row.stock));
+    row.buy = row.inPantry
+      ? 0
+      : rounded(Math.max(0, row.quantity - row.stock - (cookedBefore.get(row.key) ?? 0)));
     row.checked = saved?.checked ?? (stored.length > 0 && stored.every((i) => i.checked));
     row.bag = saved?.bag ?? row.bag;
   }
-  return { rows: [...rows.values()], incomplete: [...new Set(incomplete)] };
+  return { rows: [...rows.values()], breakfast, incomplete: [...new Set(incomplete)] };
 }
 export interface PriceProvider {
   label: string;

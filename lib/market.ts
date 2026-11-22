@@ -3,6 +3,7 @@ import rules from './market-data/market-families.json';
 import { fold } from './grocery-names';
 import { needs, type Need } from './shopping';
 import type { State } from './model';
+import { breakfastKey, type BreakfastProduct } from './breakfast';
 
 export const marketDate = index.toDate;
 export const priceSource = 'https://huggingface.co/datasets/openfoodfacts/open-prices';
@@ -37,7 +38,7 @@ type Quote = {
 };
 const quotes: Record<string, Quote[]> = index.prices;
 const families = rules.map((rule) => ({ ...rule, re: new RegExp(rule.pattern) }));
-function valuation(name: string, byPiece: boolean) {
+function valuation(name: string, byPiece: boolean, breakfast?: BreakfastProduct) {
   const normalized = fold(name);
   const family = families.find((f) => f.re.test(normalized));
   if (!family) return null;
@@ -48,6 +49,10 @@ function valuation(name: string, byPiece: boolean) {
     const loose = options.find((q) => q.kind === 'loose');
     const each = byPiece ? options.find((q) => q.kind === 'each' && q.n >= 10) : undefined;
     const quote =
+      (breakfast && breakfast.key !== 'apple'
+        ? options.find((q) => q.kind === 'pack' && q.unit === breakfast.unit)
+        : undefined) ||
+      (breakfast?.key === 'apple' && loose) ||
       (each && (!loose || each.n > loose.n) ? each : undefined) ||
       loose ||
       options.find((q) => q.unit === (liquid ? 'ml' : 'g')) ||
@@ -87,8 +92,8 @@ function measure(r: Need, ref: NonNullable<ReturnType<typeof valuation>>, amount
   if (u === 'pincee') return amount * 0.35;
   return null;
 }
-export function marketBasket(s: State, w: string) {
-  const { rows, incomplete } = needs(s, w);
+export function marketBasket(s: State, w: string, asOf?: string) {
+  const { rows, incomplete, breakfast } = needs(s, w, asOf);
   const groups = new Map<string, Need[]>();
   for (const r of rows) {
     const key = fold(r.name);
@@ -97,9 +102,11 @@ export function marketBasket(s: State, w: string) {
   const lines = [...groups.values()]
     .map((parts) => {
       const first = parts[0];
+      const product = breakfast.find((p) => p.key === breakfastKey(first.name) && p.quantity > 0);
       const ref = valuation(
         first.name,
         first.category === 'Fruits et légumes' && parts.every((p) => p.unit === 'pièce'),
+        product,
       );
       const available = parts.every((p) => p.inPantry);
       const pantry = parts.every((p) => p.unit === 'selon le goût');
@@ -117,7 +124,21 @@ export function marketBasket(s: State, w: string) {
       const used = pantry ? 0 : measured(parts, 'quantity');
       // Choose the least expensive checkout among common observed formats. Compare
       // total shelf prices first, then minimise surplus for equal totals.
-      const packOptions = ref?.quote.formats ?? [];
+      // A household format is shared by the stock count, refill and weekly checkout.
+      // For a size without a matching observation, scale the family's median unit price.
+      const oneUnit =
+        product && ref ? measure({ ...first, unit: product.unit, unknown: false }, ref, 1) : null;
+      const preferredSize = product && oneUnit ? product.size * oneUnit : null;
+      const observed = ref?.quote.formats?.find((f) => f.size === preferredSize);
+      const packOptions =
+        preferredSize && ref
+          ? [
+              observed ?? {
+                size: preferredSize,
+                cents: Math.max(1, Math.round(preferredSize * ref.quote.rate)),
+              },
+            ]
+          : (ref?.quote.formats ?? []);
       const basis = required || used || 0;
       const format = packOptions
         .map((f) => ({ ...f, count: Math.ceil(basis / f.size - 1e-9) }))
@@ -154,11 +175,20 @@ export function marketBasket(s: State, w: string) {
         packs,
         pack,
         ref: ref?.quote,
+        breakfast: product && {
+          product,
+          packPrice: format?.cents ?? null,
+          observed: !!observed,
+          value:
+            oneUnit && rate !== undefined ? Math.round(product.quantity * oneUnit * rate) : null,
+          bowl: oneUnit && rate !== undefined ? product.serving * oneUnit * rate : null,
+        },
       };
     })
     .sort((a, b) => a.name.localeCompare(b.name, 'fr'));
   return {
     lines,
+    breakfast,
     incomplete,
     cash: lines.reduce((sum, r) => sum + (r.cents ?? 0), 0),
     used: lines.reduce((sum, r) => sum + (r.usedCents ?? 0), 0),

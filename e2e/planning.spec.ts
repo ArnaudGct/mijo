@@ -230,3 +230,34 @@ test('panier estimé, livraison et fusion des variantes sur mobile', async ({ pa
     await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
   ).toBeTruthy();
 });
+test('petit-déjeuner : portions modifiables, relevé en briques et en pots, report dans les courses', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`/courses?week=${week}&onglet=petit-dejeuner`);
+  await page.getByLabel('Mot de passe').fill(process.env.TABLE_TEST_PASSWORD!);
+  await page.getByRole('button', { name: 'Ouvrir mon carnet' }).click();
+  await page.getByRole('button', { name: 'Régler mon bol' }).click();
+  const dialog = page.getByRole('dialog');
+  await dialog
+    .getByRole('group', { name: 'Flocons d’avoine' })
+    .getByLabel('Par matin (g)')
+    .fill('50');
+  await dialog.getByRole('button', { name: 'Enregistrer' }).click();
+  const foods = page.locator('.breakfast-table article');
+  await expect(foods).toHaveCount(5);
+  await expect(foods.filter({ hasText: 'Flocons d’avoine' })).toContainText('350 g');
+  await expect(foods.filter({ hasText: 'Skyr nature' })).toContainText('1 pot');
+  await page.getByRole('button', { name: 'Relever mon stock' }).click();
+  await dialog.getByLabel('Nombre de formats · Lait').fill('6');
+  await dialog.getByLabel('Nombre de formats · Skyr nature').fill('3');
+  await dialog.getByRole('button', { name: 'Enregistrer le relevé' }).click();
+  await expect(foods.filter({ hasText: 'Skyr nature' })).toContainText('36 bols');
+  await page.reload();
+  await expect(foods.filter({ hasText: 'Lait' })).toContainText('Aucun achat');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.getByRole('button', { name: 'Liste', exact: true }).click();
+  await expect(
+    page.locator('.grocery').filter({ has: page.getByText('Flocons d’avoine', { exact: true }) }),
+  ).toHaveCount(1);
+});

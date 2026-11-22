@@ -1520,6 +1520,39 @@
         ]
       }
     ],
+    "cinnamon-powder": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 4.914286,
+        "pack": 39,
+        "n": 49,
+        "latest": "2026-11-17",
+        "example": 364003,
+        "formats": [
+          {
+            "size": 39,
+            "cents": 149,
+            "n": 13
+          },
+          {
+            "size": 35,
+            "cents": 172,
+            "n": 11
+          },
+          {
+            "size": 45,
+            "cents": 378,
+            "n": 9
+          },
+          {
+            "size": 27,
+            "cents": 220,
+            "n": 4
+          }
+        ]
+      }
+    ],
     "coconut-milks": [
       {
         "kind": "pack",
@@ -4438,6 +4471,48 @@
         ]
       }
     ],
+    "rolled-oats": [
+      {
+        "kind": "loose",
+        "unit": "g",
+        "rate": 0.285,
+        "pack": 0,
+        "n": 8,
+        "latest": "2026-09-25",
+        "example": 335581
+      },
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.4,
+        "pack": 500,
+        "n": 77,
+        "latest": "2026-11-20",
+        "example": 365659,
+        "formats": [
+          {
+            "size": 500,
+            "cents": 203,
+            "n": 59
+          },
+          {
+            "size": 800,
+            "cents": 262,
+            "n": 6
+          },
+          {
+            "size": 550,
+            "cents": 222,
+            "n": 4
+          },
+          {
+            "size": 900,
+            "cents": 313,
+            "n": 3
+          }
+        ]
+      }
+    ],
     "rums": [
       {
         "kind": "pack",
@@ -4799,6 +4874,44 @@
             "size": 400,
             "cents": 971,
             "n": 16
+          }
+        ]
+      }
+    ],
+    "skyrs": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.704167,
+        "pack": 400,
+        "n": 72,
+        "latest": "2026-11-13",
+        "example": 362892,
+        "formats": [
+          {
+            "size": 400,
+            "cents": 213,
+            "n": 18
+          },
+          {
+            "size": 280,
+            "cents": 246,
+            "n": 14
+          },
+          {
+            "size": 480,
+            "cents": 339,
+            "n": 8
+          },
+          {
+            "size": 825,
+            "cents": 489,
+            "n": 7
+          },
+          {
+            "size": 850,
+            "cents": 338,
+            "n": 5
           }
         ]
       }

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { breakfastSettings } from './breakfast-model';
 export const categories = [
   'Fruits et légumes',
   'Viandes et poissons',
@@ -57,6 +58,7 @@ export const stores = z.object({
   freeAt: z.number().int().nonnegative().nullable(),
 });
 export const settings = z.object({
+  breakfast: breakfastSettings.optional(),
   generatedWeeks: z.array(date).default([]),
   portions: portions.default(2),
   target: z.number().int().min(1).max(14).default(7),

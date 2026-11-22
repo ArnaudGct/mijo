@@ -1676,3 +1676,91 @@ html {
   color: var(--green);
   background: transparent;
 }
+.breakfast-sheet {
+  margin-block: 24px;
+}
+.breakfast-sheet .section-heading {
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.breakfast-sheet h2,
+.breakfast-table h3 {
+  margin: 0;
+}
+.breakfast-sheet small {
+  display: block;
+  color: var(--muted);
+  font-size: 13px;
+}
+.breakfast-cost {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px 52px;
+  padding: 20px 24px;
+  background: #eaf0e1;
+  border-radius: 12px;
+}
+.breakfast-cost strong {
+  font-family: var(--serif);
+  font-size: 32px;
+  font-weight: 400;
+}
+.breakfast-note {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.breakfast-table {
+  margin: 14px 0 18px;
+  border-block: 1px solid var(--line);
+}
+.breakfast-table article {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr 1fr;
+  gap: 18px;
+  align-items: start;
+  padding: 15px 4px;
+}
+.breakfast-table article + article {
+  border-top: 1px solid var(--line);
+}
+.breakfast-table h3 {
+  font-size: 19px;
+}
+.breakfast-table b {
+  display: block;
+  font-size: 15px;
+}
+.bowl-field {
+  border: 0;
+  border-block-start: 1px solid var(--line);
+  padding: 8px 0;
+  min-width: 0;
+}
+.bowl-field legend {
+  font-weight: 600;
+  padding-inline-end: 8px;
+}
+@media (max-width: 650px) {
+  .breakfast-table article {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 14px;
+  }
+  .breakfast-table article > div:first-child {
+    grid-column: 1/-1;
+  }
+  .breakfast-cost {
+    gap: 12px 23px;
+    padding: 16px;
+  }
+  .breakfast-sheet .actions {
+    flex-wrap: wrap;
+  }
+  .bowl-field .columns {
+    grid-template-columns: 1fr 1fr;
+  }
+  .breakfast-sheet .section-heading {
+    display: flex;
+  }
+}

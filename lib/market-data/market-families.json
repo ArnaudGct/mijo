@@ -1,5 +1,29 @@
 [
   {
+    "pattern": "^flocons d'avoine$",
+    "tags": [
+      "rolled-oats"
+    ],
+    "piece": 0,
+    "portion": 40
+  },
+  {
+    "pattern": "^skyr(?: nature)?$",
+    "tags": [
+      "skyrs"
+    ],
+    "piece": 0,
+    "portion": 70
+  },
+  {
+    "pattern": "^cannelle(?: moulue)?$",
+    "tags": [
+      "cinnamon-powder"
+    ],
+    "piece": 0,
+    "portion": 1
+  },
+  {
     "pattern": "vinaigre balsamique",
     "tags": [
       "balsamic-vinegars"

@@ -6,6 +6,10 @@ export const fold = (s: string) =>
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '');
 const aliases: [RegExp, string][] = [
+  [/^lait(?: de vache| (?:demi[- ]ecreme|entier|ecreme)(?: uht)?| uht)?$/, 'Lait'],
+  [/^flocons? (?:d'|de l')avoine(?: complets?| nature)?$/, 'Flocons d’avoine'],
+  [/^skyr(?: nature)?$/, 'Skyr nature'],
+  [/^cannelle(?: (?:en poudre|moulue))?$/, 'Cannelle moulue'],
   [
     /^(?:cube de bouillon de legumes|bouillon(?: cube)? (?:de )?legumes|bouillon de legumes en cube)$/,
     'Bouillon de légumes',
