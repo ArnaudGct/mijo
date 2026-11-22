@@ -1660,3 +1660,19 @@ html {
     }
   }
 }
+.pantry-link {
+  display: block;
+  width: fit-content;
+  border: 0;
+  padding: 3px 0;
+  margin-top: 2px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.pantry-link:hover {
+  color: var(--green);
+  background: transparent;
+}

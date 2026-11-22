@@ -138,6 +138,7 @@ export const item = z.object({
   unit: z.string().max(70),
   category: z.enum(categories),
   manual: z.boolean(),
+  inPantry: z.boolean().optional(),
   checked: z.boolean(),
   bag: z.enum(['Frais', 'Épicerie', 'Troisième']).nullable(),
 });

@@ -1,5 +1,13 @@
 [
   {
+    "pattern": "vinaigre balsamique",
+    "tags": [
+      "balsamic-vinegars"
+    ],
+    "piece": 0,
+    "portion": 15
+  },
+  {
     "pattern": "^pesto",
     "tags": [
       "pestos"
@@ -54,14 +62,6 @@
     ],
     "piece": 0,
     "portion": 125
-  },
-  {
-    "pattern": "^vinaigre",
-    "tags": [
-      "vinegars"
-    ],
-    "piece": 0,
-    "portion": 15
   },
   {
     "pattern": "^beurre de cacahu",
@@ -701,14 +701,6 @@
     "portion": 15
   },
   {
-    "pattern": "vinaigre balsamique",
-    "tags": [
-      "balsamic-vinegars"
-    ],
-    "piece": 0,
-    "portion": 15
-  },
-  {
     "pattern": "vinaigre",
     "tags": [
       "wine-vinegars",
@@ -1299,6 +1291,15 @@
     "portion": 50
   },
   {
+    "pattern": "^riz$",
+    "tags": [
+      "long-grain-rices",
+      "rices"
+    ],
+    "piece": 0,
+    "portion": 150
+  },
+  {
     "pattern": "riz",
     "tags": [
       "rices"
@@ -1346,6 +1347,14 @@
     ],
     "piece": 0,
     "portion": 100
+  },
+  {
+    "pattern": "^semoule$",
+    "tags": [
+      "wheat-semolinas"
+    ],
+    "piece": 0,
+    "portion": 150
   },
   {
     "pattern": "(semoule|couscous|boulgour|freekeh)",

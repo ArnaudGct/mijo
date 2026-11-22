@@ -6,6 +6,15 @@ export const fold = (s: string) =>
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '');
 const aliases: [RegExp, string][] = [
+  [
+    /^(?:cube de bouillon de legumes|bouillon(?: cube)? (?:de )?legumes|bouillon de legumes en cube)$/,
+    'Bouillon de légumes',
+  ],
+  [
+    /^(?:cube de bouillon de volaille|bouillon(?: cube)? (?:de )?volaille)$/,
+    'Bouillon de volaille',
+  ],
+  [/^(?:cube de bouillon de boeuf|bouillon(?: cube)? (?:de )?boeuf)$/, 'Bouillon de bœuf'],
   [/^(oignons?)( (rouges?|jaunes?|blancs?|doux|roses?))?$/, 'Oignon'],
   [/^carottes?( violettes?)?$/, 'Carotte'],
   [/^tomates?( cotelees?)?$/, 'Tomate'],
@@ -29,11 +38,6 @@ const aliases: [RegExp, string][] = [
   [/^vinaigre de vin (blanc|rouge ou de cidre)$/, 'Vinaigre de vin'],
   [/^salade( en sachet)?$/, 'Salade'],
   [/^tofu( nature)?$/, 'Tofu'],
-  [
-    /^bouillon cube (legumes|de legumes)$|^cube de bouillon de legumes$/,
-    'Bouillon cube de légumes',
-  ],
-  [/^bouillon cube volaille$|^cube de bouillon de volaille$/, 'Bouillon cube de volaille'],
   [/^(basilic|courgette|poireau|pomme|citron|aubergine|echalote|avocat)s?$/, ''],
 ];
 export function groceryName(name: string) {
@@ -54,6 +58,8 @@ export function groceryName(name: string) {
 
 export function groceryMeasure(name: string, quantity: number, unit: string): [number, string] {
   const [q, u] = normalize(quantity, unit);
+  if (/^(huile|vinaigre|lait)\b/.test(fold(name)) && (u === 'càs' || u === 'càc'))
+    return [q * (u === 'càs' ? 15 : 5), 'ml'];
   if (groceryName(name) === 'Ail') {
     if (/^tetes?/.test(fold(name)) && u === 'pièce') return [q, 'tête'];
     if (/^gousses?/.test(fold(name)) && u === 'pièce') return [q, 'gousse'];

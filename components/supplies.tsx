@@ -116,6 +116,9 @@ export function Shopping({ ui }: { ui: UI }) {
     [delivery, setDelivery] = useState(false);
   const [carrier, setCarrier] = useState<'leclerc' | 'monoprix'>('leclerc');
   const cart = marketBasket(s, w);
+  const availableThisWeek = s.items
+    .filter((i) => i.week === w && i.inPantry)
+    .sort((a, b) => a.name.localeCompare(b.name, 'fr'));
   type Line = (typeof cart.lines)[number];
   const describe = (line: Line) =>
     line.buy.length
@@ -128,7 +131,9 @@ export function Shopping({ ui }: { ui: UI }) {
               : quantity(r.buy) + ' ' + r.unit,
           )
           .join(' + ')
-      : 'En stock';
+      : line.pantry
+        ? 'Selon le goût'
+        : 'En stock';
   const parts = (line: Line) =>
     line.buy.map((r) => ({ key: r.key, quantity: r.buy, unknown: r.unknown, before: r.checked }));
   async function toggle(line: Line, checked: boolean) {
@@ -203,6 +208,12 @@ export function Shopping({ ui }: { ui: UI }) {
               <small>
                 {cart.count} articles · {withFee ? 'livraison incluse' : 'hors livraison'}
               </small>
+              <small>
+                {cart.unvalued || cart.incomplete.length
+                  ? 'Quantités chiffrées'
+                  : 'Valeur des quantités prévues'}{' '}
+                · {money(cart.used)}
+              </small>
               {partial && (
                 <p>
                   {cart.missing > 0 && cart.missing + ' article(s) sans estimation. '}
@@ -270,9 +281,11 @@ export function Shopping({ ui }: { ui: UI }) {
             <p>
               Prix médians observés en France hors promotions, sur douze mois jusqu’au{' '}
               {labelDate(marketDate, { day: 'numeric', month: 'long', year: 'numeric' })}. Les
-              produits en vrac sont comptés au poids et les autres par emballage entier. Les pièces
-              et dosettes sont converties avec des poids indicatifs. Le sel et le poivre « selon le
-              goût » sont supposés au placard.
+              produits frais sont comptés au poids ou à la pièce. Pour les produits emballés, le
+              panier retient le format courant le moins cher pour couvrir le besoin, au prix médian
+              de ce format. La valeur des quantités prévues inclut les ingrédients déjà au placard
+              et couvre les portions à préparer. Les pièces et dosettes sont converties avec des
+              poids indicatifs. Le sel et le poivre « selon le goût » sont supposés au placard.
             </p>
             <p>
               Votre panier HelloFresh de référence est de {money(s.prefs.hello)}.{' '}
@@ -307,6 +320,29 @@ export function Shopping({ ui }: { ui: UI }) {
                       <strong>{l.name}</strong>
                       <small>{describe(l)}</small>
                       {l.parts.some((p) => p.stock > 0) && <small>Stock déduit du placard</small>}
+                      {!l.pantry && (l.available || l.buy.length > 0) && (
+                        <button
+                          className="pantry-link"
+                          aria-label={
+                            (l.available ? 'Remettre sur la liste · ' : 'Déjà chez moi · ') + l.name
+                          }
+                          onClick={() =>
+                            ui.run(
+                              {
+                                action: 'pantryWeek',
+                                week: w,
+                                name: l.name,
+                                available: !l.available,
+                              },
+                              l.available
+                                ? 'Article remis dans les courses.'
+                                : 'Couvert par le placard pour cette semaine.',
+                            )
+                          }
+                        >
+                          {l.available ? 'Remettre sur la liste' : 'Déjà chez moi'}
+                        </button>
+                      )}
                       {s.items
                         .filter(
                           (i) => i.manual && i.week === w && fold(groceryName(i.name)) === l.key,
@@ -322,7 +358,7 @@ export function Shopping({ ui }: { ui: UI }) {
                         ))}
                     </div>
                     <span className="line-price">
-                      {l.pantry
+                      {l.pantry || l.available
                         ? 'Placard'
                         : !l.buy.length
                           ? 'En stock'
@@ -378,6 +414,26 @@ export function Shopping({ ui }: { ui: UI }) {
               </button>
             </div>
           ))}
+          {availableThisWeek.length > 0 && (
+            <section>
+              <h3>Déjà chez moi cette semaine</h3>
+              {availableThisWeek.map((i) => (
+                <div className="row" key={i.id}>
+                  <b>{i.name}</b>
+                  <button
+                    onClick={() =>
+                      ui.run(
+                        { action: 'pantryWeek', week: w, name: i.name, available: false },
+                        'Article remis dans les courses.',
+                      )
+                    }
+                  >
+                    Remettre sur la liste
+                  </button>
+                </div>
+              ))}
+            </section>
+          )}
         </div>
       )}
     </>

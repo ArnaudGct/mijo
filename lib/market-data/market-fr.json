@@ -11,7 +11,29 @@
         "pack": 235,
         "n": 43,
         "latest": "2026-11-18",
-        "example": 364929
+        "example": 364926,
+        "formats": [
+          {
+            "size": 260,
+            "cents": 180,
+            "n": 16
+          },
+          {
+            "size": 185,
+            "cents": 253,
+            "n": 7
+          },
+          {
+            "size": 90,
+            "cents": 282,
+            "n": 6
+          },
+          {
+            "size": 235,
+            "cents": 107,
+            "n": 6
+          }
+        ]
       }
     ],
     "almonds": [
@@ -22,7 +44,29 @@
         "pack": 145,
         "n": 150,
         "latest": "2026-11-17",
-        "example": 363713
+        "example": 363713,
+        "formats": [
+          {
+            "size": 125,
+            "cents": 320,
+            "n": 43
+          },
+          {
+            "size": 100,
+            "cents": 265,
+            "n": 23
+          },
+          {
+            "size": 200,
+            "cents": 321,
+            "n": 21
+          },
+          {
+            "size": 150,
+            "cents": 224,
+            "n": 14
+          }
+        ]
       },
       {
         "kind": "pack",
@@ -31,10 +75,26 @@
         "pack": 1000,
         "n": 5,
         "latest": "2026-09-12",
-        "example": 334720
+        "example": 334720,
+        "formats": [
+          {
+            "size": 1000,
+            "cents": 189,
+            "n": 5
+          }
+        ]
       }
     ],
     "apples": [
+      {
+        "kind": "each",
+        "unit": "pièce",
+        "rate": 242.0,
+        "pack": 0,
+        "n": 9,
+        "latest": "2026-11-14",
+        "example": 363080
+      },
       {
         "kind": "loose",
         "unit": "g",
@@ -51,7 +111,29 @@
         "pack": 400,
         "n": 68,
         "latest": "2026-10-29",
-        "example": 356422
+        "example": 356422,
+        "formats": [
+          {
+            "size": 97,
+            "cents": 199,
+            "n": 12
+          },
+          {
+            "size": 100,
+            "cents": 174,
+            "n": 8
+          },
+          {
+            "size": 400,
+            "cents": 163,
+            "n": 7
+          },
+          {
+            "size": 730,
+            "cents": 215,
+            "n": 7
+          }
+        ]
       }
     ],
     "apricots": [
@@ -71,7 +153,14 @@
         "pack": 500,
         "n": 11,
         "latest": "2026-08-16",
-        "example": 310016
+        "example": 310016,
+        "formats": [
+          {
+            "size": 1000,
+            "cents": 389,
+            "n": 3
+          }
+        ]
       }
     ],
     "aubergines": [
@@ -91,7 +180,29 @@
         "pack": 375,
         "n": 63,
         "latest": "2026-11-04",
-        "example": 359299
+        "example": 359299,
+        "formats": [
+          {
+            "size": 375,
+            "cents": 350,
+            "n": 22
+          },
+          {
+            "size": 185,
+            "cents": 266,
+            "n": 14
+          },
+          {
+            "size": 650,
+            "cents": 409,
+            "n": 4
+          },
+          {
+            "size": 530,
+            "cents": 349,
+            "n": 3
+          }
+        ]
       }
     ],
     "auvergne-blue-cheese-from-cow-s-milk": [
@@ -102,10 +213,31 @@
         "pack": 125,
         "n": 10,
         "latest": "2026-11-20",
-        "example": 365770
+        "example": 365770,
+        "formats": [
+          {
+            "size": 125,
+            "cents": 149,
+            "n": 5
+          },
+          {
+            "size": 150,
+            "cents": 259,
+            "n": 3
+          }
+        ]
       }
     ],
     "avocados": [
+      {
+        "kind": "each",
+        "unit": "pièce",
+        "rate": 151.5,
+        "pack": 0,
+        "n": 25,
+        "latest": "2026-11-19",
+        "example": 364946
+      },
       {
         "kind": "loose",
         "unit": "g",
@@ -124,7 +256,14 @@
         "pack": 88,
         "n": 10,
         "latest": "2026-08-23",
-        "example": 316296
+        "example": 316296,
+        "formats": [
+          {
+            "size": 88,
+            "cents": 81,
+            "n": 4
+          }
+        ]
       }
     ],
     "balsamic-vinegars": [
@@ -135,7 +274,14 @@
         "pack": 250,
         "n": 6,
         "latest": "2026-08-20",
-        "example": 314603
+        "example": 314603,
+        "formats": [
+          {
+            "size": 250,
+            "cents": 425,
+            "n": 4
+          }
+        ]
       },
       {
         "kind": "pack",
@@ -144,7 +290,24 @@
         "pack": 500,
         "n": 121,
         "latest": "2026-11-17",
-        "example": 364238
+        "example": 364238,
+        "formats": [
+          {
+            "size": 500,
+            "cents": 384,
+            "n": 64
+          },
+          {
+            "size": 250,
+            "cents": 309,
+            "n": 49
+          },
+          {
+            "size": 750,
+            "cents": 500,
+            "n": 4
+          }
+        ]
       }
     ],
     "basils": [
@@ -155,7 +318,29 @@
         "pack": 15,
         "n": 45,
         "latest": "2026-11-02",
-        "example": 358340
+        "example": 358340,
+        "formats": [
+          {
+            "size": 11,
+            "cents": 178,
+            "n": 12
+          },
+          {
+            "size": 12,
+            "cents": 54,
+            "n": 6
+          },
+          {
+            "size": 50,
+            "cents": 175,
+            "n": 5
+          },
+          {
+            "size": 17,
+            "cents": 353,
+            "n": 4
+          }
+        ]
       },
       {
         "kind": "pack",
@@ -164,7 +349,13 @@
         "pack": 100,
         "n": 3,
         "latest": "2026-10-11",
-        "example": 345753
+        "example": 345753,
+        "formats": [
+          {
+            "size": 100,
+            "cents": 210
+          }
+        ]
       }
     ],
     "beef": [
@@ -175,7 +366,29 @@
         "pack": 400,
         "n": 607,
         "latest": "2026-11-14",
-        "example": 362825
+        "example": 362825,
+        "formats": [
+          {
+            "size": 1000,
+            "cents": 1268,
+            "n": 99
+          },
+          {
+            "size": 400,
+            "cents": 767,
+            "n": 79
+          },
+          {
+            "size": 800,
+            "cents": 1060,
+            "n": 53
+          },
+          {
+            "size": 250,
+            "cents": 525,
+            "n": 43
+          }
+        ]
       }
     ],
     "beef-flank-steak": [
@@ -186,7 +399,14 @@
         "pack": 262,
         "n": 5,
         "latest": "2026-11-04",
-        "example": 359390
+        "example": 359390,
+        "formats": [
+          {
+            "size": 262,
+            "cents": 795,
+            "n": 3
+          }
+        ]
       }
     ],
     "beef-rump-steak": [
@@ -197,7 +417,14 @@
         "pack": 240,
         "n": 5,
         "latest": "2026-08-20",
-        "example": 314697
+        "example": 314697,
+        "formats": [
+          {
+            "size": 240,
+            "cents": 635,
+            "n": 5
+          }
+        ]
       }
     ],
     "beetroot": [
@@ -217,7 +444,29 @@
         "pack": 300,
         "n": 50,
         "latest": "2026-11-19",
-        "example": 365099
+        "example": 365099,
+        "formats": [
+          {
+            "size": 300,
+            "cents": 144,
+            "n": 20
+          },
+          {
+            "size": 320,
+            "cents": 226,
+            "n": 7
+          },
+          {
+            "size": 130,
+            "cents": 181,
+            "n": 6
+          },
+          {
+            "size": 500,
+            "cents": 189,
+            "n": 6
+          }
+        ]
       }
     ],
     "blueberries": [
@@ -237,7 +486,19 @@
         "pack": 340,
         "n": 12,
         "latest": "2026-05-13",
-        "example": 274367
+        "example": 274367,
+        "formats": [
+          {
+            "size": 125,
+            "cents": 260,
+            "n": 4
+          },
+          {
+            "size": 500,
+            "cents": 662,
+            "n": 3
+          }
+        ]
       }
     ],
     "bouillon-cubes": [
@@ -248,7 +509,29 @@
         "pack": 105,
         "n": 321,
         "latest": "2026-11-17",
-        "example": 363551
+        "example": 363399,
+        "formats": [
+          {
+            "size": 80,
+            "cents": 149,
+            "n": 64
+          },
+          {
+            "size": 120,
+            "cents": 200,
+            "n": 49
+          },
+          {
+            "size": 150,
+            "cents": 157,
+            "n": 31
+          },
+          {
+            "size": 128,
+            "cents": 162,
+            "n": 28
+          }
+        ]
       },
       {
         "kind": "pack",
@@ -257,7 +540,14 @@
         "pack": 72,
         "n": 6,
         "latest": "2026-10-11",
-        "example": 345866
+        "example": 345749,
+        "formats": [
+          {
+            "size": 72,
+            "cents": 156,
+            "n": 3
+          }
+        ]
       }
     ],
     "bread-crumbs": [
@@ -268,7 +558,29 @@
         "pack": 250,
         "n": 28,
         "latest": "2026-11-20",
-        "example": 365426
+        "example": 365426,
+        "formats": [
+          {
+            "size": 250,
+            "cents": 87,
+            "n": 8
+          },
+          {
+            "size": 200,
+            "cents": 198,
+            "n": 4
+          },
+          {
+            "size": 275,
+            "cents": 66,
+            "n": 4
+          },
+          {
+            "size": 150,
+            "cents": 155,
+            "n": 3
+          }
+        ]
       }
     ],
     "breads": [
@@ -279,10 +591,41 @@
         "pack": 308,
         "n": 2433,
         "latest": "2026-11-20",
-        "example": 365638
+        "example": 365417,
+        "formats": [
+          {
+            "size": 500,
+            "cents": 209,
+            "n": 437
+          },
+          {
+            "size": 250,
+            "cents": 158,
+            "n": 294
+          },
+          {
+            "size": 300,
+            "cents": 170,
+            "n": 255
+          },
+          {
+            "size": 330,
+            "cents": 138,
+            "n": 134
+          }
+        ]
       }
     ],
     "broccoli": [
+      {
+        "kind": "each",
+        "unit": "pièce",
+        "rate": 154.5,
+        "pack": 0,
+        "n": 8,
+        "latest": "2026-07-04",
+        "example": 291571
+      },
       {
         "kind": "loose",
         "unit": "g",
@@ -299,7 +642,24 @@
         "pack": 750,
         "n": 24,
         "latest": "2026-09-14",
-        "example": 330998
+        "example": 330998,
+        "formats": [
+          {
+            "size": 750,
+            "cents": 200,
+            "n": 7
+          },
+          {
+            "size": 900,
+            "cents": 177,
+            "n": 7
+          },
+          {
+            "size": 1000,
+            "cents": 472,
+            "n": 5
+          }
+        ]
       }
     ],
     "bulgur": [
@@ -310,7 +670,29 @@
         "pack": 300,
         "n": 50,
         "latest": "2026-11-17",
-        "example": 363962
+        "example": 363617,
+        "formats": [
+          {
+            "size": 250,
+            "cents": 189,
+            "n": 13
+          },
+          {
+            "size": 400,
+            "cents": 227,
+            "n": 10
+          },
+          {
+            "size": 220,
+            "cents": 238,
+            "n": 9
+          },
+          {
+            "size": 500,
+            "cents": 190,
+            "n": 8
+          }
+        ]
       }
     ],
     "burrata": [
@@ -321,7 +703,29 @@
         "pack": 200,
         "n": 26,
         "latest": "2026-09-02",
-        "example": 324565
+        "example": 324565,
+        "formats": [
+          {
+            "size": 200,
+            "cents": 403,
+            "n": 6
+          },
+          {
+            "size": 120,
+            "cents": 246,
+            "n": 5
+          },
+          {
+            "size": 260,
+            "cents": 326,
+            "n": 4
+          },
+          {
+            "size": 100,
+            "cents": 210,
+            "n": 3
+          }
+        ]
       }
     ],
     "butters": [
@@ -332,10 +736,41 @@
         "pack": 250,
         "n": 708,
         "latest": "2026-11-20",
-        "example": 365611
+        "example": 365611,
+        "formats": [
+          {
+            "size": 250,
+            "cents": 295,
+            "n": 498
+          },
+          {
+            "size": 125,
+            "cents": 185,
+            "n": 75
+          },
+          {
+            "size": 200,
+            "cents": 147,
+            "n": 66
+          },
+          {
+            "size": 500,
+            "cents": 544,
+            "n": 46
+          }
+        ]
       }
     ],
     "cabbages": [
+      {
+        "kind": "each",
+        "unit": "pièce",
+        "rate": 274.0,
+        "pack": 0,
+        "n": 10,
+        "latest": "2026-09-12",
+        "example": 334716
+      },
       {
         "kind": "loose",
         "unit": "g",
@@ -352,7 +787,19 @@
         "pack": 250,
         "n": 17,
         "latest": "2026-09-23",
-        "example": 334352
+        "example": 334352,
+        "formats": [
+          {
+            "size": 250,
+            "cents": 163,
+            "n": 7
+          },
+          {
+            "size": 300,
+            "cents": 206,
+            "n": 4
+          }
+        ]
       }
     ],
     "canned-chickpeas": [
@@ -363,7 +810,29 @@
         "pack": 360,
         "n": 120,
         "latest": "2026-11-06",
-        "example": 360398
+        "example": 360398,
+        "formats": [
+          {
+            "size": 265,
+            "cents": 118,
+            "n": 26
+          },
+          {
+            "size": 530,
+            "cents": 129,
+            "n": 14
+          },
+          {
+            "size": 400,
+            "cents": 99,
+            "n": 11
+          },
+          {
+            "size": 260,
+            "cents": 195,
+            "n": 8
+          }
+        ]
       }
     ],
     "canned-kidney-common-beans": [
@@ -374,7 +843,29 @@
         "pack": 250,
         "n": 32,
         "latest": "2026-10-04",
-        "example": 340554
+        "example": 340554,
+        "formats": [
+          {
+            "size": 250,
+            "cents": 153,
+            "n": 20
+          },
+          {
+            "size": 400,
+            "cents": 120,
+            "n": 5
+          },
+          {
+            "size": 800,
+            "cents": 154,
+            "n": 4
+          },
+          {
+            "size": 500,
+            "cents": 149,
+            "n": 3
+          }
+        ]
       }
     ],
     "canned-peas": [
@@ -385,7 +876,29 @@
         "pack": 340,
         "n": 294,
         "latest": "2026-11-16",
-        "example": 363242
+        "example": 363238,
+        "formats": [
+          {
+            "size": 280,
+            "cents": 189,
+            "n": 50
+          },
+          {
+            "size": 560,
+            "cents": 164,
+            "n": 37
+          },
+          {
+            "size": 130,
+            "cents": 162,
+            "n": 32
+          },
+          {
+            "size": 140,
+            "cents": 159,
+            "n": 29
+          }
+        ]
       }
     ],
     "canned-sweet-corn": [
@@ -396,7 +909,29 @@
         "pack": 285,
         "n": 186,
         "latest": "2026-10-16",
-        "example": 348062
+        "example": 348060,
+        "formats": [
+          {
+            "size": 285,
+            "cents": 110,
+            "n": 62
+          },
+          {
+            "size": 420,
+            "cents": 239,
+            "n": 50
+          },
+          {
+            "size": 300,
+            "cents": 125,
+            "n": 27
+          },
+          {
+            "size": 280,
+            "cents": 217,
+            "n": 14
+          }
+        ]
       }
     ],
     "canned-tomatoes": [
@@ -407,7 +942,29 @@
         "pack": 400,
         "n": 191,
         "latest": "2026-11-17",
-        "example": 363369
+        "example": 363369,
+        "formats": [
+          {
+            "size": 400,
+            "cents": 168,
+            "n": 64
+          },
+          {
+            "size": 800,
+            "cents": 110,
+            "n": 21
+          },
+          {
+            "size": 240,
+            "cents": 121,
+            "n": 16
+          },
+          {
+            "size": 1200,
+            "cents": 225,
+            "n": 11
+          }
+        ]
       }
     ],
     "canned-tunas": [
@@ -418,7 +975,29 @@
         "pack": 140,
         "n": 382,
         "latest": "2026-11-17",
-        "example": 363408
+        "example": 363408,
+        "formats": [
+          {
+            "size": 160,
+            "cents": 304,
+            "n": 96
+          },
+          {
+            "size": 130,
+            "cents": 131,
+            "n": 41
+          },
+          {
+            "size": 140,
+            "cents": 181,
+            "n": 36
+          },
+          {
+            "size": 104,
+            "cents": 77,
+            "n": 20
+          }
+        ]
       }
     ],
     "carrots": [
@@ -438,7 +1017,29 @@
         "pack": 300,
         "n": 222,
         "latest": "2026-11-18",
-        "example": 364899
+        "example": 364390,
+        "formats": [
+          {
+            "size": 300,
+            "cents": 102,
+            "n": 45
+          },
+          {
+            "size": 500,
+            "cents": 110,
+            "n": 36
+          },
+          {
+            "size": 250,
+            "cents": 193,
+            "n": 27
+          },
+          {
+            "size": 200,
+            "cents": 173,
+            "n": 21
+          }
+        ]
       }
     ],
     "cashew-nuts": [
@@ -449,7 +1050,29 @@
         "pack": 150,
         "n": 150,
         "latest": "2026-11-12",
-        "example": 362664
+        "example": 362664,
+        "formats": [
+          {
+            "size": 125,
+            "cents": 179,
+            "n": 33
+          },
+          {
+            "size": 100,
+            "cents": 290,
+            "n": 19
+          },
+          {
+            "size": 150,
+            "cents": 459,
+            "n": 19
+          },
+          {
+            "size": 300,
+            "cents": 608,
+            "n": 13
+          }
+        ]
       }
     ],
     "celery-stalk": [
@@ -480,7 +1103,29 @@
         "pack": 230,
         "n": 123,
         "latest": "2026-11-20",
-        "example": 365816
+        "example": 365816,
+        "formats": [
+          {
+            "size": 230,
+            "cents": 149,
+            "n": 58
+          },
+          {
+            "size": 400,
+            "cents": 204,
+            "n": 16
+          },
+          {
+            "size": 200,
+            "cents": 229,
+            "n": 9
+          },
+          {
+            "size": 1000,
+            "cents": 225,
+            "n": 8
+          }
+        ]
       }
     ],
     "cheddar-cheese": [
@@ -491,7 +1136,29 @@
         "pack": 200,
         "n": 72,
         "latest": "2026-11-13",
-        "example": 362566
+        "example": 362566,
+        "formats": [
+          {
+            "size": 200,
+            "cents": 352,
+            "n": 45
+          },
+          {
+            "size": 150,
+            "cents": 278,
+            "n": 14
+          },
+          {
+            "size": 125,
+            "cents": 246,
+            "n": 5
+          },
+          {
+            "size": 120,
+            "cents": 250,
+            "n": 3
+          }
+        ]
       }
     ],
     "cheese-spreads": [
@@ -502,7 +1169,29 @@
         "pack": 150,
         "n": 331,
         "latest": "2026-11-20",
-        "example": 365615
+        "example": 365614,
+        "formats": [
+          {
+            "size": 150,
+            "cents": 188,
+            "n": 108
+          },
+          {
+            "size": 125,
+            "cents": 185,
+            "n": 34
+          },
+          {
+            "size": 180,
+            "cents": 234,
+            "n": 22
+          },
+          {
+            "size": 300,
+            "cents": 340,
+            "n": 22
+          }
+        ]
       }
     ],
     "cheeses": [
@@ -513,7 +1202,29 @@
         "pack": 200,
         "n": 3156,
         "latest": "2026-11-20",
-        "example": 365591
+        "example": 365591,
+        "formats": [
+          {
+            "size": 200,
+            "cents": 272,
+            "n": 606
+          },
+          {
+            "size": 150,
+            "cents": 253,
+            "n": 369
+          },
+          {
+            "size": 250,
+            "cents": 314,
+            "n": 348
+          },
+          {
+            "size": 180,
+            "cents": 247,
+            "n": 168
+          }
+        ]
       },
       {
         "kind": "pack",
@@ -522,10 +1233,26 @@
         "pack": 330,
         "n": 5,
         "latest": "2026-03-27",
-        "example": 252926
+        "example": 252926,
+        "formats": [
+          {
+            "size": 330,
+            "cents": 300,
+            "n": 5
+          }
+        ]
       }
     ],
     "cherry-tomatoes": [
+      {
+        "kind": "each",
+        "unit": "pièce",
+        "rate": 99.0,
+        "pack": 0,
+        "n": 5,
+        "latest": "2026-08-28",
+        "example": 321258
+      },
       {
         "kind": "loose",
         "unit": "g",
@@ -542,18 +1269,42 @@
         "pack": 250,
         "n": 31,
         "latest": "2026-10-29",
-        "example": 364968
+        "example": 364968,
+        "formats": [
+          {
+            "size": 250,
+            "cents": 180,
+            "n": 18
+          },
+          {
+            "size": 400,
+            "cents": 250,
+            "n": 9
+          }
+        ]
       }
     ],
     "chicken-breasts": [
       {
         "kind": "pack",
         "unit": "g",
-        "rate": 1.493611,
-        "pack": 300,
-        "n": 32,
-        "latest": "2026-11-19",
-        "example": 365138
+        "rate": 1.23,
+        "pack": 450,
+        "n": 17,
+        "latest": "2026-11-11",
+        "example": 361849,
+        "formats": [
+          {
+            "size": 300,
+            "cents": 369,
+            "n": 8
+          },
+          {
+            "size": 1000,
+            "cents": 959,
+            "n": 3
+          }
+        ]
       }
     ],
     "chicken-thighs": [
@@ -564,7 +1315,19 @@
         "pack": 400,
         "n": 15,
         "latest": "2026-11-01",
-        "example": 357601
+        "example": 357601,
+        "formats": [
+          {
+            "size": 400,
+            "cents": 593,
+            "n": 5
+          },
+          {
+            "size": 360,
+            "cents": 499,
+            "n": 3
+          }
+        ]
       }
     ],
     "chickpeas": [
@@ -575,7 +1338,29 @@
         "pack": 400,
         "n": 180,
         "latest": "2026-11-14",
-        "example": 362794
+        "example": 362794,
+        "formats": [
+          {
+            "size": 265,
+            "cents": 118,
+            "n": 27
+          },
+          {
+            "size": 400,
+            "cents": 119,
+            "n": 17
+          },
+          {
+            "size": 500,
+            "cents": 190,
+            "n": 14
+          },
+          {
+            "size": 530,
+            "cents": 129,
+            "n": 14
+          }
+        ]
       }
     ],
     "chili-peppers": [
@@ -586,7 +1371,7 @@
         "pack": 0,
         "n": 4,
         "latest": "2026-07-04",
-        "example": 293495
+        "example": 293492
       },
       {
         "kind": "pack",
@@ -595,7 +1380,29 @@
         "pack": 90,
         "n": 127,
         "latest": "2026-11-18",
-        "example": 364925
+        "example": 364925,
+        "formats": [
+          {
+            "size": 100,
+            "cents": 138,
+            "n": 19
+          },
+          {
+            "size": 40,
+            "cents": 441,
+            "n": 17
+          },
+          {
+            "size": 140,
+            "cents": 101,
+            "n": 11
+          },
+          {
+            "size": 38,
+            "cents": 258,
+            "n": 8
+          }
+        ]
       },
       {
         "kind": "pack",
@@ -604,7 +1411,14 @@
         "pack": 235,
         "n": 4,
         "latest": "2026-08-21",
-        "example": 315167
+        "example": 315167,
+        "formats": [
+          {
+            "size": 235,
+            "cents": 249,
+            "n": 3
+          }
+        ]
       }
     ],
     "chives": [
@@ -615,7 +1429,29 @@
         "pack": 5,
         "n": 39,
         "latest": "2026-11-17",
-        "example": 363907
+        "example": 363907,
+        "formats": [
+          {
+            "size": 3,
+            "cents": 318,
+            "n": 8
+          },
+          {
+            "size": 4,
+            "cents": 200,
+            "n": 8
+          },
+          {
+            "size": 5,
+            "cents": 99,
+            "n": 6
+          },
+          {
+            "size": 7,
+            "cents": 342,
+            "n": 4
+          }
+        ]
       }
     ],
     "chorizos": [
@@ -626,7 +1462,29 @@
         "pack": 225,
         "n": 87,
         "latest": "2026-11-13",
-        "example": 362459
+        "example": 362459,
+        "formats": [
+          {
+            "size": 225,
+            "cents": 189,
+            "n": 52
+          },
+          {
+            "size": 200,
+            "cents": 347,
+            "n": 11
+          },
+          {
+            "size": 100,
+            "cents": 197,
+            "n": 8
+          },
+          {
+            "size": 120,
+            "cents": 221,
+            "n": 6
+          }
+        ]
       }
     ],
     "chutneys": [
@@ -637,7 +1495,29 @@
         "pack": 115,
         "n": 53,
         "latest": "2026-11-18",
-        "example": 364910
+        "example": 364908,
+        "formats": [
+          {
+            "size": 150,
+            "cents": 212,
+            "n": 10
+          },
+          {
+            "size": 100,
+            "cents": 156,
+            "n": 9
+          },
+          {
+            "size": 115,
+            "cents": 153,
+            "n": 6
+          },
+          {
+            "size": 220,
+            "cents": 219,
+            "n": 6
+          }
+        ]
       }
     ],
     "coconut-milks": [
@@ -648,7 +1528,29 @@
         "pack": 500,
         "n": 19,
         "latest": "2026-11-07",
-        "example": 360819
+        "example": 360819,
+        "formats": [
+          {
+            "size": 200,
+            "cents": 82,
+            "n": 6
+          },
+          {
+            "size": 500,
+            "cents": 382,
+            "n": 5
+          },
+          {
+            "size": 750,
+            "cents": 199,
+            "n": 4
+          },
+          {
+            "size": 400,
+            "cents": 250,
+            "n": 3
+          }
+        ]
       }
     ],
     "cod-fillets": [
@@ -659,7 +1561,24 @@
         "pack": 400,
         "n": 41,
         "latest": "2026-11-02",
-        "example": 358454
+        "example": 358381,
+        "formats": [
+          {
+            "size": 400,
+            "cents": 747,
+            "n": 27
+          },
+          {
+            "size": 600,
+            "cents": 1549,
+            "n": 5
+          },
+          {
+            "size": 800,
+            "cents": 1198,
+            "n": 3
+          }
+        ]
       }
     ],
     "cods": [
@@ -670,7 +1589,29 @@
         "pack": 400,
         "n": 98,
         "latest": "2026-11-02",
-        "example": 358454
+        "example": 358322,
+        "formats": [
+          {
+            "size": 400,
+            "cents": 762,
+            "n": 30
+          },
+          {
+            "size": 121,
+            "cents": 303,
+            "n": 28
+          },
+          {
+            "size": 120,
+            "cents": 230,
+            "n": 8
+          },
+          {
+            "size": 540,
+            "cents": 411,
+            "n": 7
+          }
+        ]
       }
     ],
     "cream-cheeses": [
@@ -681,7 +1622,29 @@
         "pack": 240,
         "n": 231,
         "latest": "2026-11-20",
-        "example": 365615
+        "example": 365615,
+        "formats": [
+          {
+            "size": 150,
+            "cents": 184,
+            "n": 50
+          },
+          {
+            "size": 125,
+            "cents": 183,
+            "n": 33
+          },
+          {
+            "size": 250,
+            "cents": 231,
+            "n": 25
+          },
+          {
+            "size": 500,
+            "cents": 271,
+            "n": 22
+          }
+        ]
       },
       {
         "kind": "pack",
@@ -690,7 +1653,14 @@
         "pack": 330,
         "n": 5,
         "latest": "2026-03-27",
-        "example": 252926
+        "example": 252926,
+        "formats": [
+          {
+            "size": 330,
+            "cents": 300,
+            "n": 5
+          }
+        ]
       }
     ],
     "creams": [
@@ -701,7 +1671,29 @@
         "pack": 250,
         "n": 184,
         "latest": "2026-11-20",
-        "example": 365763
+        "example": 365613,
+        "formats": [
+          {
+            "size": 250,
+            "cents": 288,
+            "n": 44
+          },
+          {
+            "size": 450,
+            "cents": 199,
+            "n": 24
+          },
+          {
+            "size": 190,
+            "cents": 104,
+            "n": 20
+          },
+          {
+            "size": 400,
+            "cents": 180,
+            "n": 10
+          }
+        ]
       },
       {
         "kind": "pack",
@@ -710,10 +1702,41 @@
         "pack": 500,
         "n": 404,
         "latest": "2026-11-20",
-        "example": 365727
+        "example": 365612,
+        "formats": [
+          {
+            "size": 500,
+            "cents": 261,
+            "n": 128
+          },
+          {
+            "size": 600,
+            "cents": 290,
+            "n": 91
+          },
+          {
+            "size": 200,
+            "cents": 206,
+            "n": 87
+          },
+          {
+            "size": 1000,
+            "cents": 438,
+            "n": 20
+          }
+        ]
       }
     ],
     "cucumbers": [
+      {
+        "kind": "each",
+        "unit": "pièce",
+        "rate": 179.0,
+        "pack": 0,
+        "n": 25,
+        "latest": "2026-10-16",
+        "example": 348347
+      },
       {
         "kind": "loose",
         "unit": "g",
@@ -730,7 +1753,29 @@
         "pack": 320,
         "n": 55,
         "latest": "2026-11-20",
-        "example": 365602
+        "example": 365602,
+        "formats": [
+          {
+            "size": 185,
+            "cents": 145,
+            "n": 9
+          },
+          {
+            "size": 320,
+            "cents": 245,
+            "n": 8
+          },
+          {
+            "size": 300,
+            "cents": 330,
+            "n": 6
+          },
+          {
+            "size": 360,
+            "cents": 181,
+            "n": 5
+          }
+        ]
       }
     ],
     "cured-hams": [
@@ -741,7 +1786,29 @@
         "pack": 100,
         "n": 185,
         "latest": "2026-11-19",
-        "example": 365135
+        "example": 365135,
+        "formats": [
+          {
+            "size": 100,
+            "cents": 333,
+            "n": 81
+          },
+          {
+            "size": 80,
+            "cents": 350,
+            "n": 15
+          },
+          {
+            "size": 220,
+            "cents": 536,
+            "n": 14
+          },
+          {
+            "size": 150,
+            "cents": 343,
+            "n": 12
+          }
+        ]
       }
     ],
     "curry-pastes": [
@@ -752,7 +1819,29 @@
         "pack": 130,
         "n": 96,
         "latest": "2026-11-20",
-        "example": 365642
+        "example": 365642,
+        "formats": [
+          {
+            "size": 165,
+            "cents": 321,
+            "n": 20
+          },
+          {
+            "size": 100,
+            "cents": 223,
+            "n": 19
+          },
+          {
+            "size": 105,
+            "cents": 470,
+            "n": 13
+          },
+          {
+            "size": 227,
+            "cents": 406,
+            "n": 8
+          }
+        ]
       }
     ],
     "dark-chocolates": [
@@ -763,7 +1852,29 @@
         "pack": 100,
         "n": 944,
         "latest": "2026-11-17",
-        "example": 363705
+        "example": 363296,
+        "formats": [
+          {
+            "size": 100,
+            "cents": 299,
+            "n": 468
+          },
+          {
+            "size": 200,
+            "cents": 288,
+            "n": 194
+          },
+          {
+            "size": 150,
+            "cents": 330,
+            "n": 37
+          },
+          {
+            "size": 170,
+            "cents": 385,
+            "n": 29
+          }
+        ]
       }
     ],
     "dill": [
@@ -774,7 +1885,19 @@
         "pack": 13,
         "n": 19,
         "latest": "2026-11-02",
-        "example": 358255
+        "example": 358255,
+        "formats": [
+          {
+            "size": 13,
+            "cents": 219,
+            "n": 10
+          },
+          {
+            "size": 15,
+            "cents": 177,
+            "n": 3
+          }
+        ]
       }
     ],
     "dried-tomatoes": [
@@ -785,7 +1908,29 @@
         "pack": 190,
         "n": 50,
         "latest": "2026-11-04",
-        "example": 359368
+        "example": 359368,
+        "formats": [
+          {
+            "size": 280,
+            "cents": 326,
+            "n": 14
+          },
+          {
+            "size": 100,
+            "cents": 489,
+            "n": 8
+          },
+          {
+            "size": 190,
+            "cents": 369,
+            "n": 5
+          },
+          {
+            "size": 270,
+            "cents": 375,
+            "n": 5
+          }
+        ]
       }
     ],
     "dry-pastas": [
@@ -796,7 +1941,29 @@
         "pack": 500,
         "n": 1213,
         "latest": "2026-11-20",
-        "example": 365428
+        "example": 365420,
+        "formats": [
+          {
+            "size": 500,
+            "cents": 138,
+            "n": 826
+          },
+          {
+            "size": 1000,
+            "cents": 135,
+            "n": 210
+          },
+          {
+            "size": 250,
+            "cents": 139,
+            "n": 110
+          },
+          {
+            "size": 400,
+            "cents": 230,
+            "n": 52
+          }
+        ]
       }
     ],
     "duck-breasts": [
@@ -807,7 +1974,13 @@
         "pack": 70,
         "n": 6,
         "latest": "2026-11-01",
-        "example": 357602
+        "example": 357602,
+        "formats": [
+          {
+            "size": 70,
+            "cents": 335
+          }
+        ]
       }
     ],
     "edamame": [
@@ -818,10 +1991,25 @@
         "pack": 260,
         "n": 7,
         "latest": "2026-10-04",
-        "example": 340528
+        "example": 340528,
+        "formats": [
+          {
+            "size": 260,
+            "cents": 427
+          }
+        ]
       }
     ],
     "eggs": [
+      {
+        "kind": "each",
+        "unit": "pièce",
+        "rate": 47.0,
+        "pack": 0,
+        "n": 5,
+        "latest": "2026-11-07",
+        "example": 361377
+      },
       {
         "kind": "pack",
         "unit": "g",
@@ -829,7 +2017,29 @@
         "pack": 378,
         "n": 109,
         "latest": "2026-11-13",
-        "example": 362574
+        "example": 362574,
+        "formats": [
+          {
+            "size": 408,
+            "cents": 156,
+            "n": 16
+          },
+          {
+            "size": 360,
+            "cents": 192,
+            "n": 14
+          },
+          {
+            "size": 374,
+            "cents": 209,
+            "n": 14
+          },
+          {
+            "size": 696,
+            "cents": 278,
+            "n": 11
+          }
+        ]
       }
     ],
     "feta": [
@@ -840,7 +2050,24 @@
         "pack": 150,
         "n": 38,
         "latest": "2026-11-19",
-        "example": 364957
+        "example": 364957,
+        "formats": [
+          {
+            "size": 150,
+            "cents": 226,
+            "n": 24
+          },
+          {
+            "size": 200,
+            "cents": 280,
+            "n": 7
+          },
+          {
+            "size": 180,
+            "cents": 283,
+            "n": 3
+          }
+        ]
       }
     ],
     "fresh-pasta": [
@@ -851,7 +2078,29 @@
         "pack": 300,
         "n": 381,
         "latest": "2026-11-20",
-        "example": 365590
+        "example": 365586,
+        "formats": [
+          {
+            "size": 250,
+            "cents": 336,
+            "n": 122
+          },
+          {
+            "size": 300,
+            "cents": 239,
+            "n": 109
+          },
+          {
+            "size": 500,
+            "cents": 333,
+            "n": 24
+          },
+          {
+            "size": 280,
+            "cents": 288,
+            "n": 16
+          }
+        ]
       }
     ],
     "fresh-pasta-stuffed-with-cheese-and-vegetables": [
@@ -862,7 +2111,19 @@
         "pack": 250,
         "n": 38,
         "latest": "2026-11-19",
-        "example": 365096
+        "example": 365096,
+        "formats": [
+          {
+            "size": 250,
+            "cents": 339,
+            "n": 32
+          },
+          {
+            "size": 300,
+            "cents": 253,
+            "n": 3
+          }
+        ]
       }
     ],
     "fried-onions": [
@@ -873,7 +2134,24 @@
         "pack": 100,
         "n": 24,
         "latest": "2026-11-17",
-        "example": 363397
+        "example": 363397,
+        "formats": [
+          {
+            "size": 100,
+            "cents": 167,
+            "n": 11
+          },
+          {
+            "size": 130,
+            "cents": 226,
+            "n": 4
+          },
+          {
+            "size": 80,
+            "cents": 299,
+            "n": 3
+          }
+        ]
       }
     ],
     "garlic": [
@@ -893,7 +2171,29 @@
         "pack": 40,
         "n": 18,
         "latest": "2026-11-02",
-        "example": 358427
+        "example": 358254,
+        "formats": [
+          {
+            "size": 19,
+            "cents": 497,
+            "n": 4
+          },
+          {
+            "size": 40,
+            "cents": 400,
+            "n": 4
+          },
+          {
+            "size": 20,
+            "cents": 189,
+            "n": 3
+          },
+          {
+            "size": 70,
+            "cents": 392,
+            "n": 3
+          }
+        ]
       }
     ],
     "ginger": [
@@ -913,7 +2213,29 @@
         "pack": 70,
         "n": 55,
         "latest": "2026-11-20",
-        "example": 365424
+        "example": 365424,
+        "formats": [
+          {
+            "size": 200,
+            "cents": 446,
+            "n": 16
+          },
+          {
+            "size": 30,
+            "cents": 277,
+            "n": 6
+          },
+          {
+            "size": 100,
+            "cents": 180,
+            "n": 6
+          },
+          {
+            "size": 29,
+            "cents": 204,
+            "n": 5
+          }
+        ]
       }
     ],
     "gnocchi": [
@@ -924,7 +2246,29 @@
         "pack": 380,
         "n": 178,
         "latest": "2026-11-20",
-        "example": 365590
+        "example": 365586,
+        "formats": [
+          {
+            "size": 300,
+            "cents": 228,
+            "n": 56
+          },
+          {
+            "size": 500,
+            "cents": 283,
+            "n": 29
+          },
+          {
+            "size": 280,
+            "cents": 270,
+            "n": 19
+          },
+          {
+            "size": 380,
+            "cents": 109,
+            "n": 12
+          }
+        ]
       }
     ],
     "goat-cheeses": [
@@ -935,7 +2279,29 @@
         "pack": 180,
         "n": 263,
         "latest": "2026-11-20",
-        "example": 365772
+        "example": 365619,
+        "formats": [
+          {
+            "size": 180,
+            "cents": 210,
+            "n": 63
+          },
+          {
+            "size": 200,
+            "cents": 269,
+            "n": 43
+          },
+          {
+            "size": 150,
+            "cents": 298,
+            "n": 33
+          },
+          {
+            "size": 120,
+            "cents": 295,
+            "n": 29
+          }
+        ]
       }
     ],
     "gouda": [
@@ -946,7 +2312,24 @@
         "pack": 200,
         "n": 31,
         "latest": "2026-08-23",
-        "example": 316239
+        "example": 316239,
+        "formats": [
+          {
+            "size": 200,
+            "cents": 209,
+            "n": 19
+          },
+          {
+            "size": 150,
+            "cents": 235,
+            "n": 5
+          },
+          {
+            "size": 300,
+            "cents": 266,
+            "n": 4
+          }
+        ]
       }
     ],
     "grana-padano": [
@@ -957,7 +2340,24 @@
         "pack": 100,
         "n": 20,
         "latest": "2026-11-13",
-        "example": 362452
+        "example": 362452,
+        "formats": [
+          {
+            "size": 100,
+            "cents": 208,
+            "n": 10
+          },
+          {
+            "size": 60,
+            "cents": 163,
+            "n": 4
+          },
+          {
+            "size": 200,
+            "cents": 465,
+            "n": 4
+          }
+        ]
       }
     ],
     "grated-coconut": [
@@ -968,7 +2368,19 @@
         "pack": 125,
         "n": 16,
         "latest": "2026-11-17",
-        "example": 364482
+        "example": 364482,
+        "formats": [
+          {
+            "size": 125,
+            "cents": 176,
+            "n": 8
+          },
+          {
+            "size": 115,
+            "cents": 210,
+            "n": 5
+          }
+        ]
       }
     ],
     "ground-beef-steaks": [
@@ -979,7 +2391,29 @@
         "pack": 400,
         "n": 233,
         "latest": "2026-11-14",
-        "example": 362875
+        "example": 362875,
+        "formats": [
+          {
+            "size": 1000,
+            "cents": 1491,
+            "n": 52
+          },
+          {
+            "size": 400,
+            "cents": 789,
+            "n": 47
+          },
+          {
+            "size": 250,
+            "cents": 517,
+            "n": 36
+          },
+          {
+            "size": 800,
+            "cents": 1318,
+            "n": 23
+          }
+        ]
       }
     ],
     "ground-peppers": [
@@ -990,7 +2424,29 @@
         "pack": 42,
         "n": 57,
         "latest": "2026-11-20",
-        "example": 365802
+        "example": 365753,
+        "formats": [
+          {
+            "size": 90,
+            "cents": 492,
+            "n": 8
+          },
+          {
+            "size": 36,
+            "cents": 169,
+            "n": 7
+          },
+          {
+            "size": 42,
+            "cents": 172,
+            "n": 6
+          },
+          {
+            "size": 40,
+            "cents": 274,
+            "n": 5
+          }
+        ]
       }
     ],
     "guacamoles": [
@@ -1001,7 +2457,29 @@
         "pack": 265,
         "n": 93,
         "latest": "2026-11-17",
-        "example": 364492
+        "example": 364492,
+        "formats": [
+          {
+            "size": 320,
+            "cents": 279,
+            "n": 17
+          },
+          {
+            "size": 175,
+            "cents": 375,
+            "n": 16
+          },
+          {
+            "size": 270,
+            "cents": 253,
+            "n": 15
+          },
+          {
+            "size": 300,
+            "cents": 184,
+            "n": 13
+          }
+        ]
       }
     ],
     "hazelnuts": [
@@ -1021,7 +2499,29 @@
         "pack": 125,
         "n": 33,
         "latest": "2026-10-28",
-        "example": 356029
+        "example": 356029,
+        "formats": [
+          {
+            "size": 125,
+            "cents": 345,
+            "n": 13
+          },
+          {
+            "size": 100,
+            "cents": 480,
+            "n": 6
+          },
+          {
+            "size": 200,
+            "cents": 644,
+            "n": 6
+          },
+          {
+            "size": 90,
+            "cents": 302,
+            "n": 3
+          }
+        ]
       },
       {
         "kind": "pack",
@@ -1030,7 +2530,14 @@
         "pack": 1000,
         "n": 4,
         "latest": "2026-09-04",
-        "example": 325390
+        "example": 325390,
+        "formats": [
+          {
+            "size": 1000,
+            "cents": 200,
+            "n": 4
+          }
+        ]
       }
     ],
     "herbes-de-provence": [
@@ -1041,7 +2548,29 @@
         "pack": 40,
         "n": 60,
         "latest": "2026-10-11",
-        "example": 345756
+        "example": 345756,
+        "formats": [
+          {
+            "size": 40,
+            "cents": 91,
+            "n": 12
+          },
+          {
+            "size": 18,
+            "cents": 116,
+            "n": 10
+          },
+          {
+            "size": 120,
+            "cents": 249,
+            "n": 10
+          },
+          {
+            "size": 25,
+            "cents": 390,
+            "n": 7
+          }
+        ]
       },
       {
         "kind": "pack",
@@ -1050,7 +2579,14 @@
         "pack": 100,
         "n": 3,
         "latest": "2026-08-27",
-        "example": 322105
+        "example": 322105,
+        "formats": [
+          {
+            "size": 100,
+            "cents": 310,
+            "n": 3
+          }
+        ]
       }
     ],
     "honeys": [
@@ -1061,7 +2597,29 @@
         "pack": 375,
         "n": 252,
         "latest": "2026-11-20",
-        "example": 365750
+        "example": 365552,
+        "formats": [
+          {
+            "size": 500,
+            "cents": 568,
+            "n": 87
+          },
+          {
+            "size": 375,
+            "cents": 697,
+            "n": 69
+          },
+          {
+            "size": 250,
+            "cents": 455,
+            "n": 56
+          },
+          {
+            "size": 350,
+            "cents": 725,
+            "n": 15
+          }
+        ]
       }
     ],
     "hot-sauces": [
@@ -1072,7 +2630,29 @@
         "pack": 200,
         "n": 73,
         "latest": "2026-11-18",
-        "example": 364918
+        "example": 364918,
+        "formats": [
+          {
+            "size": 100,
+            "cents": 399,
+            "n": 22
+          },
+          {
+            "size": 335,
+            "cents": 316,
+            "n": 9
+          },
+          {
+            "size": 400,
+            "cents": 314,
+            "n": 7
+          },
+          {
+            "size": 70,
+            "cents": 69,
+            "n": 3
+          }
+        ]
       },
       {
         "kind": "pack",
@@ -1081,7 +2661,29 @@
         "pack": 148,
         "n": 176,
         "latest": "2026-11-18",
-        "example": 364928
+        "example": 364928,
+        "formats": [
+          {
+            "size": 60,
+            "cents": 299,
+            "n": 45
+          },
+          {
+            "size": 150,
+            "cents": 308,
+            "n": 20
+          },
+          {
+            "size": 148,
+            "cents": 279,
+            "n": 19
+          },
+          {
+            "size": 215,
+            "cents": 369,
+            "n": 15
+          }
+        ]
       }
     ],
     "ketchup": [
@@ -1092,7 +2694,29 @@
         "pack": 390,
         "n": 221,
         "latest": "2026-11-20",
-        "example": 365818
+        "example": 365818,
+        "formats": [
+          {
+            "size": 560,
+            "cents": 140,
+            "n": 33
+          },
+          {
+            "size": 280,
+            "cents": 135,
+            "n": 23
+          },
+          {
+            "size": 340,
+            "cents": 125,
+            "n": 22
+          },
+          {
+            "size": 250,
+            "cents": 147,
+            "n": 16
+          }
+        ]
       },
       {
         "kind": "pack",
@@ -1101,10 +2725,36 @@
         "pack": 400,
         "n": 20,
         "latest": "2026-10-12",
-        "example": 345081
+        "example": 345081,
+        "formats": [
+          {
+            "size": 400,
+            "cents": 224,
+            "n": 9
+          },
+          {
+            "size": 500,
+            "cents": 268,
+            "n": 6
+          },
+          {
+            "size": 215,
+            "cents": 324,
+            "n": 3
+          }
+        ]
       }
     ],
     "kiwis": [
+      {
+        "kind": "each",
+        "unit": "pièce",
+        "rate": 99.0,
+        "pack": 0,
+        "n": 21,
+        "latest": "2026-09-05",
+        "example": 331771
+      },
       {
         "kind": "loose",
         "unit": "g",
@@ -1123,7 +2773,29 @@
         "pack": 180,
         "n": 141,
         "latest": "2026-11-13",
-        "example": 362546
+        "example": 362546,
+        "formats": [
+          {
+            "size": 200,
+            "cents": 178,
+            "n": 57
+          },
+          {
+            "size": 150,
+            "cents": 202,
+            "n": 56
+          },
+          {
+            "size": 180,
+            "cents": 118,
+            "n": 13
+          },
+          {
+            "size": 140,
+            "cents": 109,
+            "n": 4
+          }
+        ]
       }
     ],
     "leeks": [
@@ -1143,10 +2815,41 @@
         "pack": 900,
         "n": 21,
         "latest": "2026-11-14",
-        "example": 363078
+        "example": 363078,
+        "formats": [
+          {
+            "size": 1000,
+            "cents": 147,
+            "n": 7
+          },
+          {
+            "size": 350,
+            "cents": 350,
+            "n": 5
+          },
+          {
+            "size": 900,
+            "cents": 1365,
+            "n": 4
+          },
+          {
+            "size": 450,
+            "cents": 403,
+            "n": 3
+          }
+        ]
       }
     ],
     "lemons": [
+      {
+        "kind": "each",
+        "unit": "pièce",
+        "rate": 79.0,
+        "pack": 0,
+        "n": 13,
+        "latest": "2026-09-04",
+        "example": 325571
+      },
       {
         "kind": "loose",
         "unit": "g",
@@ -1163,7 +2866,14 @@
         "pack": 200,
         "n": 6,
         "latest": "2026-09-23",
-        "example": 334397
+        "example": 334397,
+        "formats": [
+          {
+            "size": 200,
+            "cents": 575,
+            "n": 5
+          }
+        ]
       }
     ],
     "lentils": [
@@ -1174,10 +2884,41 @@
         "pack": 410,
         "n": 439,
         "latest": "2026-11-20",
-        "example": 365646
+        "example": 365646,
+        "formats": [
+          {
+            "size": 500,
+            "cents": 199,
+            "n": 115
+          },
+          {
+            "size": 250,
+            "cents": 255,
+            "n": 57
+          },
+          {
+            "size": 265,
+            "cents": 170,
+            "n": 44
+          },
+          {
+            "size": 400,
+            "cents": 168,
+            "n": 38
+          }
+        ]
       }
     ],
     "lettuces": [
+      {
+        "kind": "each",
+        "unit": "pièce",
+        "rate": 139.0,
+        "pack": 0,
+        "n": 41,
+        "latest": "2026-09-30",
+        "example": 348931
+      },
       {
         "kind": "loose",
         "unit": "g",
@@ -1194,10 +2935,36 @@
         "pack": 200,
         "n": 30,
         "latest": "2026-10-29",
-        "example": 362280
+        "example": 362280,
+        "formats": [
+          {
+            "size": 200,
+            "cents": 194,
+            "n": 9
+          },
+          {
+            "size": 300,
+            "cents": 184,
+            "n": 8
+          },
+          {
+            "size": 175,
+            "cents": 155,
+            "n": 3
+          }
+        ]
       }
     ],
     "limes": [
+      {
+        "kind": "each",
+        "unit": "pièce",
+        "rate": 62.0,
+        "pack": 0,
+        "n": 8,
+        "latest": "2026-06-26",
+        "example": 288840
+      },
       {
         "kind": "loose",
         "unit": "g",
@@ -1208,7 +2975,49 @@
         "example": 323887
       }
     ],
+    "long-grain-rices": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.398,
+        "pack": 500,
+        "n": 339,
+        "latest": "2026-11-19",
+        "example": 365045,
+        "formats": [
+          {
+            "size": 1000,
+            "cents": 199,
+            "n": 129
+          },
+          {
+            "size": 500,
+            "cents": 249,
+            "n": 127
+          },
+          {
+            "size": 220,
+            "cents": 172,
+            "n": 38
+          },
+          {
+            "size": 450,
+            "cents": 199,
+            "n": 11
+          }
+        ]
+      }
+    ],
     "mangoes": [
+      {
+        "kind": "each",
+        "unit": "pièce",
+        "rate": 229.0,
+        "pack": 0,
+        "n": 17,
+        "latest": "2026-10-06",
+        "example": 342137
+      },
       {
         "kind": "pack",
         "unit": "g",
@@ -1216,7 +3025,13 @@
         "pack": 380,
         "n": 3,
         "latest": "2026-03-19",
-        "example": 248321
+        "example": 248321,
+        "formats": [
+          {
+            "size": 380,
+            "cents": 289
+          }
+        ]
       }
     ],
     "mascarpone": [
@@ -1227,7 +3042,19 @@
         "pack": 250,
         "n": 34,
         "latest": "2026-09-12",
-        "example": 330403
+        "example": 330403,
+        "formats": [
+          {
+            "size": 250,
+            "cents": 255,
+            "n": 21
+          },
+          {
+            "size": 500,
+            "cents": 494,
+            "n": 10
+          }
+        ]
       },
       {
         "kind": "pack",
@@ -1236,7 +3063,14 @@
         "pack": 330,
         "n": 5,
         "latest": "2026-03-27",
-        "example": 252926
+        "example": 252926,
+        "formats": [
+          {
+            "size": 330,
+            "cents": 300,
+            "n": 5
+          }
+        ]
       }
     ],
     "mayonnaises": [
@@ -1247,7 +3081,29 @@
         "pack": 255,
         "n": 561,
         "latest": "2026-11-20",
-        "example": 365819
+        "example": 365819,
+        "formats": [
+          {
+            "size": 235,
+            "cents": 169,
+            "n": 76
+          },
+          {
+            "size": 255,
+            "cents": 214,
+            "n": 53
+          },
+          {
+            "size": 470,
+            "cents": 174,
+            "n": 34
+          },
+          {
+            "size": 175,
+            "cents": 125,
+            "n": 32
+          }
+        ]
       },
       {
         "kind": "pack",
@@ -1256,7 +3112,24 @@
         "pack": 450,
         "n": 19,
         "latest": "2026-08-26",
-        "example": 320046
+        "example": 320046,
+        "formats": [
+          {
+            "size": 235,
+            "cents": 219,
+            "n": 5
+          },
+          {
+            "size": 450,
+            "cents": 219,
+            "n": 5
+          },
+          {
+            "size": 500,
+            "cents": 291,
+            "n": 5
+          }
+        ]
       }
     ],
     "meat-analogues": [
@@ -1267,10 +3140,41 @@
         "pack": 180,
         "n": 924,
         "latest": "2026-11-20",
-        "example": 365645
+        "example": 365645,
+        "formats": [
+          {
+            "size": 200,
+            "cents": 369,
+            "n": 254
+          },
+          {
+            "size": 180,
+            "cents": 381,
+            "n": 138
+          },
+          {
+            "size": 120,
+            "cents": 279,
+            "n": 99
+          },
+          {
+            "size": 160,
+            "cents": 318,
+            "n": 94
+          }
+        ]
       }
     ],
     "melons": [
+      {
+        "kind": "each",
+        "unit": "pièce",
+        "rate": 320.5,
+        "pack": 0,
+        "n": 8,
+        "latest": "2026-09-15",
+        "example": 334058
+      },
       {
         "kind": "loose",
         "unit": "g",
@@ -1289,7 +3193,29 @@
         "pack": 397,
         "n": 143,
         "latest": "2026-11-10",
-        "example": 361602
+        "example": 361602,
+        "formats": [
+          {
+            "size": 300,
+            "cents": 308,
+            "n": 37
+          },
+          {
+            "size": 397,
+            "cents": 211,
+            "n": 18
+          },
+          {
+            "size": 1033,
+            "cents": 267,
+            "n": 15
+          },
+          {
+            "size": 165,
+            "cents": 196,
+            "n": 10
+          }
+        ]
       },
       {
         "kind": "pack",
@@ -1298,7 +3224,29 @@
         "pack": 1000,
         "n": 1033,
         "latest": "2026-11-11",
-        "example": 361835
+        "example": 361835,
+        "formats": [
+          {
+            "size": 1000,
+            "cents": 163,
+            "n": 415
+          },
+          {
+            "size": 6000,
+            "cents": 779,
+            "n": 271
+          },
+          {
+            "size": 500,
+            "cents": 120,
+            "n": 116
+          },
+          {
+            "size": 3000,
+            "cents": 702,
+            "n": 100
+          }
+        ]
       }
     ],
     "mint": [
@@ -1309,7 +3257,14 @@
         "pack": 13,
         "n": 13,
         "latest": "2026-11-20",
-        "example": 365572
+        "example": 365572,
+        "formats": [
+          {
+            "size": 13,
+            "cents": 322,
+            "n": 3
+          }
+        ]
       }
     ],
     "misos": [
@@ -1320,7 +3275,19 @@
         "pack": 300,
         "n": 14,
         "latest": "2026-10-03",
-        "example": 339372
+        "example": 339372,
+        "formats": [
+          {
+            "size": 300,
+            "cents": 748,
+            "n": 8
+          },
+          {
+            "size": 150,
+            "cents": 440,
+            "n": 3
+          }
+        ]
       }
     ],
     "mozzarella": [
@@ -1331,7 +3298,29 @@
         "pack": 150,
         "n": 152,
         "latest": "2026-11-20",
-        "example": 365834
+        "example": 365834,
+        "formats": [
+          {
+            "size": 125,
+            "cents": 104,
+            "n": 63
+          },
+          {
+            "size": 250,
+            "cents": 233,
+            "n": 22
+          },
+          {
+            "size": 150,
+            "cents": 196,
+            "n": 15
+          },
+          {
+            "size": 200,
+            "cents": 156,
+            "n": 10
+          }
+        ]
       }
     ],
     "mushrooms": [
@@ -1351,7 +3340,29 @@
         "pack": 250,
         "n": 252,
         "latest": "2026-11-20",
-        "example": 365816
+        "example": 365816,
+        "formats": [
+          {
+            "size": 230,
+            "cents": 149,
+            "n": 88
+          },
+          {
+            "size": 400,
+            "cents": 166,
+            "n": 32
+          },
+          {
+            "size": 460,
+            "cents": 143,
+            "n": 21
+          },
+          {
+            "size": 345,
+            "cents": 324,
+            "n": 18
+          }
+        ]
       }
     ],
     "mustards": [
@@ -1362,7 +3373,29 @@
         "pack": 260,
         "n": 475,
         "latest": "2026-11-20",
-        "example": 365603
+        "example": 365603,
+        "formats": [
+          {
+            "size": 200,
+            "cents": 219,
+            "n": 56
+          },
+          {
+            "size": 350,
+            "cents": 231,
+            "n": 39
+          },
+          {
+            "size": 265,
+            "cents": 175,
+            "n": 31
+          },
+          {
+            "size": 210,
+            "cents": 273,
+            "n": 30
+          }
+        ]
       },
       {
         "kind": "pack",
@@ -1371,7 +3404,14 @@
         "pack": 380,
         "n": 11,
         "latest": "2026-10-12",
-        "example": 345187
+        "example": 345187,
+        "formats": [
+          {
+            "size": 380,
+            "cents": 373,
+            "n": 7
+          }
+        ]
       }
     ],
     "nectarines": [
@@ -1393,7 +3433,29 @@
         "pack": 140,
         "n": 472,
         "latest": "2026-11-20",
-        "example": 365709
+        "example": 365641,
+        "formats": [
+          {
+            "size": 500,
+            "cents": 150,
+            "n": 50
+          },
+          {
+            "size": 250,
+            "cents": 187,
+            "n": 46
+          },
+          {
+            "size": 90,
+            "cents": 193,
+            "n": 23
+          },
+          {
+            "size": 100,
+            "cents": 175,
+            "n": 21
+          }
+        ]
       }
     ],
     "oat-based-creams-for-cooking": [
@@ -1404,7 +3466,14 @@
         "pack": 200,
         "n": 11,
         "latest": "2026-10-26",
-        "example": 354370
+        "example": 354370,
+        "formats": [
+          {
+            "size": 200,
+            "cents": 159,
+            "n": 11
+          }
+        ]
       }
     ],
     "olive-oils": [
@@ -1415,7 +3484,29 @@
         "pack": 750,
         "n": 333,
         "latest": "2026-11-20",
-        "example": 365576
+        "example": 365575,
+        "formats": [
+          {
+            "size": 750,
+            "cents": 1014,
+            "n": 142
+          },
+          {
+            "size": 1000,
+            "cents": 970,
+            "n": 68
+          },
+          {
+            "size": 500,
+            "cents": 750,
+            "n": 64
+          },
+          {
+            "size": 250,
+            "cents": 444,
+            "n": 35
+          }
+        ]
       }
     ],
     "olives": [
@@ -1426,7 +3517,29 @@
         "pack": 200,
         "n": 401,
         "latest": "2026-11-20",
-        "example": 365760
+        "example": 365759,
+        "formats": [
+          {
+            "size": 150,
+            "cents": 238,
+            "n": 60
+          },
+          {
+            "size": 200,
+            "cents": 292,
+            "n": 44
+          },
+          {
+            "size": 120,
+            "cents": 239,
+            "n": 27
+          },
+          {
+            "size": 160,
+            "cents": 213,
+            "n": 27
+          }
+        ]
       }
     ],
     "onions": [
@@ -1446,7 +3559,29 @@
         "pack": 40,
         "n": 60,
         "latest": "2026-11-20",
-        "example": 365571
+        "example": 365571,
+        "formats": [
+          {
+            "size": 40,
+            "cents": 194,
+            "n": 10
+          },
+          {
+            "size": 1000,
+            "cents": 274,
+            "n": 8
+          },
+          {
+            "size": 25,
+            "cents": 378,
+            "n": 4
+          },
+          {
+            "size": 30,
+            "cents": 120,
+            "n": 4
+          }
+        ]
       }
     ],
     "paprika": [
@@ -1457,7 +3592,24 @@
         "pack": 40,
         "n": 30,
         "latest": "2026-11-02",
-        "example": 358472
+        "example": 358472,
+        "formats": [
+          {
+            "size": 40,
+            "cents": 256,
+            "n": 20
+          },
+          {
+            "size": 75,
+            "cents": 416,
+            "n": 4
+          },
+          {
+            "size": 48,
+            "cents": 389,
+            "n": 3
+          }
+        ]
       }
     ],
     "parmigiano-reggiano": [
@@ -1468,10 +3620,41 @@
         "pack": 80,
         "n": 45,
         "latest": "2026-10-31",
-        "example": 356890
+        "example": 356890,
+        "formats": [
+          {
+            "size": 60,
+            "cents": 190,
+            "n": 16
+          },
+          {
+            "size": 100,
+            "cents": 309,
+            "n": 10
+          },
+          {
+            "size": 200,
+            "cents": 557,
+            "n": 10
+          },
+          {
+            "size": 80,
+            "cents": 138,
+            "n": 4
+          }
+        ]
       }
     ],
     "parsley": [
+      {
+        "kind": "each",
+        "unit": "pièce",
+        "rate": 195.0,
+        "pack": 0,
+        "n": 3,
+        "latest": "2026-07-27",
+        "example": 298149
+      },
       {
         "kind": "pack",
         "unit": "g",
@@ -1479,7 +3662,29 @@
         "pack": 10,
         "n": 38,
         "latest": "2026-11-05",
-        "example": 359864
+        "example": 359864,
+        "formats": [
+          {
+            "size": 7,
+            "cents": 111,
+            "n": 5
+          },
+          {
+            "size": 50,
+            "cents": 112,
+            "n": 5
+          },
+          {
+            "size": 9,
+            "cents": 179,
+            "n": 4
+          },
+          {
+            "size": 5,
+            "cents": 39,
+            "n": 3
+          }
+        ]
       }
     ],
     "pastas": [
@@ -1490,7 +3695,29 @@
         "pack": 500,
         "n": 2473,
         "latest": "2026-11-20",
-        "example": 365639
+        "example": 365420,
+        "formats": [
+          {
+            "size": 500,
+            "cents": 145,
+            "n": 961
+          },
+          {
+            "size": 250,
+            "cents": 264,
+            "n": 348
+          },
+          {
+            "size": 1000,
+            "cents": 135,
+            "n": 236
+          },
+          {
+            "size": 300,
+            "cents": 249,
+            "n": 153
+          }
+        ]
       }
     ],
     "peanut-butters": [
@@ -1501,7 +3728,29 @@
         "pack": 350,
         "n": 394,
         "latest": "2026-11-17",
-        "example": 363356
+        "example": 363356,
+        "formats": [
+          {
+            "size": 454,
+            "cents": 390,
+            "n": 115
+          },
+          {
+            "size": 350,
+            "cents": 399,
+            "n": 74
+          },
+          {
+            "size": 340,
+            "cents": 488,
+            "n": 50
+          },
+          {
+            "size": 430,
+            "cents": 397,
+            "n": 26
+          }
+        ]
       }
     ],
     "peanuts": [
@@ -1512,7 +3761,29 @@
         "pack": 250,
         "n": 272,
         "latest": "2026-11-12",
-        "example": 362667
+        "example": 362658,
+        "formats": [
+          {
+            "size": 150,
+            "cents": 89,
+            "n": 41
+          },
+          {
+            "size": 250,
+            "cents": 70,
+            "n": 40
+          },
+          {
+            "size": 500,
+            "cents": 179,
+            "n": 24
+          },
+          {
+            "size": 450,
+            "cents": 364,
+            "n": 22
+          }
+        ]
       }
     ],
     "peas": [
@@ -1523,7 +3794,29 @@
         "pack": 500,
         "n": 60,
         "latest": "2026-10-10",
-        "example": 346213
+        "example": 346213,
+        "formats": [
+          {
+            "size": 560,
+            "cents": 158,
+            "n": 16
+          },
+          {
+            "size": 280,
+            "cents": 131,
+            "n": 7
+          },
+          {
+            "size": 530,
+            "cents": 173,
+            "n": 6
+          },
+          {
+            "size": 500,
+            "cents": 117,
+            "n": 5
+          }
+        ]
       }
     ],
     "peppers": [
@@ -1543,7 +3836,29 @@
         "pack": 40,
         "n": 188,
         "latest": "2026-11-20",
-        "example": 365753
+        "example": 365573,
+        "formats": [
+          {
+            "size": 38,
+            "cents": 281,
+            "n": 26
+          },
+          {
+            "size": 40,
+            "cents": 388,
+            "n": 16
+          },
+          {
+            "size": 45,
+            "cents": 299,
+            "n": 13
+          },
+          {
+            "size": 35,
+            "cents": 320,
+            "n": 12
+          }
+        ]
       },
       {
         "kind": "pack",
@@ -1552,7 +3867,14 @@
         "pack": 100,
         "n": 3,
         "latest": "2026-04-23",
-        "example": 268478
+        "example": 268478,
+        "formats": [
+          {
+            "size": 100,
+            "cents": 499,
+            "n": 3
+          }
+        ]
       }
     ],
     "pestos": [
@@ -1563,7 +3885,29 @@
         "pack": 190,
         "n": 373,
         "latest": "2026-11-20",
-        "example": 365432
+        "example": 365432,
+        "formats": [
+          {
+            "size": 190,
+            "cents": 252,
+            "n": 204
+          },
+          {
+            "size": 200,
+            "cents": 229,
+            "n": 63
+          },
+          {
+            "size": 180,
+            "cents": 326,
+            "n": 36
+          },
+          {
+            "size": 185,
+            "cents": 248,
+            "n": 23
+          }
+        ]
       }
     ],
     "pine-nuts": [
@@ -1574,7 +3918,14 @@
         "pack": 50,
         "n": 11,
         "latest": "2026-11-17",
-        "example": 363501
+        "example": 363501,
+        "formats": [
+          {
+            "size": 50,
+            "cents": 474,
+            "n": 5
+          }
+        ]
       }
     ],
     "pistachios": [
@@ -1585,7 +3936,29 @@
         "pack": 175,
         "n": 105,
         "latest": "2026-11-12",
-        "example": 362663
+        "example": 362663,
+        "formats": [
+          {
+            "size": 300,
+            "cents": 419,
+            "n": 16
+          },
+          {
+            "size": 100,
+            "cents": 274,
+            "n": 14
+          },
+          {
+            "size": 125,
+            "cents": 187,
+            "n": 14
+          },
+          {
+            "size": 150,
+            "cents": 289,
+            "n": 11
+          }
+        ]
       }
     ],
     "plain-tofu": [
@@ -1596,7 +3969,29 @@
         "pack": 250,
         "n": 49,
         "latest": "2026-11-17",
-        "example": 363836
+        "example": 363836,
+        "formats": [
+          {
+            "size": 250,
+            "cents": 264,
+            "n": 23
+          },
+          {
+            "size": 400,
+            "cents": 323,
+            "n": 9
+          },
+          {
+            "size": 500,
+            "cents": 399,
+            "n": 9
+          },
+          {
+            "size": 200,
+            "cents": 290,
+            "n": 4
+          }
+        ]
       }
     ],
     "plain-yogurts": [
@@ -1607,7 +4002,29 @@
         "pack": 500,
         "n": 272,
         "latest": "2026-11-17",
-        "example": 364068
+        "example": 364039,
+        "formats": [
+          {
+            "size": 500,
+            "cents": 131,
+            "n": 119
+          },
+          {
+            "size": 1000,
+            "cents": 278,
+            "n": 38
+          },
+          {
+            "size": 1500,
+            "cents": 246,
+            "n": 21
+          },
+          {
+            "size": 600,
+            "cents": 193,
+            "n": 16
+          }
+        ]
       }
     ],
     "pork": [
@@ -1618,7 +4035,29 @@
         "pack": 180,
         "n": 491,
         "latest": "2026-11-17",
-        "example": 363672
+        "example": 363279,
+        "formats": [
+          {
+            "size": 200,
+            "cents": 131,
+            "n": 83
+          },
+          {
+            "size": 180,
+            "cents": 186,
+            "n": 64
+          },
+          {
+            "size": 100,
+            "cents": 254,
+            "n": 51
+          },
+          {
+            "size": 150,
+            "cents": 202,
+            "n": 42
+          }
+        ]
       }
     ],
     "pork-loin": [
@@ -1629,7 +4068,13 @@
         "pack": 80,
         "n": 6,
         "latest": "2026-08-24",
-        "example": 317616
+        "example": 317616,
+        "formats": [
+          {
+            "size": 80,
+            "cents": 268
+          }
+        ]
       }
     ],
     "pork-sausages": [
@@ -1640,7 +4085,29 @@
         "pack": 210,
         "n": 109,
         "latest": "2026-11-17",
-        "example": 363914
+        "example": 363914,
+        "formats": [
+          {
+            "size": 210,
+            "cents": 238,
+            "n": 33
+          },
+          {
+            "size": 140,
+            "cents": 195,
+            "n": 29
+          },
+          {
+            "size": 350,
+            "cents": 268,
+            "n": 16
+          },
+          {
+            "size": 280,
+            "cents": 299,
+            "n": 13
+          }
+        ]
       }
     ],
     "potatoes": [
@@ -1660,7 +4127,29 @@
         "pack": 600,
         "n": 192,
         "latest": "2026-11-07",
-        "example": 360818
+        "example": 360818,
+        "formats": [
+          {
+            "size": 450,
+            "cents": 254,
+            "n": 35
+          },
+          {
+            "size": 600,
+            "cents": 299,
+            "n": 35
+          },
+          {
+            "size": 1000,
+            "cents": 185,
+            "n": 30
+          },
+          {
+            "size": 500,
+            "cents": 248,
+            "n": 20
+          }
+        ]
       }
     ],
     "prawns": [
@@ -1671,7 +4160,29 @@
         "pack": 300,
         "n": 39,
         "latest": "2026-11-19",
-        "example": 365247
+        "example": 365243,
+        "formats": [
+          {
+            "size": 400,
+            "cents": 1086,
+            "n": 9
+          },
+          {
+            "size": 200,
+            "cents": 420,
+            "n": 7
+          },
+          {
+            "size": 310,
+            "cents": 486,
+            "n": 4
+          },
+          {
+            "size": 100,
+            "cents": 399,
+            "n": 3
+          }
+        ]
       }
     ],
     "precooked-rices": [
@@ -1682,7 +4193,19 @@
         "pack": 220,
         "n": 18,
         "latest": "2026-11-05",
-        "example": 359785
+        "example": 359785,
+        "formats": [
+          {
+            "size": 220,
+            "cents": 142,
+            "n": 11
+          },
+          {
+            "size": 300,
+            "cents": 285,
+            "n": 3
+          }
+        ]
       }
     ],
     "pumpkin-seeds": [
@@ -1702,7 +4225,14 @@
         "pack": 250,
         "n": 14,
         "latest": "2026-11-14",
-        "example": 362800
+        "example": 362800,
+        "formats": [
+          {
+            "size": 250,
+            "cents": 662,
+            "n": 6
+          }
+        ]
       }
     ],
     "quinoa": [
@@ -1713,10 +4243,41 @@
         "pack": 400,
         "n": 79,
         "latest": "2026-11-17",
-        "example": 363891
+        "example": 363889,
+        "formats": [
+          {
+            "size": 400,
+            "cents": 299,
+            "n": 29
+          },
+          {
+            "size": 220,
+            "cents": 332,
+            "n": 24
+          },
+          {
+            "size": 500,
+            "cents": 390,
+            "n": 10
+          },
+          {
+            "size": 250,
+            "cents": 237,
+            "n": 6
+          }
+        ]
       }
     ],
     "radishes": [
+      {
+        "kind": "each",
+        "unit": "pièce",
+        "rate": 129.0,
+        "pack": 0,
+        "n": 6,
+        "latest": "2026-10-24",
+        "example": 354272
+      },
       {
         "kind": "pack",
         "unit": "g",
@@ -1724,7 +4285,19 @@
         "pack": 250,
         "n": 9,
         "latest": "2026-10-19",
-        "example": 350763
+        "example": 350763,
+        "formats": [
+          {
+            "size": 200,
+            "cents": 314,
+            "n": 3
+          },
+          {
+            "size": 250,
+            "cents": 229,
+            "n": 3
+          }
+        ]
       }
     ],
     "raisins": [
@@ -1735,7 +4308,29 @@
         "pack": 250,
         "n": 41,
         "latest": "2026-10-26",
-        "example": 354335
+        "example": 354335,
+        "formats": [
+          {
+            "size": 500,
+            "cents": 399,
+            "n": 14
+          },
+          {
+            "size": 125,
+            "cents": 184,
+            "n": 10
+          },
+          {
+            "size": 250,
+            "cents": 219,
+            "n": 8
+          },
+          {
+            "size": 200,
+            "cents": 289,
+            "n": 7
+          }
+        ]
       }
     ],
     "red-bell-peppers": [
@@ -1755,7 +4350,14 @@
         "pack": 100,
         "n": 4,
         "latest": "2026-04-04",
-        "example": 259118
+        "example": 259118,
+        "formats": [
+          {
+            "size": 100,
+            "cents": 155,
+            "n": 3
+          }
+        ]
       }
     ],
     "red-onions": [
@@ -1777,7 +4379,29 @@
         "pack": 500,
         "n": 589,
         "latest": "2026-11-19",
-        "example": 365172
+        "example": 365045,
+        "formats": [
+          {
+            "size": 500,
+            "cents": 250,
+            "n": 182
+          },
+          {
+            "size": 1000,
+            "cents": 215,
+            "n": 169
+          },
+          {
+            "size": 220,
+            "cents": 170,
+            "n": 129
+          },
+          {
+            "size": 250,
+            "cents": 138,
+            "n": 24
+          }
+        ]
       },
       {
         "kind": "pack",
@@ -1786,7 +4410,14 @@
         "pack": 1000,
         "n": 7,
         "latest": "2026-09-20",
-        "example": 333642
+        "example": 333642,
+        "formats": [
+          {
+            "size": 1000,
+            "cents": 165,
+            "n": 7
+          }
+        ]
       }
     ],
     "ricotta": [
@@ -1797,7 +4428,14 @@
         "pack": 250,
         "n": 29,
         "latest": "2026-10-07",
-        "example": 342343
+        "example": 342343,
+        "formats": [
+          {
+            "size": 250,
+            "cents": 188,
+            "n": 29
+          }
+        ]
       }
     ],
     "rums": [
@@ -1808,7 +4446,29 @@
         "pack": 700,
         "n": 122,
         "latest": "2026-11-05",
-        "example": 359872
+        "example": 359872,
+        "formats": [
+          {
+            "size": 700,
+            "cents": 1973,
+            "n": 88
+          },
+          {
+            "size": 1000,
+            "cents": 2043,
+            "n": 24
+          },
+          {
+            "size": 500,
+            "cents": 1948,
+            "n": 4
+          },
+          {
+            "size": 750,
+            "cents": 1825,
+            "n": 3
+          }
+        ]
       }
     ],
     "salads": [
@@ -1819,7 +4479,29 @@
         "pack": 300,
         "n": 201,
         "latest": "2026-11-17",
-        "example": 363934
+        "example": 363276,
+        "formats": [
+          {
+            "size": 300,
+            "cents": 212,
+            "n": 62
+          },
+          {
+            "size": 250,
+            "cents": 264,
+            "n": 60
+          },
+          {
+            "size": 500,
+            "cents": 192,
+            "n": 27
+          },
+          {
+            "size": 320,
+            "cents": 486,
+            "n": 16
+          }
+        ]
       }
     ],
     "salmon-fillets": [
@@ -1830,7 +4512,24 @@
         "pack": 440,
         "n": 23,
         "latest": "2026-11-11",
-        "example": 361882
+        "example": 361882,
+        "formats": [
+          {
+            "size": 440,
+            "cents": 1187,
+            "n": 7
+          },
+          {
+            "size": 400,
+            "cents": 1158,
+            "n": 6
+          },
+          {
+            "size": 500,
+            "cents": 1279,
+            "n": 5
+          }
+        ]
       }
     ],
     "salmons": [
@@ -1841,7 +4540,29 @@
         "pack": 200,
         "n": 224,
         "latest": "2026-11-19",
-        "example": 365097
+        "example": 365097,
+        "formats": [
+          {
+            "size": 200,
+            "cents": 457,
+            "n": 30
+          },
+          {
+            "size": 100,
+            "cents": 521,
+            "n": 19
+          },
+          {
+            "size": 250,
+            "cents": 524,
+            "n": 17
+          },
+          {
+            "size": 400,
+            "cents": 699,
+            "n": 17
+          }
+        ]
       }
     ],
     "salts": [
@@ -1852,7 +4573,29 @@
         "pack": 250,
         "n": 229,
         "latest": "2026-11-19",
-        "example": 365227
+        "example": 365227,
+        "formats": [
+          {
+            "size": 250,
+            "cents": 189,
+            "n": 61
+          },
+          {
+            "size": 125,
+            "cents": 249,
+            "n": 33
+          },
+          {
+            "size": 500,
+            "cents": 65,
+            "n": 25
+          },
+          {
+            "size": 1000,
+            "cents": 150,
+            "n": 16
+          }
+        ]
       }
     ],
     "sauces": [
@@ -1863,7 +4606,29 @@
         "pack": 251,
         "n": 4435,
         "latest": "2026-11-20",
-        "example": 365600
+        "example": 365423,
+        "formats": [
+          {
+            "size": 190,
+            "cents": 244,
+            "n": 322
+          },
+          {
+            "size": 200,
+            "cents": 217,
+            "n": 307
+          },
+          {
+            "size": 260,
+            "cents": 178,
+            "n": 209
+          },
+          {
+            "size": 180,
+            "cents": 304,
+            "n": 179
+          }
+        ]
       },
       {
         "kind": "pack",
@@ -1872,7 +4637,29 @@
         "pack": 250,
         "n": 1191,
         "latest": "2026-11-20",
-        "example": 365640
+        "example": 365427,
+        "formats": [
+          {
+            "size": 500,
+            "cents": 259,
+            "n": 213
+          },
+          {
+            "size": 150,
+            "cents": 329,
+            "n": 131
+          },
+          {
+            "size": 250,
+            "cents": 427,
+            "n": 124
+          },
+          {
+            "size": 200,
+            "cents": 321,
+            "n": 99
+          }
+        ]
       }
     ],
     "sesame": [
@@ -1883,7 +4670,29 @@
         "pack": 95,
         "n": 39,
         "latest": "2026-11-14",
-        "example": 362805
+        "example": 362805,
+        "formats": [
+          {
+            "size": 55,
+            "cents": 399,
+            "n": 7
+          },
+          {
+            "size": 100,
+            "cents": 199,
+            "n": 7
+          },
+          {
+            "size": 50,
+            "cents": 258,
+            "n": 4
+          },
+          {
+            "size": 250,
+            "cents": 381,
+            "n": 4
+          }
+        ]
       }
     ],
     "sesame-oils": [
@@ -1894,7 +4703,29 @@
         "pack": 250,
         "n": 44,
         "latest": "2026-09-20",
-        "example": 333564
+        "example": 333564,
+        "formats": [
+          {
+            "size": 250,
+            "cents": 405,
+            "n": 27
+          },
+          {
+            "size": 150,
+            "cents": 467,
+            "n": 4
+          },
+          {
+            "size": 210,
+            "cents": 466,
+            "n": 3
+          },
+          {
+            "size": 500,
+            "cents": 780,
+            "n": 3
+          }
+        ]
       }
     ],
     "shallots": [
@@ -1914,7 +4745,29 @@
         "pack": 35,
         "n": 42,
         "latest": "2026-11-20",
-        "example": 365571
+        "example": 365571,
+        "formats": [
+          {
+            "size": 40,
+            "cents": 194,
+            "n": 8
+          },
+          {
+            "size": 25,
+            "cents": 378,
+            "n": 4
+          },
+          {
+            "size": 30,
+            "cents": 120,
+            "n": 4
+          },
+          {
+            "size": 9,
+            "cents": 398,
+            "n": 3
+          }
+        ]
       }
     ],
     "shrimps": [
@@ -1925,7 +4778,29 @@
         "pack": 270,
         "n": 135,
         "latest": "2026-11-19",
-        "example": 365243
+        "example": 365243,
+        "formats": [
+          {
+            "size": 300,
+            "cents": 739,
+            "n": 19
+          },
+          {
+            "size": 100,
+            "cents": 364,
+            "n": 16
+          },
+          {
+            "size": 200,
+            "cents": 442,
+            "n": 16
+          },
+          {
+            "size": 400,
+            "cents": 971,
+            "n": 16
+          }
+        ]
       }
     ],
     "smoked-salmons": [
@@ -1936,7 +4811,29 @@
         "pack": 120,
         "n": 105,
         "latest": "2026-11-19",
-        "example": 365097
+        "example": 365097,
+        "formats": [
+          {
+            "size": 200,
+            "cents": 457,
+            "n": 25
+          },
+          {
+            "size": 120,
+            "cents": 657,
+            "n": 15
+          },
+          {
+            "size": 100,
+            "cents": 484,
+            "n": 14
+          },
+          {
+            "size": 130,
+            "cents": 815,
+            "n": 11
+          }
+        ]
       }
     ],
     "soy-sauces": [
@@ -1947,7 +4844,14 @@
         "pack": 250,
         "n": 9,
         "latest": "2026-08-28",
-        "example": 322325
+        "example": 322325,
+        "formats": [
+          {
+            "size": 125,
+            "cents": 98,
+            "n": 3
+          }
+        ]
       },
       {
         "kind": "pack",
@@ -1956,7 +4860,29 @@
         "pack": 150,
         "n": 287,
         "latest": "2026-11-20",
-        "example": 365427
+        "example": 365427,
+        "formats": [
+          {
+            "size": 150,
+            "cents": 419,
+            "n": 75
+          },
+          {
+            "size": 250,
+            "cents": 542,
+            "n": 62
+          },
+          {
+            "size": 200,
+            "cents": 374,
+            "n": 42
+          },
+          {
+            "size": 125,
+            "cents": 145,
+            "n": 25
+          }
+        ]
       }
     ],
     "spices": [
@@ -1967,7 +4893,29 @@
         "pack": 40,
         "n": 1304,
         "latest": "2026-11-20",
-        "example": 365424
+        "example": 365423,
+        "formats": [
+          {
+            "size": 40,
+            "cents": 298,
+            "n": 143
+          },
+          {
+            "size": 100,
+            "cents": 195,
+            "n": 79
+          },
+          {
+            "size": 30,
+            "cents": 257,
+            "n": 77
+          },
+          {
+            "size": 35,
+            "cents": 292,
+            "n": 76
+          }
+        ]
       },
       {
         "kind": "pack",
@@ -1976,7 +4924,29 @@
         "pack": 100,
         "n": 67,
         "latest": "2026-11-07",
-        "example": 361135
+        "example": 361135,
+        "formats": [
+          {
+            "size": 100,
+            "cents": 334,
+            "n": 34
+          },
+          {
+            "size": 20,
+            "cents": 199,
+            "n": 10
+          },
+          {
+            "size": 200,
+            "cents": 287,
+            "n": 6
+          },
+          {
+            "size": 50,
+            "cents": 452,
+            "n": 3
+          }
+        ]
       }
     ],
     "spinachs": [
@@ -1996,7 +4966,29 @@
         "pack": 600,
         "n": 63,
         "latest": "2026-10-27",
-        "example": 357970
+        "example": 357970,
+        "formats": [
+          {
+            "size": 600,
+            "cents": 205,
+            "n": 13
+          },
+          {
+            "size": 1000,
+            "cents": 138,
+            "n": 13
+          },
+          {
+            "size": 795,
+            "cents": 191,
+            "n": 5
+          },
+          {
+            "size": 395,
+            "cents": 118,
+            "n": 4
+          }
+        ]
       }
     ],
     "sugars": [
@@ -2007,7 +4999,29 @@
         "pack": 750,
         "n": 300,
         "latest": "2026-11-19",
-        "example": 365021
+        "example": 365020,
+        "formats": [
+          {
+            "size": 1000,
+            "cents": 199,
+            "n": 132
+          },
+          {
+            "size": 750,
+            "cents": 254,
+            "n": 45
+          },
+          {
+            "size": 500,
+            "cents": 259,
+            "n": 43
+          },
+          {
+            "size": 650,
+            "cents": 289,
+            "n": 11
+          }
+        ]
       },
       {
         "kind": "pack",
@@ -2016,7 +5030,14 @@
         "pack": 700,
         "n": 8,
         "latest": "2026-11-19",
-        "example": 365154
+        "example": 365154,
+        "formats": [
+          {
+            "size": 700,
+            "cents": 305,
+            "n": 5
+          }
+        ]
       }
     ],
     "sunflower-oils": [
@@ -2027,7 +5048,29 @@
         "pack": 1000,
         "n": 72,
         "latest": "2026-11-03",
-        "example": 359031
+        "example": 359031,
+        "formats": [
+          {
+            "size": 1000,
+            "cents": 165,
+            "n": 33
+          },
+          {
+            "size": 500,
+            "cents": 213,
+            "n": 9
+          },
+          {
+            "size": 3000,
+            "cents": 499,
+            "n": 9
+          },
+          {
+            "size": 750,
+            "cents": 438,
+            "n": 8
+          }
+        ]
       }
     ],
     "sunflower-seeds": [
@@ -2038,7 +5081,14 @@
         "pack": 250,
         "n": 14,
         "latest": "2026-11-09",
-        "example": 362472
+        "example": 362472,
+        "formats": [
+          {
+            "size": 250,
+            "cents": 319,
+            "n": 7
+          }
+        ]
       }
     ],
     "sweet-peppers": [
@@ -2058,7 +5108,29 @@
         "pack": 312,
         "n": 74,
         "latest": "2026-11-05",
-        "example": 359852
+        "example": 359852,
+        "formats": [
+          {
+            "size": 375,
+            "cents": 434,
+            "n": 20
+          },
+          {
+            "size": 312,
+            "cents": 299,
+            "n": 13
+          },
+          {
+            "size": 280,
+            "cents": 366,
+            "n": 8
+          },
+          {
+            "size": 40,
+            "cents": 356,
+            "n": 6
+          }
+        ]
       }
     ],
     "sweet-potatoes": [
@@ -2078,7 +5150,13 @@
         "pack": 600,
         "n": 5,
         "latest": "2026-11-06",
-        "example": 360370
+        "example": 360370,
+        "formats": [
+          {
+            "size": 600,
+            "cents": 208
+          }
+        ]
       }
     ],
     "tomato-pastes": [
@@ -2089,10 +5167,41 @@
         "pack": 210,
         "n": 91,
         "latest": "2026-10-30",
-        "example": 362489
+        "example": 362489,
+        "formats": [
+          {
+            "size": 210,
+            "cents": 177,
+            "n": 19
+          },
+          {
+            "size": 200,
+            "cents": 135,
+            "n": 15
+          },
+          {
+            "size": 280,
+            "cents": 126,
+            "n": 14
+          },
+          {
+            "size": 140,
+            "cents": 149,
+            "n": 11
+          }
+        ]
       }
     ],
     "tomatoes": [
+      {
+        "kind": "each",
+        "unit": "pièce",
+        "rate": 405.0,
+        "pack": 0,
+        "n": 3,
+        "latest": "2026-10-07",
+        "example": 358000
+      },
       {
         "kind": "loose",
         "unit": "g",
@@ -2109,7 +5218,29 @@
         "pack": 400,
         "n": 249,
         "latest": "2026-11-17",
-        "example": 363369
+        "example": 363369,
+        "formats": [
+          {
+            "size": 400,
+            "cents": 184,
+            "n": 74
+          },
+          {
+            "size": 800,
+            "cents": 110,
+            "n": 22
+          },
+          {
+            "size": 250,
+            "cents": 180,
+            "n": 18
+          },
+          {
+            "size": 240,
+            "cents": 125,
+            "n": 17
+          }
+        ]
       }
     ],
     "tortillas": [
@@ -2120,7 +5251,19 @@
         "pack": 216,
         "n": 11,
         "latest": "2026-08-18",
-        "example": 313607
+        "example": 313607,
+        "formats": [
+          {
+            "size": 216,
+            "cents": 347,
+            "n": 5
+          },
+          {
+            "size": 335,
+            "cents": 254,
+            "n": 3
+          }
+        ]
       }
     ],
     "turkey-cutlets": [
@@ -2140,7 +5283,13 @@
         "pack": 250,
         "n": 4,
         "latest": "2026-06-29",
-        "example": 289688
+        "example": 289688,
+        "formats": [
+          {
+            "size": 250,
+            "cents": 526
+          }
+        ]
       }
     ],
     "turkeys": [
@@ -2151,7 +5300,29 @@
         "pack": 200,
         "n": 100,
         "latest": "2026-11-03",
-        "example": 359200
+        "example": 359200,
+        "formats": [
+          {
+            "size": 200,
+            "cents": 258,
+            "n": 21
+          },
+          {
+            "size": 150,
+            "cents": 212,
+            "n": 12
+          },
+          {
+            "size": 120,
+            "cents": 287,
+            "n": 11
+          },
+          {
+            "size": 400,
+            "cents": 346,
+            "n": 8
+          }
+        ]
       }
     ],
     "turnip": [
@@ -2173,7 +5344,24 @@
         "pack": 35,
         "n": 21,
         "latest": "2026-11-19",
-        "example": 365020
+        "example": 365020,
+        "formats": [
+          {
+            "size": 7,
+            "cents": 249,
+            "n": 5
+          },
+          {
+            "size": 75,
+            "cents": 229,
+            "n": 5
+          },
+          {
+            "size": 650,
+            "cents": 496,
+            "n": 3
+          }
+        ]
       }
     ],
     "veal-meat": [
@@ -2184,7 +5372,24 @@
         "pack": 300,
         "n": 28,
         "latest": "2026-09-20",
-        "example": 333422
+        "example": 333422,
+        "formats": [
+          {
+            "size": 300,
+            "cents": 374,
+            "n": 13
+          },
+          {
+            "size": 200,
+            "cents": 370,
+            "n": 6
+          },
+          {
+            "size": 390,
+            "cents": 709,
+            "n": 3
+          }
+        ]
       }
     ],
     "vegetable-oils": [
@@ -2195,7 +5400,24 @@
         "pack": 205,
         "n": 25,
         "latest": "2026-11-20",
-        "example": 365413
+        "example": 365413,
+        "formats": [
+          {
+            "size": 184,
+            "cents": 442,
+            "n": 8
+          },
+          {
+            "size": 1000,
+            "cents": 678,
+            "n": 4
+          },
+          {
+            "size": 750,
+            "cents": 396,
+            "n": 3
+          }
+        ]
       },
       {
         "kind": "pack",
@@ -2204,7 +5426,29 @@
         "pack": 750,
         "n": 710,
         "latest": "2026-11-20",
-        "example": 365576
+        "example": 365575,
+        "formats": [
+          {
+            "size": 1000,
+            "cents": 444,
+            "n": 218
+          },
+          {
+            "size": 750,
+            "cents": 988,
+            "n": 171
+          },
+          {
+            "size": 500,
+            "cents": 592,
+            "n": 121
+          },
+          {
+            "size": 250,
+            "cents": 472,
+            "n": 118
+          }
+        ]
       }
     ],
     "vinegars": [
@@ -2215,7 +5459,14 @@
         "pack": 250,
         "n": 10,
         "latest": "2026-08-28",
-        "example": 321657
+        "example": 321657,
+        "formats": [
+          {
+            "size": 250,
+            "cents": 422,
+            "n": 6
+          }
+        ]
       },
       {
         "kind": "pack",
@@ -2224,7 +5475,29 @@
         "pack": 500,
         "n": 426,
         "latest": "2026-11-17",
-        "example": 363525
+        "example": 363525,
+        "formats": [
+          {
+            "size": 500,
+            "cents": 274,
+            "n": 163
+          },
+          {
+            "size": 250,
+            "cents": 381,
+            "n": 113
+          },
+          {
+            "size": 750,
+            "cents": 139,
+            "n": 43
+          },
+          {
+            "size": 1000,
+            "cents": 100,
+            "n": 38
+          }
+        ]
       }
     ],
     "walnuts": [
@@ -2244,10 +5517,41 @@
         "pack": 130,
         "n": 42,
         "latest": "2026-11-17",
-        "example": 364505
+        "example": 364505,
+        "formats": [
+          {
+            "size": 150,
+            "cents": 528,
+            "n": 11
+          },
+          {
+            "size": 50,
+            "cents": 192,
+            "n": 6
+          },
+          {
+            "size": 125,
+            "cents": 352,
+            "n": 6
+          },
+          {
+            "size": 90,
+            "cents": 237,
+            "n": 4
+          }
+        ]
       }
     ],
     "watermelons": [
+      {
+        "kind": "each",
+        "unit": "pièce",
+        "rate": 499.0,
+        "pack": 0,
+        "n": 5,
+        "latest": "2026-07-18",
+        "example": 294438
+      },
       {
         "kind": "loose",
         "unit": "g",
@@ -2266,7 +5570,52 @@
         "pack": 1000,
         "n": 138,
         "latest": "2026-11-19",
-        "example": 365023
+        "example": 365023,
+        "formats": [
+          {
+            "size": 1000,
+            "cents": 148,
+            "n": 126
+          },
+          {
+            "size": 500,
+            "cents": 448,
+            "n": 7
+          }
+        ]
+      }
+    ],
+    "wheat-semolinas": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.374,
+        "pack": 500,
+        "n": 307,
+        "latest": "2026-11-20",
+        "example": 365421,
+        "formats": [
+          {
+            "size": 500,
+            "cents": 160,
+            "n": 138
+          },
+          {
+            "size": 1000,
+            "cents": 230,
+            "n": 54
+          },
+          {
+            "size": 450,
+            "cents": 443,
+            "n": 20
+          },
+          {
+            "size": 350,
+            "cents": 220,
+            "n": 16
+          }
+        ]
       }
     ],
     "white-hams": [
@@ -2277,7 +5626,29 @@
         "pack": 140,
         "n": 420,
         "latest": "2026-11-19",
-        "example": 365334
+        "example": 365334,
+        "formats": [
+          {
+            "size": 140,
+            "cents": 295,
+            "n": 91
+          },
+          {
+            "size": 160,
+            "cents": 320,
+            "n": 51
+          },
+          {
+            "size": 70,
+            "cents": 198,
+            "n": 38
+          },
+          {
+            "size": 210,
+            "cents": 369,
+            "n": 37
+          }
+        ]
       }
     ],
     "wild-garlic": [
@@ -2288,7 +5659,14 @@
         "pack": 9,
         "n": 3,
         "latest": "2026-08-26",
-        "example": 320165
+        "example": 320165,
+        "formats": [
+          {
+            "size": 9,
+            "cents": 272,
+            "n": 3
+          }
+        ]
       }
     ],
     "wine-vinegars": [
@@ -2299,7 +5677,24 @@
         "pack": 500,
         "n": 91,
         "latest": "2026-11-17",
-        "example": 363525
+        "example": 363525,
+        "formats": [
+          {
+            "size": 500,
+            "cents": 251,
+            "n": 57
+          },
+          {
+            "size": 250,
+            "cents": 312,
+            "n": 16
+          },
+          {
+            "size": 750,
+            "cents": 147,
+            "n": 15
+          }
+        ]
       }
     ],
     "yellow-onions": [
@@ -2319,10 +5714,26 @@
         "pack": 1000,
         "n": 8,
         "latest": "2026-10-27",
-        "example": 361365
+        "example": 361365,
+        "formats": [
+          {
+            "size": 1000,
+            "cents": 299,
+            "n": 7
+          }
+        ]
       }
     ],
     "zucchini": [
+      {
+        "kind": "each",
+        "unit": "pièce",
+        "rate": 312.5,
+        "pack": 0,
+        "n": 4,
+        "latest": "2026-10-31",
+        "example": 364321
+      },
       {
         "kind": "loose",
         "unit": "g",
@@ -2339,7 +5750,29 @@
         "pack": 375,
         "n": 83,
         "latest": "2026-11-20",
-        "example": 365598
+        "example": 365598,
+        "formats": [
+          {
+            "size": 375,
+            "cents": 369,
+            "n": 25
+          },
+          {
+            "size": 185,
+            "cents": 260,
+            "n": 19
+          },
+          {
+            "size": 660,
+            "cents": 476,
+            "n": 15
+          },
+          {
+            "size": 380,
+            "cents": 275,
+            "n": 7
+          }
+        ]
       }
     ]
   }

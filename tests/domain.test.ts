@@ -284,3 +284,40 @@ test('un seul oignon pour plusieurs sources, stock et article manuel, livraison 
   assert.equal(shipping('monoprix', 15000).fee, 400);
   assert.equal(shipping('monoprix', 15001).fee, 0);
 });
+
+test('panier de semaine : formats de riz, bouillon partagé et produits disponibles', () => {
+  const s = fixture();
+  s.preps[0].snapshot.ingredients = [
+    parseLine('Riz | 750 | g'),
+    parseLine("Huile d'olive | 9 | càs"),
+    parseLine('Bouillon de légumes | 400 | ml'),
+  ];
+  s.preps[1].snapshot.ingredients = [parseLine('Bouillon cube légumes | 0,5 | pièce')];
+  const before = marketBasket(s, day),
+    oil = before.lines.find((l) => l.name === "Huile d'olive")!;
+  const rice = before.lines.find((l) => l.name === 'Riz')!;
+  assert.equal(rice.packs * rice.pack >= 750, true);
+  assert.equal(before.lines.filter((l) => l.name === 'Bouillon de légumes').length, 1);
+  assert.equal(before.lines.find((l) => l.name === 'Bouillon de légumes')?.packs, 1);
+  assert.ok(oil.cents && oil.usedCents && oil.cents > oil.usedCents);
+  s.stock = [{ id: id(), name: "Huile d'olive", unit: 'ml', quantity: 100 }];
+  assert.equal(marketBasket(s, day).lines.find((l) => l.name === oil.name)?.buy[0].buy, 35);
+  s.items.push({
+    id: id(),
+    week: day,
+    name: oil.name,
+    key: 'placard:huile',
+    quantity: null,
+    unit: '',
+    inPantry: true,
+    manual: false,
+    bag: null,
+    checked: false,
+    category: 'Autres',
+  });
+  const after = marketBasket(s, day);
+  assert.equal(after.cash, before.cash - oil.cents);
+  assert.equal(after.used, before.used);
+  assert.equal(after.lines.find((l) => l.name === oil.name)?.cents, 0);
+  assert.ok(after.cash < before.cash);
+});

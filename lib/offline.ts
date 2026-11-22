@@ -17,7 +17,7 @@ export async function syncChecks(input: unknown) {
     const s = await readState(tx, true);
     for (const e of edits) {
       const r = needs(s, e.week).rows.find((x) => x.key === e.key);
-      if (!r || r.buy !== e.quantity || r.unknown !== e.unknown)
+      if (!r || r.inPantry || r.buy !== e.quantity || r.unknown !== e.unknown)
         throw new UserError(
           'La liste a changé. Conservez vos coches et comparez avec la liste en ligne.',
           409,

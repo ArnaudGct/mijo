@@ -214,6 +214,15 @@ test('panier estimé, livraison et fusion des variantes sur mobile', async ({ pa
     .filter({ has: page.getByText('Oignon', { exact: true }) });
   await expect(onions).toHaveCount(1);
   await expect(onions).toContainText('2 pièce');
+  const total = await page.locator('.basket-summary .large-money').innerText();
+  await onions.getByRole('button', { name: 'Déjà chez moi · Oignon' }).click();
+  await expect(
+    onions.getByRole('button', { name: 'Remettre sur la liste · Oignon' }),
+  ).toBeVisible();
+  await expect(page.locator('.basket-summary .large-money')).not.toHaveText(total);
+  await page.reload();
+  await onions.getByRole('button', { name: 'Remettre sur la liste · Oignon' }).click();
+  await expect(page.locator('.basket-summary .large-money')).toHaveText(total);
   await page.getByLabel('Inclure la livraison').check();
   await expect(page.getByText('Minimum de commande non atteint.', { exact: false })).toBeVisible();
   await expect(page.getByLabel('Magasin du panier')).toHaveCount(0);

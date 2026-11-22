@@ -33,10 +33,11 @@ type Quote = {
   n: number;
   latest: string;
   example: number;
+  formats?: { size: number; cents: number }[];
 };
 const quotes: Record<string, Quote[]> = index.prices;
 const families = rules.map((rule) => ({ ...rule, re: new RegExp(rule.pattern) }));
-function valuation(name: string) {
+function valuation(name: string, byPiece: boolean) {
   const normalized = fold(name);
   const family = families.find((f) => f.re.test(normalized));
   if (!family) return null;
@@ -44,41 +45,46 @@ function valuation(name: string) {
   for (const tag of family.tags) {
     const options = quotes[tag];
     if (!options) continue;
+    const loose = options.find((q) => q.kind === 'loose');
+    const each = byPiece ? options.find((q) => q.kind === 'each' && q.n >= 10) : undefined;
     const quote =
-      options.find((q) => q.kind === 'loose') ||
+      (each && (!loose || each.n > loose.n) ? each : undefined) ||
+      loose ||
       options.find((q) => q.unit === (liquid ? 'ml' : 'g')) ||
-      options[0];
+      options.find((q) => q.kind === 'pack');
+    if (!quote) continue;
     return { family, quote };
   }
   return null;
 }
-function measure(r: Need, ref: NonNullable<ReturnType<typeof valuation>>) {
+function measure(r: Need, ref: NonNullable<ReturnType<typeof valuation>>, amount: number) {
   const { family, quote } = ref;
   const u = fold(r.unit),
     n = fold(r.name);
   // Recipe packets are small portions. Retail packages are rounded separately.
   // Bouillon expressed as prepared liquid converts at one 10 g cube per 500 ml.
   if (r.unknown || !r.unit) return null;
-  if (n.includes('bouillon') && u === 'ml') return r.buy * 0.02;
-  if (n === 'ail' && u === 'tete') return r.buy * 45;
-  if (n === 'ail' && u === 'gousse') return r.buy * 5;
-  if (u === 'g' || u === 'ml') return r.buy;
-  if (u === 'piece') return family.piece ? family.piece * r.buy : null;
+  if (quote.kind === 'each') return u === 'piece' ? amount : null;
+  if (n.includes('bouillon') && u === 'ml') return amount * 0.02;
+  if (n === 'ail' && u === 'tete') return amount * 45;
+  if (n === 'ail' && u === 'gousse') return amount * 5;
+  if (u === 'g' || u === 'ml') return amount;
+  if (u === 'piece') return family.piece ? family.piece * amount : null;
   if (u === 'cac' || u === 'cas')
     return (
-      r.buy *
+      amount *
       (u === 'cac' ? 5 : 15) *
       (quote.unit === 'ml' ? 1 : /sel|sucre/.test(n) ? 1 : /beurre/.test(n) ? 0.95 : 0.65)
     );
-  if (u === 'filet' && quote.unit === 'ml') return r.buy * 10;
+  if (u === 'filet' && quote.unit === 'ml') return amount * 10;
   if (u === 'gousse' && n === 'vanille') return null;
-  if (u === 'cm' && n.includes('gingembre')) return r.buy * 5;
+  if (u === 'cm' && n.includes('gingembre')) return amount * 5;
   if (
     /^(sachet|paquet|boite|tube|pot|botte|barquette|lot hellofresh|bouquet|bocal|portion)/.test(u)
   )
-    return r.buy * family.portion;
-  if (/^tranche/.test(u) && family.piece) return r.buy * family.piece;
-  if (u === 'pincee') return r.buy * 0.35;
+    return amount * family.portion;
+  if (/^tranche/.test(u) && family.piece) return amount * family.piece;
+  if (u === 'pincee') return amount * 0.35;
   return null;
 }
 export function marketBasket(s: State, w: string) {
@@ -90,23 +96,50 @@ export function marketBasket(s: State, w: string) {
   }
   const lines = [...groups.values()]
     .map((parts) => {
-      const first = parts[0],
-        ref = valuation(first.name);
-      const buy = parts.filter((p) => p.buy > 0 || p.unknown);
-      const pantry = buy.length > 0 && buy.every((p) => p.unit === 'selon le goût');
-      const amounts = ref ? buy.map((r) => measure(r, ref)) : [];
-      const required = amounts.reduce<number>((sum, n) => sum + (n ?? 0), 0);
+      const first = parts[0];
+      const ref = valuation(
+        first.name,
+        first.category === 'Fruits et légumes' && parts.every((p) => p.unit === 'pièce'),
+      );
+      const available = parts.every((p) => p.inPantry);
+      const pantry = parts.every((p) => p.unit === 'selon le goût');
+      const buy = parts.filter((p) => !p.inPantry && !pantry && (p.buy > 0 || p.unknown));
+      function measured(rows: Need[], field: 'buy' | 'quantity') {
+        let sum = 0;
+        for (const row of rows) {
+          const value = ref ? measure(row, ref, row[field]) : null;
+          if (value === null) return null;
+          sum += value;
+        }
+        return sum;
+      }
+      const required = measured(buy, 'buy');
+      const used = pantry ? 0 : measured(parts, 'quantity');
+      // Choose the least expensive checkout among common observed formats. Compare
+      // total shelf prices first, then minimise surplus for equal totals.
+      const packOptions = ref?.quote.formats ?? [];
+      const basis = required || used || 0;
+      const format = packOptions
+        .map((f) => ({ ...f, count: Math.ceil(basis / f.size - 1e-9) }))
+        .sort(
+          (a, b) => a.count * a.cents - b.count * b.cents || a.count * a.size - b.count * b.size,
+        )[0];
       const pack =
-        ref?.quote.pack ||
+        format?.size ||
+        (ref?.quote.kind === 'each' ? 1 : 0) ||
         (fold(first.name) === 'ail' ? 45 : 0) ||
-        (ref?.quote.kind === 'loose' && buy.some((p) => p.unit === 'pièce') ? ref.family.piece : 0);
-      const packs = pack ? Math.ceil(required / pack - 1e-9) : 0;
-      const cents =
-        !buy.length || pantry
-          ? 0
-          : !ref || amounts.some((q) => q === null)
-            ? null
-            : Math.max(1, Math.round((pack ? packs * pack : required) * ref.quote.rate));
+        (ref?.quote.kind === 'loose' && parts.some((p) => p.unit === 'pièce')
+          ? ref.family.piece
+          : 0);
+      const rate = format ? format.cents / format.size : ref?.quote.rate;
+      const packs = pack && required ? Math.ceil(required / pack - 1e-9) : 0;
+      const cents = !buy.length
+        ? 0
+        : required === null || rate === undefined
+          ? null
+          : Math.round((pack ? packs * pack : required) * rate);
+      const usedCents =
+        used === 0 ? 0 : used === null || rate === undefined ? null : Math.round(used * rate);
       return {
         name: first.name,
         category: first.category,
@@ -115,6 +148,8 @@ export function marketBasket(s: State, w: string) {
         buy,
         pantry,
         cents,
+        usedCents,
+        available,
         checked: buy.length > 0 && buy.every((p) => p.checked),
         packs,
         pack,
@@ -126,6 +161,8 @@ export function marketBasket(s: State, w: string) {
     lines,
     incomplete,
     cash: lines.reduce((sum, r) => sum + (r.cents ?? 0), 0),
+    used: lines.reduce((sum, r) => sum + (r.usedCents ?? 0), 0),
+    unvalued: lines.filter((r) => r.usedCents === null).length,
     missing: lines.filter((r) => r.cents === null).length,
     count: lines.filter((r) => r.buy.length > 0).length,
   };

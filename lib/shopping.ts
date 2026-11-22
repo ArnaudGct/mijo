@@ -13,6 +13,7 @@ export type Need = {
   stock: number;
   buy: number;
   checked: boolean;
+  inPantry: boolean;
   bag: string;
   manual: boolean;
 };
@@ -35,6 +36,7 @@ export function needs(s: State, week: string) {
       stock: 0,
       buy: 0,
       checked: false,
+      inPantry: false,
       bag: ['Produits frais', 'Viandes et poissons', 'Surgelés'].includes(i.category)
         ? 'Frais'
         : 'Épicerie',
@@ -67,8 +69,11 @@ export function needs(s: State, week: string) {
         const [q, u] = groceryMeasure(i.name, i.quantity, i.unit);
         return n + (u === row.unit ? q : 0);
       }, 0);
+    row.inPantry = s.items.some(
+      (i) => i.week === week && i.inPantry && fold(groceryName(i.name)) === fold(row.name),
+    );
     row.quantity = rounded(row.quantity);
-    row.buy = rounded(Math.max(0, row.quantity - row.stock));
+    row.buy = row.inPantry ? 0 : rounded(Math.max(0, row.quantity - row.stock));
     row.checked = saved?.checked ?? (stored.length > 0 && stored.every((i) => i.checked));
     row.bag = saved?.bag ?? row.bag;
   }

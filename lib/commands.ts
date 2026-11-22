@@ -18,6 +18,7 @@ import { planned, defaultMeals, uid, suggest } from './planner';
 import { addDays, inWeek, monday, today } from './dates';
 import { sourceUrl } from './source-url';
 import { clean } from './ingredients';
+import { fold, groceryName } from './grocery-names';
 export class UserError extends Error {
   constructor(
     message: string,
@@ -86,6 +87,12 @@ export const input = z.discriminatedUnion('action', [
   z.object({ action: z.literal('fillWeek'), week: date }),
   z.object({ action: z.literal('duplicateWeek'), week: date, to: date }),
   z.object({ action: z.literal('session'), data: session }),
+  z.object({
+    action: z.literal('pantryWeek'),
+    week: date,
+    name: z.string().trim().min(1).max(300),
+    available: z.boolean(),
+  }),
   z.object({ action: z.literal('stock'), data: inventory }),
   z.object({ action: z.literal('price'), data: offer }),
   z.object({ action: z.literal('item'), data: item }),
@@ -384,9 +391,30 @@ export async function execute(tx: Tx, s: State, c: z.output<typeof input>) {
         free(next);
         await put(tx, 'meals', next);
       }
-      for (const i of s.items.filter((i) => i.week === c.week)) {
+      for (const i of s.items.filter((i) => i.week === c.week && !i.inPantry)) {
         await put(tx, 'items', { ...i, id: uid(), week: c.to, checked: false });
       }
+      break;
+    }
+    case 'pantryWeek': {
+      const name = groceryName(c.name),
+        key = 'placard:' + fold(name);
+      const stored = s.items.find((i) => i.week === c.week && i.key === key);
+      if (c.available && !stored)
+        await put(tx, 'items', {
+          id: uid(),
+          week: c.week,
+          key,
+          name,
+          inPantry: true,
+          manual: false,
+          checked: false,
+          category: 'Autres',
+          quantity: null,
+          unit: '',
+          bag: null,
+        });
+      if (!c.available && stored) await del('items', stored.id);
       break;
     }
     case 'stock':
