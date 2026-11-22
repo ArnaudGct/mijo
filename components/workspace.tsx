@@ -19,14 +19,14 @@ import {
   ChevronLeft,
   Pause,
   Play,
-  Plus,
 } from 'lucide-react';
-import { type State, duration, date } from '@/lib/model';
-import { today, monday, addDays, labelDate, inWeek, money } from '@/lib/dates';
+import { type State, date } from '@/lib/model';
+import { today, monday, labelDate, inWeek, money } from '@/lib/dates';
 import { marketBasket } from '@/lib/market';
 import { Feedback, Brand, WeekNav, Photo, Field, Form, str, api, type UI } from './common';
-import { Catalog, RecipeDetail, RecipeCard, RecipeEditor } from './recipes';
-import { Planner } from './weekly';
+import { DiscoveryCard, DiscoveryPreview, useDiscoveries } from './discoveries';
+import { Catalog, RecipeEditor } from './recipes';
+import { MealCalendar, Planner } from './weekly';
 import { Cooking } from './cooking';
 import { Shopping, Preferences } from './supplies';
 const nav = [
@@ -249,10 +249,8 @@ export function Workspace({ initial, children }: { initial: State; children: Rea
 }
 function Home({ ui }: { ui: UI }) {
   const { s, w } = ui;
-  const list = s.recipes.filter((r) => !r.archived);
-  const slides = list
-    .filter((r) => r.data.image && r.data.steps.length && r.data.ingredients.length)
-    .slice(0, 10);
+  const discoveries = useDiscoveries(ui);
+  const slides = discoveries.slice(0, 10);
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   useEffect(() => {
@@ -289,7 +287,7 @@ function Home({ ui }: { ui: UI }) {
   const meals = s.meals.filter((m) => inWeek(m.day, w));
   const cart = marketBasket(s, w);
   const openRecipe = () => {
-    if (feature) ui.open(<RecipeDetail ui={ui} row={feature} />);
+    if (feature) ui.open(<DiscoveryPreview ui={ui} item={feature} />);
     else ui.open(<RecipeEditor ui={ui} />);
   };
   return (
@@ -310,16 +308,17 @@ function Home({ ui }: { ui: UI }) {
         }}
       >
         <div className="hero-copy">
-          <span className="hero-label">
-            <Leaf size={15} />
-            {feature ? 'Dans mon carnet' : 'Bienvenue dans le carnet'}
-          </span>
-          <h2>{feature?.data.title ?? 'Ma cuisine de la semaine'}</h2>
+          <h2>{feature?.title ?? 'Ma cuisine de la semaine'}</h2>
           {feature && (
             <p className="inline">
-              <Clock3 size={16} />
-              {duration(feature.data) ?? '—'} min <span>·</span>{' '}
-              {feature.data.difficulty || 'Difficulté à préciser'}
+              {feature.publisher}
+              {feature.minutes !== null && (
+                <>
+                  <span>·</span>
+                  <Clock3 size={16} />
+                  {feature.minutes} min
+                </>
+              )}
             </p>
           )}
           <button className="on-green" onClick={openRecipe}>
@@ -329,9 +328,9 @@ function Home({ ui }: { ui: UI }) {
         </div>
         <div className="hero-image">
           <Photo
-            key={feature?.id}
-            src={feature?.data.image || '/cuisine.jpg'}
-            title={feature?.data.title || ''}
+            key={feature?.url}
+            src={feature?.image || '/cuisine.jpg'}
+            title={feature?.title || ''}
           />
           {count > 1 && (
             <div className="slide-controls">
@@ -406,56 +405,22 @@ function Home({ ui }: { ui: UI }) {
             Organiser <ArrowRight size={16} />
           </Link>
         </div>
-        <div className="home-menu">
-          {Array.from({ length: 7 }, (_, i) => {
-            const day = addDays(w, i);
-            const planner = '/semaine?week=' + w + '#jour-' + day;
-            return (
-              <div className="menu-day" key={day}>
-                <Link className="menu-date" href={planner}>
-                  {labelDate(day, { weekday: 'short', day: 'numeric' })}
-                </Link>
-                {(['midi', 'soir'] as const).map((slot) => {
-                  const m = meals.find((m) => m.day === day && m.slot === slot);
-                  const p = m && s.preps.find((p) => p.id === m.prepId);
-                  return (
-                    <Link
-                      className="menu-meal"
-                      key={slot}
-                      href={p ? '/cuisiner?week=' + monday(p.day) + '&session=' + p.id : planner}
-                    >
-                      {p?.snapshot.image && <Photo src={p.snapshot.image} />}
-                      <span>
-                        <small>{slot === 'midi' ? 'Déjeuner' : 'Dîner'}</small>
-                        {p?.snapshot.title ?? (m ? 'Repas à l’extérieur' : 'Libre')}
-                      </span>
-                    </Link>
-                  );
-                })}
-              </div>
-            );
-          })}
-        </div>
+        <MealCalendar key={w} ui={ui} compact />
       </section>
       <div className="section-heading">
-        <h2>Mon carnet de recettes</h2>
-        <Link className="text-link" href={'/recettes?week=' + w}>
+        <h2>Suggestions de recettes</h2>
+        <Link className="text-link" href={'/recettes?week=' + w + '&onglet=suggestions'}>
           Tout voir <ArrowRight size={16} />
         </Link>
       </div>
       <div className="cards">
-        {list
-          .filter((r) => r.data.image)
-          .slice(0, 3)
-          .map((r) => (
-            <RecipeCard key={r.id} row={r} ui={ui} />
-          ))}
+        {(discoveries.length > 10 ? discoveries.slice(10, 13) : discoveries.slice(0, 3)).map(
+          (item) => (
+            <DiscoveryCard key={item.url} ui={ui} item={item} />
+          ),
+        )}
       </div>
-      {!list.length && (
-        <button onClick={openRecipe}>
-          <Plus size={16} /> Ma première recette
-        </button>
-      )}
+      {!discoveries.length && <p>Toutes ces suggestions sont déjà dans ton carnet.</p>}
     </>
   );
 }

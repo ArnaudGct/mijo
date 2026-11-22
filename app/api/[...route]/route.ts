@@ -7,6 +7,7 @@ import { db, state } from '@/lib/db';
 import { authenticated, login, logout } from '@/lib/auth';
 import { mutate, ensureWeek, UserError } from '@/lib/commands';
 import { backup, restore } from '@/lib/backup';
+import { cachedDiscovery, discoveryFeed } from '@/lib/discovery-feed';
 import { previewUrl } from '@/lib/web-import';
 import { localObservations } from '@/lib/open-prices';
 import { syncChecks } from '@/lib/offline';
@@ -63,6 +64,7 @@ export async function GET(_req: Request, ctx: Ctx) {
       }
     }
     if (!(await authenticated())) return json({ error: 'Connexion requise.' }, 401);
+    if (path === 'discoveries') return json(await discoveryFeed());
     if (path === 'state') return json(await state());
     if (path === 'export')
       return new Response(JSON.stringify(await backup()), {
@@ -119,7 +121,9 @@ export async function POST(req: Request, ctx: Ctx) {
     if (path === 'url') {
       const v = await body(4000);
       try {
-        return json(await previewUrl(z.string().max(3000).parse(v.url)));
+        const url = z.string().max(3000).parse(v.url);
+        const data = cachedDiscovery(url);
+        return json(data ? { data, warning: '', original: url } : await previewUrl(url));
       } catch {
         return json({ error: 'Adresse HTTPS publique requise.' }, 400);
       }

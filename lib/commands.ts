@@ -14,7 +14,7 @@ import {
   type State,
   type Recipe,
 } from './model';
-import { planned, defaultMeals, uid, suggest } from './planner';
+import { planned, defaultMeals, uid, suggest, optimizedRecipes } from './planner';
 import { addDays, inWeek, monday, today } from './dates';
 import { sourceUrl } from './source-url';
 import { clean } from './ingredients';
@@ -86,7 +86,12 @@ export const input = z.discriminatedUnion('action', [
   z.object({ action: z.literal('meal'), data: meal }),
   z.object({ action: z.literal('removeMeal'), id }),
   z.object({ action: z.literal('moveMeal'), id, day: date, slot: z.enum(['midi', 'soir']) }),
-  z.object({ action: z.literal('fillWeek'), week: date }),
+  z.object({
+    action: z.literal('fillWeek'),
+    week: date,
+    optimize: z.boolean().optional(),
+    previewRevision: z.number().int().optional(),
+  }),
   z.object({ action: z.literal('duplicateWeek'), week: date, to: date }),
   z.object({ action: z.literal('session'), data: session }),
   z.object({
@@ -221,10 +226,29 @@ export async function execute(tx: Tx, s: State, c: z.output<typeof input>) {
         );
         requireThat(!m.consumed || p.done, 'Terminez d’abord la préparation.');
       }
+      for (const prepId of new Set([m.prepId, s.meals.find((x) => x.id === m.id)?.prepId])) {
+        if (prepId && findPrep(prepId).automatic)
+          await put(tx, 'preps', { ...findPrep(prepId), automatic: false });
+      }
       await put(tx, 'meals', m);
       break;
     }
     case 'fillWeek':
+      if (c.previewRevision !== undefined)
+        requireThat(
+          c.previewRevision === s.revision,
+          'Le planning a changé. Rouvrez la proposition.',
+        );
+      if (c.optimize) {
+        for (const { prep, recipe } of optimizedRecipes(s, c.week, today())) {
+          Object.assign(prep, {
+            recipeId: recipe.id,
+            version: recipe.version,
+            snapshot: recipe.data,
+          });
+          await put(tx, 'preps', prep);
+        }
+      }
       await fillWeek(tx, s, c.week, true);
       break;
     case 'moveMeal': {
@@ -245,13 +269,16 @@ export async function execute(tx: Tx, s: State, c: z.output<typeof input>) {
           .sort()[0];
         if (p.done || p.ticks.length || p.session)
           requireThat(first >= p.day, 'Ce repas précéderait sa préparation.');
-        else if (
-          first < p.day ||
-          moved.some(
-            (m) => m.prepId === prepId && s.meals.find((old) => old.id === m.id)?.day === p.day,
-          )
-        )
-          await put(tx, 'preps', { ...p, day: first });
+        const adjustDay =
+          !p.done &&
+          !p.ticks.length &&
+          !p.session &&
+          (first < p.day ||
+            moved.some(
+              (m) => m.prepId === prepId && s.meals.find((old) => old.id === m.id)?.day === p.day,
+            ));
+        if (adjustDay || p.automatic)
+          await put(tx, 'preps', { ...p, automatic: false, day: adjustDay ? first : p.day });
       }
       await del('meals', source.id);
       if (target) await put(tx, 'meals', moved[1]);
@@ -266,7 +293,11 @@ export async function execute(tx: Tx, s: State, c: z.output<typeof input>) {
       const p = findPrep(m.prepId);
       if (p.done || p.ticks.length || p.session) break;
       if (s.meals.some((x) => x.id !== m.id && x.prepId === p.id))
-        await put(tx, 'preps', { ...p, servings: Math.max(1, p.servings - m.servings) });
+        await put(tx, 'preps', {
+          ...p,
+          automatic: false,
+          servings: Math.max(1, p.servings - m.servings),
+        });
       else await del('preps', p.id);
       break;
     }
@@ -296,6 +327,7 @@ export async function execute(tx: Tx, s: State, c: z.output<typeof input>) {
         ...(r
           ? { automatic: false, recipeId: r.id, version: r.version, snapshot: r.data, ticks: [] }
           : {}),
+        automatic: false,
         session: c.session,
         day,
         servings: c.servings,
@@ -644,7 +676,7 @@ export async function mutate(revision: number, cmd: unknown) {
     return {
       id,
       revision: revision + 1,
-      addedMeals: c.action === 'fillWeek' ? s.meals.length - mealCount : undefined,
+      addedMeals: c.action === 'fillWeek' && !c.optimize ? s.meals.length - mealCount : undefined,
     };
   });
 }

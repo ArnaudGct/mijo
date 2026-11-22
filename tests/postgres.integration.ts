@@ -269,6 +269,54 @@ test('transactions PostgreSQL, parcours complet, restauration et rejouabilité',
       assert.equal((await ensureWeek(w)).changed, false);
       assert.ok(!(await state()).meals.some((m) => m.day === b.day && m.slot === b.slot));
     });
+    await t.test(
+      'optimiser une semaine remplie conserve les créneaux et les choix manuels',
+      async () => {
+        const w = addDays(day, 91),
+          diet = 'Régime de la semaine de test';
+        const prefs = (await state()).prefs;
+        await write({ action: 'prefs', data: { ...prefs, diet, target: 2, leftovers: false } });
+        const create = async (title: string, raw: string) =>
+          (
+            await write({
+              action: 'recipe',
+              data: { ...r, title, diet, ingredients: [parseLine(raw)] },
+            })
+          ).id!;
+        const carrot = await create('Carottes rôties', 'Carotte | 2 | pièce');
+        const potato = await create('Purée de pommes de terre', 'Pommes de terre | 2 | pièce');
+        await write({
+          action: 'plan',
+          id: carrot,
+          day: w,
+          servings: 1,
+          leftovers: false,
+          slot: 'soir',
+        });
+        await ensureWeek(w);
+        const before = await state();
+        const linked = before.preps.find((p) => p.day === addDays(w, 1) && p.recipeId === potato)!;
+        assert.ok(linked?.automatic);
+        const tart = await create('Tarte aux carottes', 'Carottes | 2 | pièce');
+        await assert.rejects(
+          write({ action: 'fillWeek', week: w, optimize: true, previewRevision: before.revision }),
+          /planning a changé/,
+        );
+        await write({
+          action: 'fillWeek',
+          week: w,
+          optimize: true,
+          previewRevision: (await state()).revision,
+        });
+        const after = await state();
+        assert.deepEqual(after.meals, before.meals);
+        assert.equal(after.preps.find((p) => p.id === linked.id)?.recipeId, tart);
+        assert.equal(after.preps.find((p) => p.day === w)?.recipeId, carrot);
+        const m = after.meals.find((m) => m.prepId === linked.id)!;
+        await write({ action: 'moveMeal', id: m.id, day: addDays(w, 2), slot: 'soir' });
+        assert.equal((await state()).preps.find((p) => p.id === linked.id)?.automatic, false);
+      },
+    );
   } finally {
     await db().end();
   }

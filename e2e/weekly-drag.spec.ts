@@ -120,4 +120,23 @@ test('dépôt de lundi à mardi sur une case vide et sur un repas, à la souris 
   await lunch.locator('.move-grip').press('Enter');
   await dinner.locator('.drop-target').press('Enter');
   await persisted([null, outside, omelette]);
+
+  await page.goto('/?week=' + week);
+  await page.setViewportSize({ width: 1360, height: 940 });
+  await lunch.scrollIntoViewIfNeeded();
+  await mouseDrag(lunch.locator('.move-grip'), monday.locator('.menu-meal'));
+  await persisted([outside, null, omelette]);
+  await dinner.scrollIntoViewIfNeeded();
+  await mouseDrag(dinner.locator('.menu-meal span'), monday.locator('.menu-meal'));
+  await persisted([omelette, null, outside]);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await session.send('Emulation.setTouchEmulationEnabled', { enabled: true });
+  await monday.evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' }));
+  await touchDrag(monday.locator('.move-grip'), lunch.locator('.menu-meal'));
+  await persisted([null, omelette, outside]);
+  await page.goto('/semaine?week=' + week);
+  await expect(page.locator('.weekly-prep').filter({ hasText: title })).toContainText('Déjeuner');
+  await expect(
+    page.locator('.weekly-prep').filter({ hasText: title }).locator('img'),
+  ).toBeVisible();
 });

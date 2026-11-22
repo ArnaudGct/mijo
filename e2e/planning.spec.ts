@@ -44,7 +44,9 @@ test('parcours privé sur ordinateur et liste emportée sur mobile', async ({
   await expect(page.locator(`[data-mealslot="${tuesday}soir"] .scheduled`)).toContainText(
     'Tarte aux poireaux',
   );
-  await page.getByRole('button', { name: 'Compléter la semaine' }).click();
+  await page.getByRole('button', { name: 'Planifier ma semaine' }).click();
+  await dialog.getByRole('button', { name: 'Appliquer au planning' }).click();
+  await expect(dialog).toHaveCount(0);
   await page.getByRole('button', { name: 'Planifier', exact: true }).click();
   await dialog.getByLabel('Rechercher un plat ou un ingrédient').fill('poireaux');
   await dialog.getByRole('button', { name: /Tarte aux poireaux/ }).click();

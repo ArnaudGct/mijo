@@ -2,9 +2,10 @@
 import Link from 'next/link';
 import { useState, useRef, useEffect, type DragEvent, type PointerEvent } from 'react';
 import { Plus, GripVertical, X } from 'lucide-react';
-import { monday, addDays, labelDate, inWeek, today } from '@/lib/dates';
+import { monday, addDays, labelDate, inWeek } from '@/lib/dates';
 import { type State, type Prep } from '@/lib/model';
-import { storageAlert } from '@/lib/planner';
+import { AutoPlanButton } from './auto-plan';
+import { storageAlert, weekPreparations } from '@/lib/planner';
 import {
   Dialog,
   Form,
@@ -244,7 +245,7 @@ const weekTabs = [
   ['petit-dejeuner', 'Petit-déjeuner'],
 ] as const;
 export function Planner({ ui }: { ui: UI }) {
-  const { s, w } = ui;
+  const { w } = ui;
   const active = usePageTab(weekTabs);
   return (
     <>
@@ -256,18 +257,7 @@ export function Planner({ ui }: { ui: UI }) {
         <PageTabs options={weekTabs} active={active} />
         {active !== 'petit-dejeuner' && (
           <div className="actions">
-            {w >= monday(today()) && s.meals.filter((m) => inWeek(m.day, w)).length < 14 && (
-              <button
-                onClick={() =>
-                  ui.run(
-                    { action: 'fillWeek', week: w },
-                    'Les dîners disponibles ont été planifiés selon votre objectif.',
-                  )
-                }
-              >
-                Compléter la semaine
-              </button>
-            )}
+            <AutoPlanButton ui={ui} />
             <button className="primary" onClick={() => ui.open(<PlanForm ui={ui} />)}>
               <Plus size={16} /> Planifier
             </button>
@@ -288,7 +278,7 @@ function destination(hit: EventTarget | null, originalSlot: MealSlot) {
   const cell = hit.closest<HTMLElement>('[data-mealslot]');
   if (cell) return cell;
   // Dropping on the day label keeps the original mealtime.
-  const day = hit.closest('.calday > header')?.parentElement;
+  const day = hit.closest('[data-day-heading]')?.parentElement;
   return day?.querySelector<HTMLElement>('[data-slot="' + originalSlot + '"]') ?? null;
 }
 function acceptsMeal(element: HTMLElement | null, id: string): element is HTMLElement {
@@ -296,6 +286,115 @@ function acceptsMeal(element: HTMLElement | null, id: string): element is HTMLEl
 }
 
 function MealPlanning({ ui, batch }: { ui: UI; batch: boolean }) {
+  const { s, w } = ui;
+  const entries = weekPreparations(s, w);
+  const preps = entries.map((x) => x.p);
+  return (
+    <>
+      {batch && (
+        <section className="panel">
+          <div className="split">
+            <h2>Sessions de cuisine</h2>
+            {preps.some((p) => !p.session && !p.done) && (
+              <button onClick={() => ui.open(<BatchForm ui={ui} />)}>
+                Regrouper des préparations
+              </button>
+            )}
+          </div>
+          {s.sessions
+            .filter((g) => inWeek(g.day, w))
+            .map((g) => (
+              <div className="row" key={g.id}>
+                <button onClick={() => ui.open(<BatchForm group={g} ui={ui} />)}>
+                  {g.name} · {labelDate(g.day)}
+                </button>
+                <Link href={'/cuisiner?week=' + w + '&session=' + g.id}>Cuisiner →</Link>
+              </div>
+            ))}
+          <p>
+            {preps.length
+              ? 'Regroupez les plats à cuisiner le même jour. Les déjeuners et dîners gardent leurs dates.'
+              : 'Planifiez d’abord les plats de la semaine. Vous pourrez ensuite les préparer ensemble.'}
+          </p>
+        </section>
+      )}
+      <MealCalendar key={w} ui={ui} />
+      <div className="section-heading">
+        <h2>Préparations de la semaine</h2>
+      </div>
+      {entries.map(({ p, first }) => {
+        const used = s.meals
+          .filter((m) => m.prepId === p.id && m.consumed)
+          .reduce((n, m) => n + m.servings, 0);
+        const portions = p.done ? p.servings - used : p.servings;
+        return (
+          <div key={p.id} className="row weekly-prep">
+            <Photo src={p.snapshot.image} />
+            <div className="prep-name">
+              <strong>{p.snapshot.title}</strong>
+              <small>
+                {labelDate(first?.day ?? p.day)}
+                {first
+                  ? first.slot === 'midi'
+                    ? ' · Déjeuner'
+                    : ' · Dîner'
+                  : ' · Préparation'} · {portions} {portions > 1 ? 'portions' : 'portion'}{' '}
+                {p.done ? (portions > 1 ? 'restantes' : 'restante') : 'à préparer'}
+              </small>
+              {first && first.day !== p.day && (
+                <small>
+                  {p.done ? 'Préparé le ' : 'Préparation le '}
+                  {labelDate(p.day)}
+                </small>
+              )}
+            </div>
+            <div className="actions">
+              <Link
+                className="button"
+                href={'/cuisiner?week=' + monday(p.day) + '&session=' + p.id}
+              >
+                Cuisiner
+              </Link>
+              <button onClick={() => ui.open(<PrepForm ui={ui} p={p} />)}>Ajuster</button>
+            </div>
+          </div>
+        );
+      })}
+      {!preps.length && (
+        <Empty title="Aucune préparation planifiée">
+          <Link href={'/recettes?week=' + w}>Choisir dans le carnet →</Link>
+        </Empty>
+      )}
+      <button
+        className="more"
+        onClick={() =>
+          ui.open(
+            <Dialog title="Dupliquer cette semaine" close={ui.close}>
+              <Form
+                onSave={async (f) => {
+                  const to = monday(str(f, 'day'));
+                  if (await ui.run({ action: 'duplicateWeek', week: w, to })) {
+                    ui.setW(to);
+                    ui.close();
+                  }
+                }}
+              >
+                <Field label="Semaine de destination (vide)">
+                  <input name="day" type="date" required defaultValue={addDays(w, 7)} />
+                </Field>
+              </Form>
+            </Dialog>,
+          )
+        }
+      >
+        Dupliquer la semaine et sa liste
+      </button>
+    </>
+  );
+}
+
+export function MealCalendar({ ui, compact = false }: { ui: UI; compact?: boolean }) {
+  const { s, w } = ui;
   const [picked, setPicked] = useState('');
   const [over, setOver] = useState('');
   const [touchDragging, setTouchDragging] = useState(false);
@@ -385,44 +484,15 @@ function MealPlanning({ ui, batch }: { ui: UI; batch: boolean }) {
     return () => cancelAnimationFrame(frame);
   }, [touchDragging]);
 
-  const { s, w } = ui;
-  const preps = s.preps.filter((p) => inWeek(p.day, w));
   return (
     <>
-      {batch && (
-        <section className="panel">
-          <div className="split">
-            <h2>Sessions de cuisine</h2>
-            {preps.some((p) => !p.session && !p.done) && (
-              <button onClick={() => ui.open(<BatchForm ui={ui} />)}>
-                Regrouper des préparations
-              </button>
-            )}
-          </div>
-          {s.sessions
-            .filter((g) => inWeek(g.day, w))
-            .map((g) => (
-              <div className="row" key={g.id}>
-                <button onClick={() => ui.open(<BatchForm group={g} ui={ui} />)}>
-                  {g.name} · {labelDate(g.day)}
-                </button>
-                <Link href={'/cuisiner?week=' + w + '&session=' + g.id}>Cuisiner →</Link>
-              </div>
-            ))}
-          <p>
-            {preps.length
-              ? 'Regroupez les plats à cuisiner le même jour. Les déjeuners et dîners gardent leurs dates.'
-              : 'Planifiez d’abord les plats de la semaine. Vous pourrez ensuite les préparer ensemble.'}
-          </p>
-        </section>
-      )}
       {picked && (
         <div className="move-help" role="status">
           Choisis le créneau où déposer le repas. <button onClick={clearDrag}>Annuler</button>
         </div>
       )}
       <div
-        className="calendar"
+        className={compact ? 'home-menu' : 'calendar'}
         ref={calendar}
         onKeyDown={(e) => {
           if (e.key === 'Escape') clearDrag();
@@ -452,11 +522,20 @@ function MealPlanning({ ui, batch }: { ui: UI; batch: boolean }) {
       >
         {Array.from({ length: 7 }, (_, i) => {
           const day = addDays(w, i);
+          const planner = '/semaine?week=' + w + '#jour-' + day;
           return (
-            <section className="calday" key={day} id={'jour-' + day}>
-              <header>
-                <b>{labelDate(day, { weekday: 'long' })}</b>
-                <span>{labelDate(day, { day: 'numeric', month: 'short' })}</span>
+            <section className={compact ? 'menu-day' : 'calday'} key={day} id={'jour-' + day}>
+              <header data-day-heading className={compact ? 'menu-date' : undefined}>
+                {compact ? (
+                  <Link draggable={false} href={planner}>
+                    {labelDate(day, { weekday: 'short', day: 'numeric' })}
+                  </Link>
+                ) : (
+                  <>
+                    <b>{labelDate(day, { weekday: 'long' })}</b>
+                    <span>{labelDate(day, { day: 'numeric', month: 'short' })}</span>
+                  </>
+                )}
               </header>
               {(['midi', 'soir'] as const).map((slot) => {
                 const m = s.meals.find((m) => m.day === day && m.slot === slot);
@@ -467,12 +546,14 @@ function MealPlanning({ ui, batch }: { ui: UI; batch: boolean }) {
                     data-mealslot={day + slot}
                     data-day={day}
                     data-slot={slot}
-                    className={'slot' + (over === day + slot ? ' drop-over' : '')}
+                    className={
+                      (compact ? 'menu-slot' : 'slot') + (over === day + slot ? ' drop-over' : '')
+                    }
                     data-meal-id={m?.id}
                     data-consumed={m?.consumed || undefined}
                     data-drop-label={m ? 'Échanger ici' : 'Déplacer ici'}
                   >
-                    <small>{slot === 'midi' ? 'Déjeuner' : 'Dîner'}</small>
+                    {!compact && <small>{slot === 'midi' ? 'Déjeuner' : 'Dîner'}</small>}
                     {picked && picked !== m?.id && !m?.consumed && (
                       <button
                         className="drop-target"
@@ -549,29 +630,45 @@ function MealPlanning({ ui, batch }: { ui: UI; batch: boolean }) {
                             <GripVertical size={16} />
                           </button>
                         )}
-                        <button
-                          className="scheduled"
-                          onClick={() =>
-                            ui.open(<MealForm ui={ui} day={day} slot={slot} meal={m} />)
-                          }
-                        >
-                          {p?.snapshot.image && <Photo src={p.snapshot.image} />}
-                          <span>
-                            {p?.snapshot.title ?? 'Repas à l’extérieur'}
-                            <small>
-                              {m.servings} portion{m.servings > 1 ? 's' : ''}
-                              {m.consumed
-                                ? ' · consommée'
-                                : m.frozen
-                                  ? ' · congélation prévue'
-                                  : ''}
-                            </small>
-                            {p && storageAlert(p, m) && (
-                              <small className="warn">{storageAlert(p, m)}</small>
-                            )}
-                          </span>
-                        </button>
-                        {!m.consumed && (
+                        {compact ? (
+                          <Link
+                            className="menu-meal"
+                            draggable={false}
+                            href={
+                              p ? '/cuisiner?week=' + monday(p.day) + '&session=' + p.id : planner
+                            }
+                          >
+                            {p?.snapshot.image && <Photo src={p.snapshot.image} />}
+                            <span>
+                              <small>{slot === 'midi' ? 'Déjeuner' : 'Dîner'}</small>
+                              {p?.snapshot.title ?? 'Repas à l’extérieur'}
+                            </span>
+                          </Link>
+                        ) : (
+                          <button
+                            className="scheduled"
+                            onClick={() =>
+                              ui.open(<MealForm ui={ui} day={day} slot={slot} meal={m} />)
+                            }
+                          >
+                            {p?.snapshot.image && <Photo src={p.snapshot.image} />}
+                            <span>
+                              {p?.snapshot.title ?? 'Repas à l’extérieur'}
+                              <small>
+                                {m.servings} portion{m.servings > 1 ? 's' : ''}
+                                {m.consumed
+                                  ? ' · consommée'
+                                  : m.frozen
+                                    ? ' · congélation prévue'
+                                    : ''}
+                              </small>
+                              {p && storageAlert(p, m) && (
+                                <small className="warn">{storageAlert(p, m)}</small>
+                              )}
+                            </span>
+                          </button>
+                        )}
+                        {!compact && !m.consumed && (
                           <button
                             className="meal-remove"
                             aria-label={
@@ -590,6 +687,12 @@ function MealPlanning({ ui, batch }: { ui: UI; batch: boolean }) {
                           </button>
                         )}
                       </div>
+                    ) : compact ? (
+                      <Link draggable={false} className="menu-meal" href={planner}>
+                        <span>
+                          <small>{slot === 'midi' ? 'Déjeuner' : 'Dîner'}</small>Libre
+                        </span>
+                      </Link>
                     ) : (
                       <div className="slot-actions">
                         <button onClick={() => ui.open(<PlanForm ui={ui} day={day} slot={slot} />)}>
@@ -607,62 +710,6 @@ function MealPlanning({ ui, batch }: { ui: UI; batch: boolean }) {
           );
         })}
       </div>
-      <div className="section-heading">
-        <h2>Préparations de la semaine</h2>
-      </div>
-      {preps.map((p) => {
-        const used = s.meals
-          .filter((m) => m.prepId === p.id && m.consumed)
-          .reduce((n, m) => n + m.servings, 0);
-        return (
-          <div key={p.id} className="row">
-            <div>
-              <strong>{p.snapshot.title}</strong>
-              <small>
-                {labelDate(p.day)} ·{' '}
-                {p.done
-                  ? p.servings - used + ' portions restantes'
-                  : p.servings + ' portions à préparer'}
-              </small>
-            </div>
-            <div className="actions">
-              <Link className="button" href={'/cuisiner?week=' + w + '&session=' + p.id}>
-                Cuisiner
-              </Link>
-              <button onClick={() => ui.open(<PrepForm ui={ui} p={p} />)}>Ajuster</button>
-            </div>
-          </div>
-        );
-      })}
-      {!preps.length && (
-        <Empty title="Aucune préparation planifiée">
-          <Link href={'/recettes?week=' + w}>Choisir dans le carnet →</Link>
-        </Empty>
-      )}
-      <button
-        className="more"
-        onClick={() =>
-          ui.open(
-            <Dialog title="Dupliquer cette semaine" close={ui.close}>
-              <Form
-                onSave={async (f) => {
-                  const to = monday(str(f, 'day'));
-                  if (await ui.run({ action: 'duplicateWeek', week: w, to })) {
-                    ui.setW(to);
-                    ui.close();
-                  }
-                }}
-              >
-                <Field label="Semaine de destination (vide)">
-                  <input name="day" type="date" required defaultValue={addDays(w, 7)} />
-                </Field>
-              </Form>
-            </Dialog>,
-          )
-        }
-      >
-        Dupliquer la semaine et sa liste
-      </button>
     </>
   );
 }

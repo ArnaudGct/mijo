@@ -1,5 +1,7 @@
 import { duration, type State, type Prep, type RecipeRow } from './model';
-import { clean, normalize, rounded } from './ingredients';
+import { fold, groceryName } from './grocery-names';
+import { sourceUrl } from './source-url';
+import { clean, normalize, rounded, shoppingCategory } from './ingredients';
 import { marketBasket } from './market';
 import { addDays, inWeek } from './dates';
 
@@ -34,62 +36,217 @@ function variety(seed: string) {
   for (const c of seed) hash = Math.imul(hash ^ c.charCodeAt(0), 16777619);
   return (hash >>> 0) / 4294967296;
 }
-export function suggest(s: State, w: string, from = w) {
-  const chosen: { id: string; day: string; why: string }[] = [];
-  const active = s.recipes.filter(
-    (r) =>
-      !r.archived &&
-      r.data.base &&
-      r.data.steps.length &&
-      r.data.ingredients.length &&
-      (!s.prefs.diet || clean(r.data.diet).includes(clean(s.prefs.diet))),
+type Recipe = RecipeRow['data'];
+type Occasion = { day: string; servings: number };
+function groceries(recipe: Recipe) {
+  const result = new Map<string, { name: string; weight: number }>();
+  for (const i of recipe.ingredients) {
+    const name = groceryName(i.name),
+      key = fold(name);
+    if (i.unit === 'selon le goût' || /^(sel|poivre|eau|huile|vinaigre|sucre|bouillon)\b/.test(key))
+      continue;
+    const fresh = ['Fruits et légumes', 'Produits frais', 'Viandes et poissons'].includes(
+      shoppingCategory(name),
+    );
+    const aromatic = /^(ail|gingembre|piment|echalote)\b/.test(key);
+    result.set(key, { name, weight: aromatic ? 0.6 : fresh ? 3 : 1 });
+  }
+  return result;
+}
+function dishFamily(r: Recipe) {
+  return (
+    fold(r.title).match(
+      /\b(bibimbap|risotto|pizza|burger|tacos?|curry|dahl|dhal|quiche|gratin|soupe|veloute|salade|lasagnes?|ravioli|wraps?|bowl|ramen|gnocchi|spaghetti|penne|orzo|tartines?|galettes?|wok|tagliatelles?|tortillas?|paella|chili)s?\b/,
+    )?.[1] ?? ''
   );
-  const used = s.preps.filter((p) => inWeek(p.day, w));
+}
+function protein(r: Recipe) {
+  const names = fold(
+    r.ingredients
+      .filter((i) => !/^bouillon|^sauce |^epices/.test(fold(i.name)))
+      .map((i) => i.name)
+      .join(' '),
+  );
+  return [
+    /\b(poulet|dinde|volaille)\b/,
+    /\b(porc|jambon|lardons?|bacon|chorizo)\b/,
+    /\b(boeuf|bavette|steaks?|veau)\b/,
+    /\b(saumon|thon|poisson|truite|cabillaud|lieu|crevettes?|merlu)\b/,
+    /\b(tofu|tempeh)\b/,
+  ].findIndex((re) => re.test(names));
+}
+function recommend(s: State, w: string, slots: Occasion[], fixed: Prep[]) {
+  if (!slots.length) return [];
+  const used = [...fixed];
+  const proteins = new Map<number, number>();
   const previous = s.preps.filter((p) => p.day < w);
-  const dinners = s.meals.filter((m) => inWeek(m.day, w) && m.slot === 'soir').length;
-  for (let i = 0; i < 7 && dinners + chosen.length < s.prefs.target; i++) {
-    const day = addDays(w, i);
-    if (day < from || s.meals.some((m) => m.day === day && m.slot === 'soir')) continue;
-    const options = active
-      .filter((r) => !used.some((p) => p.recipeId === r.id))
-      .map((r) => {
+  const options = s.recipes
+    .filter(
+      (r) =>
+        !r.archived &&
+        r.data.base &&
+        r.data.steps.length &&
+        r.data.ingredients.length &&
+        (!s.prefs.diet || clean(r.data.diet).includes(clean(s.prefs.diet))),
+    )
+    .map((r) => ({
+      r,
+      foods: groceries(r.data),
+      family: dishFamily(r.data),
+      main: protein(r.data),
+      url: sourceUrl(r.data.url),
+    }));
+  const frequency = new Map<string, number>();
+  for (const { foods } of options)
+    for (const key of foods.keys()) frequency.set(key, (frequency.get(key) ?? 0) + 1);
+  const results: { id: string; day: string; why: string }[] = [];
+  const counts = new Map<string, number>();
+  function include(r: Recipe) {
+    const main = protein(r);
+    proteins.set(main, (proteins.get(main) ?? 0) + 1);
+    for (const key of groceries(r).keys()) counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  for (const prep of used) include(prep.snapshot);
+  const inStock = new Set(
+    s.stock.filter((i) => i.quantity > 0).map((i) => fold(groceryName(i.name))),
+  );
+  for (const { day, servings } of slots) {
+    const candidates = options
+      .filter(
+        ({ r, url }) =>
+          !used.some(
+            (p) =>
+              p.recipeId === r.id ||
+              fold(p.snapshot.title) === fold(r.data.title) ||
+              (url && sourceUrl(p.snapshot.url) === url),
+          ),
+      )
+      .map(({ r, foods, family, main }) => {
         const history = previous.filter((p) => p.recipeId === r.id);
-        const recent = history.some((p) => p.day >= addDays(w, -21));
-        const preference = Math.min(4, history.filter((p) => p.done || !p.automatic).length);
-        const similar = used.filter(
-          (p) => r.data.cuisine && p.snapshot.cuisine === r.data.cuisine,
-        ).length;
+        let overlap = 0,
+          support = 0,
+          novelty = 0;
+        const shared: { name: string; weight: number }[] = [];
+        for (const [key, { name, weight }] of foods) {
+          const n = counts.get(key) ?? 0;
+          if (n) {
+            overlap += weight / (1 + 0.6 * (n - 1));
+            shared.push({ name, weight });
+          } else {
+            novelty += weight;
+            support += (frequency.get(key) ?? 0) > 1 ? weight : 0;
+          }
+          if (inStock.has(key)) overlap += weight * 0.35;
+        }
         const time = duration(r.data);
-        const estimate =
-          s.prefs.budget === null
-            ? null
-            : marketBasket({ ...s, preps: [...used, planned(r, day, s.prefs.portions)] }, w);
-        const overBudget =
-          estimate && s.prefs.budget !== null
-            ? Math.max(0, (estimate.cash - s.prefs.budget) / 300)
-            : 0;
         const score =
-          variety(day + r.id) * 8 +
-          (r.data.favorite ? 5 : 0) +
+          Math.min(14, overlap * 2) +
+          (10 * overlap) / Math.max(1, overlap + novelty) -
+          Math.min(12, novelty) * 0.35 +
+          (!counts.size ? (5 * support) / Math.max(1, novelty) : 0) +
+          variety(day + r.id) * 2 +
+          (r.data.favorite ? 4 : 0) +
           r.data.rating +
-          preference -
-          (recent ? 22 : 0) -
-          similar * 2 -
-          overBudget -
+          Math.min(3, history.filter((p) => p.done || !p.automatic).length) -
+          (history.some((p) => p.day >= addDays(w, -21)) ? 14 : 0) -
+          used.filter((p) => family && dishFamily(p.snapshot) === family).length * 17 -
+          (main < 0 ? 0 : Math.max(0, (proteins.get(main) ?? 0) - 1) * 5) -
+          used.filter((p) => r.data.cuisine && p.snapshot.cuisine === r.data.cuisine).length * 2 -
           (s.prefs.maxTime && time && time > s.prefs.maxTime ? 12 : 0);
-        return { r, score };
+        return { r, score, shared };
       })
       .sort((a, b) => b.score - a.score || a.r.id.localeCompare(b.r.id));
-    if (!options.length) continue;
-    const { r } = options[0];
-    used.push(planned(r, day, s.prefs.portions));
-    chosen.push({
+    if (!candidates.length) break;
+    // Compare retail packs for promising recipes; stock and the existing basket are already accounted for.
+    const basket = marketBasket({ ...s, preps: used }, w);
+    const finalists = (s.prefs.budget === null ? candidates.slice(0, 8) : candidates)
+      .map((c) => {
+        const after = marketBasket({ ...s, preps: [...used, planned(c.r, day, servings)] }, w);
+        const extra = Math.max(0, after.cash - basket.cash) / 100;
+        const unknown = Math.max(0, after.missing - basket.missing);
+        const over = s.prefs.budget === null ? 0 : Math.max(0, after.cash - s.prefs.budget) / 300;
+        return { ...c, rank: c.score - Math.min(8, extra * 0.6) - unknown * 2 - over };
+      })
+      .sort((a, b) => b.rank - a.rank || a.r.id.localeCompare(b.r.id));
+    const { r, shared } = finalists[0];
+    results.push({
       id: r.id,
       day,
-      why: r.data.favorite ? 'Dans vos favoris' : 'Variété de la semaine',
+      why: shared.length
+        ? 'En commun : ' +
+          shared
+            .sort((a, b) => b.weight - a.weight)
+            .slice(0, 3)
+            .map((x) => x.name)
+            .join(', ')
+        : r.data.favorite
+          ? 'Dans vos favoris'
+          : 'Variété de la semaine',
     });
+    used.push(planned(r, day, servings));
+    include(r.data);
   }
-  return chosen;
+  return results;
+}
+export function weekPreparations(s: State, w: string) {
+  const first = new Map<string, State['meals'][number]>();
+  for (const m of s.meals
+    .filter((m) => m.prepId && inWeek(m.day, w))
+    .sort((a, b) => a.day.localeCompare(b.day) || a.slot.localeCompare(b.slot))) {
+    if (m.prepId && !first.has(m.prepId)) first.set(m.prepId, m);
+  }
+  return s.preps
+    .filter((p) => inWeek(p.day, w) || first.has(p.id))
+    .map((p) => ({ p, first: first.get(p.id) }))
+    .sort(
+      (a, b) =>
+        (a.first?.day ?? a.p.day).localeCompare(b.first?.day ?? b.p.day) ||
+        (a.first?.slot ?? 'z').localeCompare(b.first?.slot ?? 'z') ||
+        a.p.snapshot.title.localeCompare(b.p.snapshot.title, 'fr'),
+    );
+}
+export function suggest(s: State, w: string, from = w) {
+  const weekMeals = s.meals.filter((m) => inWeek(m.day, w) && m.slot === 'soir');
+  const slots = Array.from({ length: 7 }, (_, i) => ({
+    day: addDays(w, i),
+    servings: s.prefs.portions,
+  }))
+    .filter(({ day }) => day >= from && !weekMeals.some((m) => m.day === day))
+    .slice(0, Math.max(0, s.prefs.target - weekMeals.length));
+  return recommend(
+    s,
+    w,
+    slots,
+    weekPreparations(s, w).map((x) => x.p),
+  );
+}
+export function optimizedRecipes(s: State, w: string, from: string) {
+  const week = weekPreparations(s, w).map((x) => x.p);
+  const editable = week.filter((p) => {
+    const meals = s.meals.filter((m) => m.prepId === p.id);
+    return (
+      p.automatic &&
+      inWeek(p.day, w) &&
+      p.day >= from &&
+      !p.done &&
+      !p.session &&
+      !p.ticks.length &&
+      meals.length &&
+      meals.every((m) => !m.consumed && !m.frozen && m.day >= from && inWeek(m.day, w))
+    );
+  });
+  const ideas = recommend(
+    s,
+    w,
+    editable,
+    week.filter((p) => !editable.includes(p)),
+  );
+  if (ideas.length !== editable.length) return [];
+  return ideas.flatMap((idea, i) =>
+    idea.id === editable[i].recipeId
+      ? []
+      : [{ prep: editable[i], recipe: s.recipes.find((r) => r.id === idea.id)!, why: idea.why }],
+  );
 }
 export function storageAlert(p: Prep, m: State['meals'][number]) {
   return m.day < p.day

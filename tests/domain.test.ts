@@ -2,7 +2,14 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { blankRecipe, snapshot, type RecipeRow } from '../lib/model';
 import { parseLine, normalize, amount } from '../lib/ingredients';
-import { planned, defaultMeals, storageAlert, suggest } from '../lib/planner';
+import {
+  planned,
+  defaultMeals,
+  storageAlert,
+  suggest,
+  weekPreparations,
+  optimizedRecipes,
+} from '../lib/planner';
 import { marketBasket, shipping } from '../lib/market';
 import { needs, basket } from '../lib/shopping';
 import { parseNotion } from '../lib/notion';
@@ -320,4 +327,41 @@ test('panier de semaine : formats de riz, bouillon partagé et produits disponib
   assert.equal(after.used, before.used);
   assert.equal(after.lines.find((l) => l.name === oil.name)?.cents, 0);
   assert.ok(after.cash < before.cash);
+});
+
+test('le planning partage les achats de frais et varie les familles de plats', () => {
+  const s = fixture();
+  const anchor = recipeRow('Bibimbap au poulet', 'Carotte | 2 | pièce');
+  anchor.data.ingredients.push(parseLine('Oignon jaune | 1 | pièce'));
+  const repeated = recipeRow('Bibimbap aux légumes', 'Carottes | 1 | pièce');
+  const matches = recipeRow('Tarte aux carottes', 'Carottes | 3 | pièce');
+  matches.data.ingredients.push(parseLine('Oignon rouge | 1 | pièce'));
+  const unrelated = recipeRow('Velouté aux poireaux', 'Poireau | 3 | pièce');
+  for (const r of [anchor, repeated, matches, unrelated])
+    r.data.ingredients.push(parseLine('Huile | 1 | càs'));
+  s.recipes = [repeated, unrelated, anchor, matches];
+  s.preps = [planned(anchor, day, 2)];
+  s.meals = defaultMeals(s.preps[0], true);
+  s.prefs.target = 2;
+  const [idea] = suggest(s, day);
+  assert.equal(idea.id, matches.id);
+  assert.match(idea.why, /Carotte/);
+  assert.doesNotMatch(idea.why, /Huile/);
+});
+test('ordre des préparations par première apparition, déjeuner avant dîner, y compris les restes', () => {
+  const s = fixture();
+  const [a, b] = s.preps;
+  b.day = '2026-11-15';
+  s.meals = [
+    { ...s.meals[0], prepId: a.id, day, slot: 'soir' },
+    { ...s.meals[1], prepId: b.id, day, slot: 'midi' },
+  ];
+  assert.deepEqual(
+    weekPreparations(s, day).map((x) => x.p.id),
+    [b.id, a.id],
+  );
+  assert.equal(weekPreparations(s, day)[0].first?.slot, 'midi');
+  a.automatic = true;
+  b.automatic = false;
+  assert.ok(optimizedRecipes(s, day, day).every((x) => x.prep.id !== b.id));
 });

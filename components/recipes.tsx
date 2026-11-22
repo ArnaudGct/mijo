@@ -1,4 +1,7 @@
 'use client';
+import { DiscoveryShelf } from './discoveries';
+import { AutoPlanButton } from './auto-plan';
+import { importSites } from '@/lib/recipe-sources';
 import { useState } from 'react';
 import {
   Heart,
@@ -22,7 +25,20 @@ import {
 import { sourceUrl } from '@/lib/source-url';
 import { clean, amount } from '@/lib/ingredients';
 import { labelDate, today, inWeek, monday, addDays } from '@/lib/dates';
-import { Field, Form, Photo, Dialog, Empty, api, str, num, quantity, type UI } from './common';
+import {
+  PageTabs,
+  usePageTab,
+  Field,
+  Form,
+  Photo,
+  Dialog,
+  Empty,
+  api,
+  str,
+  num,
+  quantity,
+  type UI,
+} from './common';
 export function RecipeCard({ row, ui }: { row: RecipeRow; ui: UI }) {
   const r = row.data;
   return (
@@ -259,7 +275,12 @@ export function PlanForm({
     </Dialog>
   );
 }
+const catalogTabs = [
+  ['carnet', 'Mon carnet'],
+  ['suggestions', 'Suggestions'],
+] as const;
 export function Catalog({ ui }: { ui: UI }) {
+  const section = usePageTab(catalogTabs);
   const [search, setSearch] = useState(''),
     [filters, setFilters] = useState(false),
     [tab, setTab] = useState('Toutes'),
@@ -311,6 +332,7 @@ export function Catalog({ ui }: { ui: UI }) {
       <header className="page-heading">
         <h1>Mon carnet de recettes</h1>
         <div className="actions">
+          <AutoPlanButton ui={ui} />
           <button onClick={() => ui.open(<UrlImport ui={ui} />)}>
             <Link2 size={16} /> Importer une URL
           </button>
@@ -319,93 +341,108 @@ export function Catalog({ ui }: { ui: UI }) {
           </button>
         </div>
       </header>
-      <div className="toolbar">
-        <label className="search">
-          <Search size={18} />
-          <input
-            aria-label="Rechercher une recette"
-            placeholder="Rechercher une recette…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </label>
-        <button aria-expanded={filters} onClick={() => setFilters(!filters)}>
-          <SlidersHorizontal size={16} /> Filtres
-        </button>
-        <select
-          aria-label="Tri des recettes"
-          value={sort}
-          onChange={(e) => setSort(e.target.value)}
-        >
-          {['Nom', 'Durée', 'Préférence', 'Dernière préparation'].map((x) => (
-            <option key={x}>{x}</option>
-          ))}
-        </select>
+      <div className="catalog-sections">
+        <PageTabs options={catalogTabs} active={section} />
       </div>
-      {filters && (
-        <div className="panel filtergrid">
-          <Field label="Durée maximale">
-            <select value={time} onChange={(e) => setTime(e.target.value)}>
-              <option value="">Toutes</option>
-              {[15, 30, 45, 60].map((n) => (
-                <option value={n} key={n}>
-                  {n} min
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Cuisine">
-            <input value={cuisine} onChange={(e) => setCuisine(e.target.value)} />
-          </Field>
-          <Field label="Ingrédient">
-            <input value={ingredient} onChange={(e) => setIngredient(e.target.value)} />
-          </Field>
-          <Field label="Alimentation">
-            <select value={diet} onChange={(e) => setDiet(e.target.value)}>
-              <option value="">Toutes</option>
-              {['Viande', 'Poisson', 'Végétarien'].map((x) => (
-                <option key={x}>{x}</option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Difficulté">
-            <select value={difficulty} onChange={(e) => setDifficulty(e.target.value)}>
-              <option value="">Toutes</option>
-              {[...new Set(ui.s.recipes.map((r) => r.data.difficulty))].filter(Boolean).map((x) => (
-                <option key={x}>{x}</option>
-              ))}
-            </select>
-          </Field>
-          <label>
-            <input type="checkbox" checked={made} onChange={(e) => setMade(e.target.checked)} />{' '}
-            Déjà réalisées
-          </label>
-          <label>
-            <input type="checkbox" checked={batch} onChange={(e) => setBatch(e.target.checked)} />{' '}
-            Batch cooking
-          </label>
-        </div>
-      )}
-      <div className="section-heading">
-        <div className="tabs">
-          {['Toutes', 'Favoris', 'À vérifier', 'Archives'].map((t) => (
-            <button className={tab === t ? 'selected' : ''} key={t} onClick={() => setTab(t)}>
-              {t}
+      {section === 'suggestions' ? (
+        <DiscoveryShelf ui={ui} />
+      ) : (
+        <>
+          <div className="toolbar">
+            <label className="search">
+              <Search size={18} />
+              <input
+                aria-label="Rechercher une recette"
+                placeholder="Rechercher une recette…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </label>
+            <button aria-expanded={filters} onClick={() => setFilters(!filters)}>
+              <SlidersHorizontal size={16} /> Filtres
             </button>
-          ))}
-        </div>
-        <small>{list.length} recettes</small>
-      </div>
-      <div className="cards">
-        {list.slice(0, limit).map((r) => (
-          <RecipeCard row={r} key={r.id} ui={ui} />
-        ))}
-      </div>
-      {!list.length && <Empty title="Aucune recette dans cette sélection" />}
-      {list.length > limit && (
-        <button className="more" onClick={() => setLimit(limit + 24)}>
-          Afficher davantage
-        </button>
+            <select
+              aria-label="Tri des recettes"
+              value={sort}
+              onChange={(e) => setSort(e.target.value)}
+            >
+              {['Nom', 'Durée', 'Préférence', 'Dernière préparation'].map((x) => (
+                <option key={x}>{x}</option>
+              ))}
+            </select>
+          </div>
+          {filters && (
+            <div className="panel filtergrid">
+              <Field label="Durée maximale">
+                <select value={time} onChange={(e) => setTime(e.target.value)}>
+                  <option value="">Toutes</option>
+                  {[15, 30, 45, 60].map((n) => (
+                    <option value={n} key={n}>
+                      {n} min
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Cuisine">
+                <input value={cuisine} onChange={(e) => setCuisine(e.target.value)} />
+              </Field>
+              <Field label="Ingrédient">
+                <input value={ingredient} onChange={(e) => setIngredient(e.target.value)} />
+              </Field>
+              <Field label="Alimentation">
+                <select value={diet} onChange={(e) => setDiet(e.target.value)}>
+                  <option value="">Toutes</option>
+                  {['Viande', 'Poisson', 'Végétarien'].map((x) => (
+                    <option key={x}>{x}</option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Difficulté">
+                <select value={difficulty} onChange={(e) => setDifficulty(e.target.value)}>
+                  <option value="">Toutes</option>
+                  {[...new Set(ui.s.recipes.map((r) => r.data.difficulty))]
+                    .filter(Boolean)
+                    .map((x) => (
+                      <option key={x}>{x}</option>
+                    ))}
+                </select>
+              </Field>
+              <label>
+                <input type="checkbox" checked={made} onChange={(e) => setMade(e.target.checked)} />{' '}
+                Déjà réalisées
+              </label>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={batch}
+                  onChange={(e) => setBatch(e.target.checked)}
+                />{' '}
+                Batch cooking
+              </label>
+            </div>
+          )}
+          <div className="section-heading">
+            <div className="tabs">
+              {['Toutes', 'Favoris', 'À vérifier', 'Archives'].map((t) => (
+                <button className={tab === t ? 'selected' : ''} key={t} onClick={() => setTab(t)}>
+                  {t}
+                </button>
+              ))}
+            </div>
+            <small>{list.length} recettes</small>
+          </div>
+          <div className="cards">
+            {list.slice(0, limit).map((r) => (
+              <RecipeCard row={r} key={r.id} ui={ui} />
+            ))}
+          </div>
+          {!list.length && <Empty title="Aucune recette dans cette sélection" />}
+          {list.length > limit && (
+            <button className="more" onClick={() => setLimit(limit + 24)}>
+              Afficher davantage
+            </button>
+          )}
+        </>
       )}
     </>
   );
@@ -450,7 +487,23 @@ function UrlImport({ ui }: { ui: UI }) {
         <Field label="Adresse de la recette">
           <input autoFocus name="url" type="url" placeholder="https://…" required />
         </Field>
-        <p role="alert">{error}</p>
+        <details className="import-sites">
+          <summary>Sites compatibles ({importSites.length} vérifiés)</summary>
+          <p>
+            Ouvre un exemple pour chaque site. D’autres sites peuvent fonctionner si la fiche publie
+            les portions, les ingrédients et les étapes.
+          </p>
+          <ul>
+            {importSites.map((site) => (
+              <li key={site.name}>
+                <a href={site.example} target="_blank" rel="noreferrer">
+                  {site.name} ↗
+                </a>
+              </li>
+            ))}
+          </ul>
+        </details>
+        {error && <p role="alert">{error}</p>}
       </Form>
     </Dialog>
   );

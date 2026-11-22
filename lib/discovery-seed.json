@@ -1,0 +1,170 @@
+[
+  {
+    "title": "Hachis Parmentier",
+    "url": "https://www.marmiton.org/recettes/recette_hachis-parmentier_17639.aspx",
+    "image": "https://assets.afcdn.com/recipe/20221012/136013_w1024h1024c1cx727cy1355cxt0cyt502cxb1462cyb2051.jpg",
+    "publisher": "Marmiton",
+    "minutes": 45
+  },
+  {
+    "title": "Croziflette",
+    "url": "https://www.marmiton.org/recettes/recette_croziflette_165464.aspx",
+    "image": "https://assets.afcdn.com/recipe/20221010/135908_w1024h1024c1cx1139cy384cxt0cyt0cxb2121cyb1238.jpg",
+    "publisher": "Marmiton",
+    "minutes": 50
+  },
+  {
+    "title": "Endives au jambon",
+    "url": "https://www.marmiton.org/recettes/recette_endives-au-jambon_25868.aspx",
+    "image": "https://assets.afcdn.com/recipe/20221003/135673_w1024h1024c1cx1093cy636cxt0cyt0cxb2121cyb1414.jpg",
+    "publisher": "Marmiton",
+    "minutes": 70
+  },
+  {
+    "title": "Risotto aux champignons : la vraie recette",
+    "url": "https://www.marmiton.org/recettes/recette_risotto-aux-champignons_312215.aspx",
+    "image": "https://assets.afcdn.com/recipe/20221020/136481_w1024h1024c1cx3588cy2733cxt0cyt0cxb7216cyb5412.jpg",
+    "publisher": "Marmiton",
+    "minutes": 75
+  },
+  {
+    "title": "Pot-au-feu facile",
+    "url": "https://www.marmiton.org/recettes/recette_pot-au-feu-facile_44578.aspx",
+    "image": "https://assets.afcdn.com/recipe/20141014/47748_w1024h1024c1cx800cy800.jpg",
+    "publisher": "Marmiton",
+    "minutes": 150
+  },
+  {
+    "title": "Rôti de veau au four",
+    "url": "https://www.marmiton.org/recettes/recette_roti-de-veau-au-four_61313.aspx",
+    "image": "https://assets.afcdn.com/recipe/20180503/79003_w1024h1024c1cx3390cy3500cxt0cyt0cxb6666cyb4992.jpg",
+    "publisher": "Marmiton",
+    "minutes": 75
+  },
+  {
+    "title": "Riz cantonais facile",
+    "url": "https://www.marmiton.org/recettes/recette_riz-cantonais-facile_27686.aspx",
+    "image": "https://assets.afcdn.com/recipe/20160517/45721_w1024h1024c1cx2000cy3000.jpg",
+    "publisher": "Marmiton",
+    "minutes": 50
+  },
+  {
+    "title": "Paupiettes de veau",
+    "url": "https://www.marmiton.org/recettes/recette_paupiettes-de-veau_82641.aspx",
+    "image": "https://assets.afcdn.com/recipe/20221007/135809_w1024h1024c1cx851cy1190cxt0cyt0cxb1686cyb1778.jpg",
+    "publisher": "Marmiton",
+    "minutes": 45
+  },
+  {
+    "title": "Sauté de porc à la crème de moutarde",
+    "url": "https://www.marmiton.org/recettes/recette_saute-de-porc-a-la-creme-de-moutarde_173829.aspx",
+    "image": "https://assets.afcdn.com/recipe/20180712/80926_w1024h1024c1cx1706cy2274cxt0cyt0cxb3412cyb4549.jpg",
+    "publisher": "Marmiton",
+    "minutes": 40
+  },
+  {
+    "title": "Croque-monsieur",
+    "url": "https://www.marmiton.org/recettes/recette_croque-monsieur_19208.aspx",
+    "image": "https://assets.afcdn.com/recipe/20170112/28965_w1024h1024c1cx1500cy1000.jpg",
+    "publisher": "Marmiton",
+    "minutes": 15
+  },
+  {
+    "title": "Fajitas au poulet et aux poivrons",
+    "url": "https://www.750g.com/fajitas-au-poulet-et-aux-poivrons-r13172.htm",
+    "image": "https://static.750g.com/images/1200-675/1122f2b0bbf07b7e2f935b3af2dc058e/fajitas-au-poulet-et-aux-poivrons.jpeg",
+    "publisher": "750g",
+    "minutes": 50
+  },
+  {
+    "title": "Pulled pork Burger ou burger au porc effiloché",
+    "url": "https://www.750g.com/pulled-pork-burger-ou-burger-au-porc-effiloche-r98288.htm",
+    "image": "https://static.750g.com/images/1200-675/e52c1566c9bf48124978f971221c2e82/pulled-pork-burger-ou-burger-au-porc-effiloche-r98288.png",
+    "publisher": "750g",
+    "minutes": 45
+  },
+  {
+    "title": "Hamburger au poisson pané",
+    "url": "https://www.750g.com/hamburger-au-poisson-pane-r95098.htm",
+    "image": "https://static.750g.com/images/1200-675/aa1f4eba2329f4ec26250b7b98b08434/hamburger-au-poisson-pane.png",
+    "publisher": "750g",
+    "minutes": 20
+  },
+  {
+    "title": "Galettes de chou-fleur (rösti)",
+    "url": "https://www.750g.com/galettes-de-chou-fleur-rosti-r207303.htm",
+    "image": "https://static.750g.com/images/1200-675/eb386cb47be43d507981e3f46d8793ec/galettes-choufleur-img-8985.jpg",
+    "publisher": "750g",
+    "minutes": 30
+  },
+  {
+    "title": "Saumon gravlax à préparer à l'avance",
+    "url": "https://www.cuisineaz.com/recettes/saumon-gravlax-a-preparer-a-l-avance-119013.aspx",
+    "image": "https://img.cuisineaz.com/671x671/2023/11/23/i196621-saumon-gravlax-facile-et-rapide.jpg",
+    "publisher": "CuisineAZ",
+    "minutes": 20
+  },
+  {
+    "title": "Accompagnement de dinde de Noël pas cher",
+    "url": "https://www.cuisineaz.com/recettes/accompagnement-de-dinde-de-noel-pas-cher-117892.aspx",
+    "image": "https://img.cuisineaz.com/1200x1200/2024/09/30/i200134-accompagnement-de-dinde-de-noel-pas-cher.jpg",
+    "publisher": "CuisineAZ",
+    "minutes": 60
+  },
+  {
+    "title": "Terrine de poisson pas chère",
+    "url": "https://www.cuisineaz.com/recettes/terrine-de-poisson-pas-chere-116179.aspx",
+    "image": "https://img.cuisineaz.com/1067x1067/2023/04/21/i193147-terrine-de-poisson-pas-chere.jpg",
+    "publisher": "CuisineAZ",
+    "minutes": 80
+  },
+  {
+    "title": "Biscuits de Noël à la poudre d’amande à l’Airfryer",
+    "url": "https://www.cuisineaz.com/recettes/biscuits-de-noel-a-la-poudre-d-amande-a-l-airfryer-126303.aspx",
+    "image": "https://img.cuisineaz.com/768x768/2026/11/12/i211453-biscuits-de-noel-a-la-poudre-d-amande-a-l-airfryer.jpg",
+    "publisher": "CuisineAZ",
+    "minutes": 55
+  },
+  {
+    "title": "Sablés de Noël à l'Airfryer",
+    "url": "https://www.cuisineaz.com/recettes/sables-de-noel-a-l-airfryer-118197.aspx",
+    "image": "https://img.cuisineaz.com/667x667/2024/10/18/i200852-sables-de-noel-a-l-airfryer.jpg",
+    "publisher": "CuisineAZ",
+    "minutes": 32
+  },
+  {
+    "title": "Plancha de burrata, pickles de fraise et choux rouge",
+    "url": "https://www.cuisineaz.com/recettes/plancha-de-burrata-pickles-de-fraise-et-choux-rouge-122878.aspx",
+    "image": "https://img.cuisineaz.com/495x495/2026/04/23/i208373-plancha-burrata-choux-rouge-et-fraises-en-pickles.jpg",
+    "publisher": "CuisineAZ",
+    "minutes": 10
+  },
+  {
+    "title": "Champignons farcis à la mozzarella",
+    "url": "https://www.cuisineaz.com/recettes/champignons-farcis-a-la-mozzarella-121138.aspx",
+    "image": "https://img.cuisineaz.com/535x535/2025/11/20/i207402-champignons-farcis.jpg",
+    "publisher": "CuisineAZ",
+    "minutes": 35
+  },
+  {
+    "title": "Frites de courgettes croustillantes, sauce épicée",
+    "url": "https://www.cuisineaz.com/recettes/frites-de-courgettes-croustillantes-sauce-epicee-120256.aspx",
+    "image": "https://img.cuisineaz.com/667x667/2017/06/16/i128300-frites-de-courgettes-panees-au-parmesan-a-picorer.jpeg",
+    "publisher": "CuisineAZ",
+    "minutes": 45
+  },
+  {
+    "title": "Accras de légumes",
+    "url": "https://www.cuisineaz.com/recettes/accras-de-legumes-113289.aspx",
+    "image": "https://img.cuisineaz.com/667x667/2021/07/29/i180046-shutterstock-1937939719.jpeg",
+    "publisher": "CuisineAZ",
+    "minutes": 60
+  },
+  {
+    "title": "Patatas bravas traditionnelles façon tapas espagnoles",
+    "url": "https://www.cuisineaz.com/recettes/patatas-bravas-traditionnelles-facon-tapas-espagnoles-120230.aspx",
+    "image": "https://img.cuisineaz.com/1200x1200/2025/07/18/i206112-patatas-bravas.jpg",
+    "publisher": "CuisineAZ",
+    "minutes": 45
+  }
+]
