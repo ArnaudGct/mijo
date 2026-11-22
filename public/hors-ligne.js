@@ -8,7 +8,17 @@ function show() {
     return;
   }
   statusEl.textContent = 'Semaine du ' + data.week;
+  document.querySelector('a[href="/courses"]').href =
+    '/courses?week=' + encodeURIComponent(data.week);
+  const rows = document.querySelector('#rows');
+  let category;
   for (const row of data.rows) {
+    if (row.category && row.category !== category) {
+      category = row.category;
+      const heading = document.createElement('h2');
+      heading.textContent = category;
+      rows.append(heading);
+    }
     const label = document.createElement('label'),
       box = document.createElement('input');
     box.type = 'checkbox';
@@ -31,7 +41,7 @@ function show() {
               : row.quantity + ' ' + row.unit)),
       ),
     );
-    document.querySelector('#rows').append(label);
+    rows.append(label);
   }
 }
 let working = false;

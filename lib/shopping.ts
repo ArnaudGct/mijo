@@ -1,6 +1,7 @@
 import type { Ingredient, State, Offer } from './model';
 import { groceryName, fold, groceryMeasure } from './grocery-names';
-import { breakfastKey, breakfastPlan, breakfastMeasure } from './breakfast';
+import { breakfastKey } from './breakfast-model';
+import { breakfastPlan, breakfastMeasure } from './breakfast';
 import { clean, normalize, rounded } from './ingredients';
 import { inWeek, addDays, today } from './dates';
 export type Need = {
@@ -9,7 +10,7 @@ export type Need = {
   unit: string;
   quantity: number;
   unknown: boolean;
-  category: Ingredient['category'];
+  category: string;
   recipes: string[];
   stock: number;
   buy: number;
@@ -26,16 +27,16 @@ export function needs(s: State, week: string, asOf = today()) {
   const byFood = new Map(breakfast.map((p) => [p.key, p]));
   const cookedBefore = new Map<string, number>();
   function include(
-    i: Ingredient,
+    i: Pick<Ingredient, 'name' | 'quantity' | 'unit'> & { category: string },
     factor: number | null,
     title: string,
     manualKey?: string,
     day?: string,
   ) {
     const food = breakfastKey(i.name),
-      product = food && byFood.get(food);
+      product = byFood.get(food);
     const [q, unit] = product
-      ? breakfastMeasure(product.key, i.name, i.quantity ?? 0, i.unit)
+      ? breakfastMeasure(product, i.name, i.quantity ?? 0, i.unit)
       : groceryMeasure(i.name, i.quantity ?? 0, i.unit);
     const name = groceryName(i.name);
     const key = clean(name) + '|' + unit;
@@ -65,7 +66,8 @@ export function needs(s: State, week: string, asOf = today()) {
         : 'Épicerie',
       manual: !!manualKey,
     };
-    if (!manualKey) row.manual = false;
+    if (manualKey) row.category = i.category;
+    else row.manual = false;
     if (i.quantity === null || factor === null || !unit) row.unknown = true;
     else row.quantity += q * factor;
     if (title && !row.recipes.includes(title)) row.recipes.push(title);
@@ -77,14 +79,12 @@ export function needs(s: State, week: string, asOf = today()) {
     for (const i of r.ingredients)
       include(i, r.base ? p.servings / r.base : null, r.title, undefined, p.day);
   }
-  for (const i of s.items.filter((i) => i.week === week && i.manual))
-    include({ ...i, raw: '' }, 1, '', i.key);
+  for (const i of s.items.filter((i) => i.week === week && i.manual)) include(i, 1, '', i.key);
   for (const product of breakfast) {
     if (product.quantity > 0)
       include(
         {
           name: product.name,
-          raw: '',
           quantity: product.quantity,
           unit: product.unit,
           category: product.category,
@@ -111,7 +111,7 @@ export function needs(s: State, week: string, asOf = today()) {
       (i) => i.week === week && i.inPantry && fold(groceryName(i.name)) === fold(row.name),
     );
     const food = breakfastKey(row.name),
-      product = food && byFood.get(food);
+      product = byFood.get(food);
     if (product && row.unit === product.unit) {
       row.stock = product.stock ?? 0;
       row.inPantry ||= product.reserve;

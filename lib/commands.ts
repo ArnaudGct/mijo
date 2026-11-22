@@ -19,6 +19,7 @@ import { addDays, inWeek, monday, today } from './dates';
 import { sourceUrl } from './source-url';
 import { clean } from './ingredients';
 import { morningRoutine, pantryReading } from './breakfast-model';
+import { shoppingAisles } from './aisles';
 import { fold, groceryName } from './grocery-names';
 export class UserError extends Error {
   constructor(
@@ -95,7 +96,10 @@ export const input = z.discriminatedUnion('action', [
     available: z.boolean(),
   }),
   z.object({ action: z.literal('breakfastRoutine'), routine: morningRoutine }),
-  z.object({ action: z.literal('breakfastStock'), readings: z.array(pantryReading).min(1).max(5) }),
+  z.object({
+    action: z.literal('breakfastStock'),
+    readings: z.array(pantryReading).min(1).max(120),
+  }),
   z.object({ action: z.literal('stock'), data: inventory }),
   z.object({ action: z.literal('price'), data: offer }),
   z.object({ action: z.literal('item'), data: item }),
@@ -424,12 +428,25 @@ export async function execute(tx: Tx, s: State, c: z.output<typeof input>) {
     case 'breakfastStock': {
       const cfg = s.prefs.breakfast ?? { routines: [], readings: [] };
       if (c.action === 'breakfastRoutine') {
+        for (const [key, food] of Object.entries(c.routine.foods)) {
+          const previous = cfg.routines.find((r) => r.foods[key])?.foods[key];
+          requireThat(
+            !previous || previous.unit === food.unit,
+            'Le stock de ' + food.name + ' est mesuré en ' + previous?.unit + '.',
+          );
+        }
         cfg.routines = cfg.routines.filter((r) => r.from !== c.routine.from).concat(c.routine);
       } else {
         requireThat(cfg.routines.length, 'Activez d’abord le petit-déjeuner.');
         requireThat(
           c.readings.every((r) => r.day <= today()),
           'La date du relevé doit être passée ou actuelle.',
+        );
+        requireThat(
+          c.readings.every((r) =>
+            cfg.routines.some((routine) => Object.hasOwn(routine.foods, r.food)),
+          ),
+          'Ingrédient absent des petits-déjeuners.',
         );
         for (const r of c.readings)
           cfg.readings = cfg.readings
@@ -447,7 +464,14 @@ export async function execute(tx: Tx, s: State, c: z.output<typeof input>) {
       break;
     case 'item': {
       const existing = s.items.find((x) => x.week === c.data.week && x.key === c.data.key);
-      await put(tx, 'items', { ...c.data, id: existing?.id ?? c.data.id });
+      const known = shoppingAisles(s.prefs.customAisles).find(
+        (name) => fold(name) === fold(c.data.category),
+      );
+      const category = known ?? c.data.category;
+      if (c.data.manual && !known) {
+        await tx`update preferences set data=${tx.json({ ...s.prefs, customAisles: [...s.prefs.customAisles, category] })} where id=1`;
+      }
+      await put(tx, 'items', { ...c.data, category, id: existing?.id ?? c.data.id });
       break;
     }
     case 'remove':
@@ -483,7 +507,7 @@ export async function execute(tx: Tx, s: State, c: z.output<typeof input>) {
         new Set(c.data.shops.map((x) => clean(x.name))).size === c.data.shops.length,
         'Deux magasins portent le même nom.',
       );
-      await tx`update preferences set data=${tx.json({ ...c.data, breakfast: s.prefs.breakfast, generatedWeeks: s.prefs.generatedWeeks })} where id=1`;
+      await tx`update preferences set data=${tx.json({ ...c.data, customAisles: s.prefs.customAisles, breakfast: s.prefs.breakfast, generatedWeeks: s.prefs.generatedWeeks })} where id=1`;
       break;
   }
 }

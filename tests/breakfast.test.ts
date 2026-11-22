@@ -84,7 +84,7 @@ test('modifications datées des portions et limites de semaines', () => {
   const cfg = s.prefs.breakfast!;
   cfg.routines.push({
     from: '2026-11-26',
-    foods: { ...suggestedBowl, oats: { serving: 100, size: 500 } },
+    foods: { ...suggestedBowl, oats: { ...suggestedBowl.oats, serving: 100, size: 500 } },
   });
   assert.equal(breakfastPlan(s, week, week).find((p) => p.key === 'oats')?.quantity, 520);
   assert.deepEqual(breakfastPlan(s, '2026-11-16', '2026-11-16'), []);
@@ -97,4 +97,54 @@ test('modifications datées des portions et limites de semaines', () => {
     breakfastPlan(s, '2026-11-30', '2026-11-29').find((p) => p.key === 'milk')!.stock,
     0,
   );
+});
+test('une ancienne routine se personnalise à une date sans déplacer les stocks ni compter deux fruits par bol', () => {
+  const s = setup();
+  const legacy = Object.fromEntries(
+    Object.entries(suggestedBowl).map(([key, f]) => [key, { serving: f.serving, size: f.size }]),
+  );
+  const saved = snapshot.parse({
+    ...s,
+    prefs: {
+      breakfast: {
+        routines: [{ from: week, foods: legacy }],
+        readings: [{ day: week, food: 'apple', amount: 5 }],
+      },
+    },
+  });
+  const cfg = saved.prefs.breakfast!;
+  const { apple, ...withoutApple } = cfg.routines[0].foods;
+  assert.equal(apple.name, 'Pomme');
+  const banana = {
+    name: 'Banane',
+    unit: 'pièce' as const,
+    container: 'pièce',
+    size: 1,
+    serving: 1,
+  };
+  cfg.routines.push({ from: '2026-11-26', foods: { ...withoutApple, 'food:banane': banana } });
+  const basket = marketBasket(saved, week, week);
+  const fruit = basket.lines.find((l) => l.name === 'Banane')!;
+  assert.equal(fruit.breakfast!.product.quantity, 4);
+  assert.equal(fruit.breakfast!.product.activeDays, 4);
+  assert.equal(fruit.breakfast!.product.stock, null);
+  assert.equal(fruit.packs, 4);
+  assert.ok(fruit.cents! > 0);
+  const apples = basket.lines.find((l) => l.name === 'Pomme')!;
+  assert.equal(apples.breakfast!.product.quantity, 3);
+  assert.equal(apples.cents, 0);
+  cfg.routines.push({
+    from: '2026-11-30',
+    foods: { 'food:produit du matin': { ...banana, name: 'Produit du matin', size: 3 } },
+  });
+  const other = marketBasket(saved, '2026-11-30', week);
+  assert.equal(
+    other.lines.some((l) => l.name === 'Pomme'),
+    false,
+  );
+  const unpriced = other.lines.find((l) => l.name === 'Produit du matin')!;
+  assert.equal(unpriced.cents, null);
+  assert.equal(unpriced.packs, 3);
+  const restored = snapshot.parse(JSON.parse(JSON.stringify(saved)));
+  assert.deepEqual(restored.prefs.breakfast, cfg);
 });

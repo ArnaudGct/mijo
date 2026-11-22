@@ -1,9 +1,11 @@
+import { householdAisle, isHouseholdAisle } from './aisles';
 import index from './market-data/market-fr.json';
-import rules from './market-data/market-families.json';
+import { marketFamily } from './market-family';
 import { fold } from './grocery-names';
 import { needs, type Need } from './shopping';
 import type { State } from './model';
-import { breakfastKey, type BreakfastProduct } from './breakfast';
+import { breakfastKey } from './breakfast-model';
+import { type BreakfastProduct } from './breakfast';
 
 export const marketDate = index.toDate;
 export const priceSource = 'https://huggingface.co/datasets/openfoodfacts/open-prices';
@@ -37,15 +39,24 @@ type Quote = {
   formats?: { size: number; cents: number }[];
 };
 const quotes: Record<string, Quote[]> = index.prices;
-const families = rules.map((rule) => ({ ...rule, re: new RegExp(rule.pattern) }));
-function valuation(name: string, byPiece: boolean, breakfast?: BreakfastProduct) {
+function valuation(
+  name: string,
+  byPiece: boolean,
+  breakfast?: BreakfastProduct,
+  household = false,
+) {
   const normalized = fold(name);
-  const family = families.find((f) => f.re.test(normalized));
+  const family = marketFamily(name, household);
   if (!family) return null;
   const liquid = /^(lait|huile|vinaigre|sauce|creme liquide|rhum|avoine)/.test(normalized);
   for (const tag of family.tags) {
     const options = quotes[tag];
     if (!options) continue;
+    if (family.household) {
+      const quote = options.find((q) => q.kind === 'pack' && q.unit === 'ml' && q.formats?.length);
+      if (quote) return { family, quote };
+      continue;
+    }
     const loose = options.find((q) => q.kind === 'loose');
     const each = byPiece ? options.find((q) => q.kind === 'each' && q.n >= 10) : undefined;
     const quote =
@@ -69,6 +80,11 @@ function measure(r: Need, ref: NonNullable<ReturnType<typeof valuation>>, amount
   // Recipe packets are small portions. Retail packages are rounded separately.
   // Bouillon expressed as prepared liquid converts at one 10 g cube per 500 ml.
   if (r.unknown || !r.unit) return null;
+  if (family.household) {
+    if (u === 'ml') return amount;
+    if (/^(?:piece|flacon|bidon|bouteille)s?$/.test(u)) return amount * quote.formats![0].size;
+    return null;
+  }
   if (quote.kind === 'each') return u === 'piece' ? amount : null;
   if (n.includes('bouillon') && u === 'ml') return amount * 0.02;
   if (n === 'ail' && u === 'tete') return amount * 45;
@@ -107,6 +123,7 @@ export function marketBasket(s: State, w: string, asOf?: string) {
         first.name,
         first.category === 'Fruits et légumes' && parts.every((p) => p.unit === 'pièce'),
         product,
+        first.manual && (isHouseholdAisle(first.category) || !!householdAisle(first.name)),
       );
       const available = parts.every((p) => p.inPantry);
       const pantry = parts.every((p) => p.unit === 'selon le goût');
@@ -138,7 +155,9 @@ export function marketBasket(s: State, w: string, asOf?: string) {
                 cents: Math.max(1, Math.round(preferredSize * ref.quote.rate)),
               },
             ]
-          : (ref?.quote.formats ?? []);
+          : ref?.family.household
+            ? ref.quote.formats!.slice(0, 1)
+            : (ref?.quote.formats ?? []);
       const basis = required || used || 0;
       const format = packOptions
         .map((f) => ({ ...f, count: Math.ceil(basis / f.size - 1e-9) }))
@@ -153,7 +172,16 @@ export function marketBasket(s: State, w: string, asOf?: string) {
           ? ref.family.piece
           : 0);
       const rate = format ? format.cents / format.size : ref?.quote.rate;
-      const packs = pack && required ? Math.ceil(required / pack - 1e-9) : 0;
+      const requiredInBowlUnits =
+        product && buy.every((r) => !r.unknown && r.unit === product.unit)
+          ? buy.reduce((sum, r) => sum + r.buy, 0)
+          : null;
+      const packs =
+        pack && required
+          ? Math.ceil(required / pack - 1e-9)
+          : product && requiredInBowlUnits
+            ? Math.ceil(requiredInBowlUnits / product.size - 1e-9)
+            : 0;
       const cents = !buy.length
         ? 0
         : required === null || rate === undefined
@@ -181,7 +209,10 @@ export function marketBasket(s: State, w: string, asOf?: string) {
           observed: !!observed,
           value:
             oneUnit && rate !== undefined ? Math.round(product.quantity * oneUnit * rate) : null,
-          bowl: oneUnit && rate !== undefined ? product.serving * oneUnit * rate : null,
+          bowl:
+            oneUnit && rate !== undefined
+              ? (product.quantity / product.days) * oneUnit * rate
+              : null,
         },
       };
     })

@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { Plus, Download, WifiOff } from 'lucide-react';
 import { marketBasket, marketDate, priceSource, shipping } from '@/lib/market';
 import { fold, groceryName } from '@/lib/grocery-names';
-import { categories, type State } from '@/lib/model';
+import { shoppingAisles, suggestAisle } from '@/lib/aisles';
+import { type State } from '@/lib/model';
 import { money, labelDate } from '@/lib/dates';
 import {
   Form,
@@ -29,8 +30,21 @@ function download(name: string, txt: string) {
   setTimeout(() => URL.revokeObjectURL(url), 500);
 }
 function Article({ ui }: { ui: UI }) {
+  const [name, setName] = useState('');
+  const [choice, setChoice] = useState<string | null>(null);
+  const manualItems = ui.s.items
+    .filter((i) => i.manual)
+    .sort((a, b) => b.week.localeCompare(a.week));
+  const aisles = shoppingAisles([
+    ...ui.s.prefs.customAisles,
+    ...manualItems.map((i) => i.category),
+  ]);
+  const aisle =
+    choice ??
+    manualItems.find((i) => fold(groceryName(i.name)) === fold(groceryName(name)))?.category ??
+    suggestAisle(name);
   return (
-    <Dialog title="Article supplémentaire" close={ui.close}>
+    <Dialog title="Ajouter un article" close={ui.close}>
       <Form
         onSave={async (f) => {
           const id = crypto.randomUUID();
@@ -44,7 +58,7 @@ function Article({ ui }: { ui: UI }) {
                 name: str(f, 'name'),
                 quantity: num(f, 'quantity'),
                 unit: str(f, 'unit'),
-                category: str(f, 'category') as (typeof categories)[number],
+                category: choice === '' ? str(f, 'newAisle') : aisle,
                 manual: true,
                 checked: false,
                 bag: null,
@@ -54,14 +68,61 @@ function Article({ ui }: { ui: UI }) {
             ui.close();
         }}
       >
-        <Fields />
+        <Field label="Nom de l’article">
+          <input
+            name="name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+            maxLength={300}
+            autoFocus
+          />
+        </Field>
         <Field label="Rayon">
-          <select name="category">
-            {categories.map((c) => (
+          <select name="category" value={aisle} onChange={(e) => setChoice(e.target.value)}>
+            {aisles.map((c) => (
               <option key={c}>{c}</option>
             ))}
+            <option value="">+ Créer un rayon…</option>
           </select>
         </Field>
+        {choice === '' && (
+          <Field label="Nom du nouveau rayon">
+            <input name="newAisle" required maxLength={70} />
+          </Field>
+        )}
+        <div className="columns">
+          <Field label="Quantité">
+            <input
+              name="quantity"
+              defaultValue="1"
+              type="number"
+              required
+              min="0.000001"
+              step="any"
+            />
+          </Field>
+          <Field label="Unité">
+            <input name="unit" list="article-unites" defaultValue="pièce" required maxLength={70} />
+            <datalist id="article-unites">
+              {[
+                'pièce',
+                'flacon',
+                'bidon',
+                'paquet',
+                'boîte',
+                'rouleau',
+                'bouteille',
+                'g',
+                'kg',
+                'ml',
+                'L',
+              ].map((v) => (
+                <option key={v} value={v} />
+              ))}
+            </datalist>
+          </Field>
+        </div>
       </Form>
     </Dialog>
   );
@@ -134,6 +195,12 @@ export function Shopping({ ui }: { ui: UI }) {
   const [delivery, setDelivery] = useState(false);
   const [carrier, setCarrier] = useState<'leclerc' | 'monoprix'>('leclerc');
   const cart = marketBasket(s, w);
+  const sections = shoppingAisles([...s.prefs.customAisles, ...cart.lines.map((l) => l.category)])
+    .map((aisle) => ({
+      aisle,
+      lines: cart.lines.filter((l) => l.category === aisle),
+    }))
+    .filter((section) => section.lines.length);
   const availableThisWeek = s.items
     .filter((i) => i.week === w && i.inPantry)
     .sort((a, b) => a.name.localeCompare(b.name, 'fr'));
@@ -180,10 +247,12 @@ export function Shopping({ ui }: { ui: UI }) {
         'table-offline',
         JSON.stringify({
           week: w,
-          rows: cart.lines
+          rows: sections
+            .flatMap(({ lines }) => lines)
             .filter((l) => l.buy.length)
             .map((l) => ({
               name: l.name,
+              category: l.category,
               description: describe(l),
               parts: parts(l),
               checked: l.checked,
@@ -310,12 +379,11 @@ export function Shopping({ ui }: { ui: UI }) {
               {cart.lines.filter((l) => l.checked).length} / {cart.count} articles cochés
             </h2>
             <button className="primary" onClick={() => ui.open(<Article ui={ui} />)}>
-              <Plus size={16} /> Article
+              <Plus size={16} /> Ajouter un article
             </button>
           </div>
-          {categories.map((cat) => {
-            const group = cart.lines.filter((l) => l.category === cat);
-            return !group.length ? null : (
+          {sections.map(({ aisle: cat, lines: group }) => {
+            return (
               <section key={cat} className="panel">
                 <h3>{cat}</h3>
                 {group.map((l) => (
@@ -409,9 +477,16 @@ export function Shopping({ ui }: { ui: UI }) {
               onClick={() =>
                 download(
                   'courses-' + w + '.txt',
-                  cart.lines
-                    .map((l) => (l.checked ? '☑ ' : '☐ ') + l.name + ' · ' + describe(l))
-                    .join('\n'),
+                  sections
+                    .map(({ aisle, lines }) =>
+                      [
+                        aisle,
+                        ...lines.map(
+                          (l) => (l.checked ? '☑ ' : '☐ ') + l.name + ' · ' + describe(l),
+                        ),
+                      ].join('\n'),
+                    )
+                    .join('\n\n'),
                 )
               }
             >

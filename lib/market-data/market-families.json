@@ -1,5 +1,49 @@
 [
   {
+    "pattern": "^gels? douche(?: |$)",
+    "tags": [
+      "shower-gels"
+    ],
+    "piece": 0,
+    "portion": 0,
+    "household": true
+  },
+  {
+    "pattern": "^shamp[o]+ings?(?: |$)",
+    "tags": [
+      "shampoos"
+    ],
+    "piece": 0,
+    "portion": 0,
+    "household": true
+  },
+  {
+    "pattern": "^liquides? vaisselle(?: |$)",
+    "tags": [
+      "dish-detergent-soap"
+    ],
+    "piece": 0,
+    "portion": 0,
+    "household": true
+  },
+  {
+    "pattern": "^lessives?(?: liquides?)?$",
+    "tags": [
+      "liquid-detergent"
+    ],
+    "piece": 0,
+    "portion": 0,
+    "household": true
+  },
+  {
+    "pattern": "^bananes?$",
+    "tags": [
+      "bananas"
+    ],
+    "piece": 150,
+    "portion": 150
+  },
+  {
     "pattern": "^flocons d'avoine$",
     "tags": [
       "rolled-oats"

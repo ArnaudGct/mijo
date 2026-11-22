@@ -310,6 +310,26 @@
         ]
       }
     ],
+    "bananas": [
+      {
+        "kind": "each",
+        "unit": "pièce",
+        "rate": 199.0,
+        "pack": 0,
+        "n": 17,
+        "latest": "2026-11-14",
+        "example": 363081
+      },
+      {
+        "kind": "loose",
+        "unit": "g",
+        "rate": 0.199,
+        "pack": 0,
+        "n": 63,
+        "latest": "2026-11-16",
+        "example": 364982
+      }
+    ],
     "basils": [
       {
         "kind": "pack",
@@ -1933,6 +1953,29 @@
         ]
       }
     ],
+    "dish-detergent-soap": [
+      {
+        "kind": "pack",
+        "unit": "ml",
+        "rate": 0.27,
+        "pack": 500,
+        "n": 13,
+        "latest": "2026-11-20",
+        "example": 365730,
+        "formats": [
+          {
+            "size": 500,
+            "cents": 147,
+            "n": 9
+          },
+          {
+            "size": 750,
+            "cents": 188,
+            "n": 3
+          }
+        ]
+      }
+    ],
     "dried-tomatoes": [
       {
         "kind": "pack",
@@ -3006,6 +3049,23 @@
         "n": 15,
         "latest": "2026-08-31",
         "example": 323887
+      }
+    ],
+    "liquid-detergent": [
+      {
+        "kind": "pack",
+        "unit": "ml",
+        "rate": 0.402417,
+        "pack": 1530,
+        "n": 4,
+        "latest": "2026-09-30",
+        "example": 348966,
+        "formats": [
+          {
+            "size": 1530,
+            "cents": 670
+          }
+        ]
       }
     ],
     "long-grain-rices": [
@@ -4840,6 +4900,62 @@
           {
             "size": 9,
             "cents": 398,
+            "n": 3
+          }
+        ]
+      }
+    ],
+    "shampoos": [
+      {
+        "kind": "pack",
+        "unit": "ml",
+        "rate": 1.127,
+        "pack": 280,
+        "n": 54,
+        "latest": "2026-10-26",
+        "example": 354392,
+        "formats": [
+          {
+            "size": 250,
+            "cents": 267,
+            "n": 23
+          },
+          {
+            "size": 300,
+            "cents": 340,
+            "n": 11
+          },
+          {
+            "size": 500,
+            "cents": 298,
+            "n": 4
+          },
+          {
+            "size": 330,
+            "cents": 654,
+            "n": 3
+          }
+        ]
+      }
+    ],
+    "shower-gels": [
+      {
+        "kind": "pack",
+        "unit": "ml",
+        "rate": 0.796,
+        "pack": 250,
+        "n": 29,
+        "latest": "2026-11-20",
+        "example": 365652,
+        "formats": [
+          {
+            "size": 250,
+            "cents": 194,
+            "n": 20
+          },
+          {
+            "size": 280,
+            "cents": 233,
             "n": 3
           }
         ]

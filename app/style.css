@@ -1764,3 +1764,38 @@ html {
     display: flex;
   }
 }
+.bowl-item-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.bowl-item-actions strong {
+  margin-right: auto;
+  overflow-wrap: anywhere;
+}
+.bowl-item-actions button {
+  padding: 4px 8px;
+  font-size: 13px;
+}
+.bowl-pack {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.bowl-pack summary {
+  cursor: pointer;
+}
+.bowl-pack .columns {
+  margin-top: 8px;
+}
+.ingredient-picker {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  margin: 6px 0;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}

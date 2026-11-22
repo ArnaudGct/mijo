@@ -6,6 +6,11 @@ export const fold = (s: string) =>
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '');
 const aliases: [RegExp, string][] = [
+  [/^cotons?[ -]?tiges?$/, 'Cotons-tiges'],
+  [/^gels? douche$/, 'Gel douche'],
+  [/^liquides? vaisselle$/, 'Liquide vaisselle'],
+  [/^lessives?$/, 'Lessive'],
+  [/^shamp[o]+ings?$/, 'Shampoing'],
   [/^lait(?: de vache| (?:demi[- ]ecreme|entier|ecreme)(?: uht)?| uht)?$/, 'Lait'],
   [/^flocons? (?:d'|de l')avoine(?: complets?| nature)?$/, 'Flocons d’avoine'],
   [/^skyr(?: nature)?$/, 'Skyr nature'],
@@ -42,7 +47,7 @@ const aliases: [RegExp, string][] = [
   [/^vinaigre de vin (blanc|rouge ou de cidre)$/, 'Vinaigre de vin'],
   [/^salade( en sachet)?$/, 'Salade'],
   [/^tofu( nature)?$/, 'Tofu'],
-  [/^(basilic|courgette|poireau|pomme|citron|aubergine|echalote|avocat)s?$/, ''],
+  [/^(basilic|courgette|poireau|pomme|banane|citron|aubergine|echalote|avocat)s?$/, ''],
 ];
 export function groceryName(name: string) {
   const base = fold(name);

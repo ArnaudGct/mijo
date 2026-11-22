@@ -87,6 +87,38 @@ test('transactions PostgreSQL, parcours complet, restauration et rejouabilité',
       await assert.rejects(syncChecks([{ ...e, quantity: 999 }]));
       assert.equal(needs(await state(), day).rows.find((r) => r.name === 'Chou')?.checked, true);
     });
+    await t.test(
+      'un rayon personnalisé survit aux préférences et les variantes du nom réutilisent le même rayon',
+      async () => {
+        const article = {
+          id: uid(),
+          week: day,
+          key: 'manuel:papier',
+          name: 'Papier quadrillé',
+          quantity: 1,
+          unit: 'paquet',
+          manual: true,
+          checked: false,
+          bag: null,
+        };
+        await write({ action: 'item', data: { ...article, category: 'Papeterie privée' } });
+        await write({
+          action: 'item',
+          data: {
+            ...article,
+            id: uid(),
+            key: 'manuel:crayon',
+            name: 'Crayon',
+            category: ' papeterie   privee ',
+          },
+        });
+        const prefs = (await state()).prefs;
+        await write({ action: 'prefs', data: { ...prefs, customAisles: [] } });
+        const s = await state();
+        assert.deepEqual(s.prefs.customAisles, ['Papeterie privée']);
+        assert.equal(s.items.find((i) => i.name === 'Crayon')?.category, 'Papeterie privée');
+      },
+    );
     await t.test('session, étapes, consommation et duplication de semaine', async () => {
       ss = uid();
       await write({ action: 'batchPlan', id: ss, day, name: 'Session', preps: [pId] });
@@ -216,6 +248,8 @@ test('transactions PostgreSQL, parcours complet, restauration et rejouabilité',
       const b = await backup();
       assert.equal(b.state.recipes.length, a.state.recipes.length);
       assert.deepEqual(b.state.meals, a.state.meals);
+      assert.deepEqual(b.state.prefs.customAisles, a.state.prefs.customAisles);
+      assert.deepEqual(b.state.items, a.state.items);
       assert.deepEqual(b.state.preps, a.state.preps);
       assert.equal(b.versions.length, a.versions.length);
     });

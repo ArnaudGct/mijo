@@ -58,7 +58,7 @@ export function amount(value: string) {
 export function categorize(name: string): Ingredient['category'] {
   const s = clean(name);
   if (
-    /^(poireau|oignon|tomate|persil|citron|carotte|champignon|courgette|aubergine|poivron|concombre|pomme|gousse d'ail|gingembre|salade|basilic|coriandre)/.test(
+    /^(poireau|oignon|tomate|persil|citron|carotte|champignon|courgette|aubergine|poivron|concombre|pomme|banane|gousse d'ail|gingembre|salade|basilic|coriandre)/.test(
       s,
     )
   )
@@ -69,8 +69,13 @@ export function categorize(name: string): Ingredient['category'] {
     )
   )
     return 'Viandes et poissons';
-  if (/^(beurre|crème|yaourt|fromage|burrata|mozzarella|tofu)/.test(s)) return 'Produits frais';
-  if (/^(riz|pâte|huile|épice|sel|poivre|farine|sucre|vinaigre|spaghetti|orzo|bouillon)/.test(s))
+  if (/^(skyr|beurre|crème|yaourt|fromage|burrata|mozzarella|tofu)/.test(s))
+    return 'Produits frais';
+  if (
+    /^(riz|pâte|huile|épice|sel|poivre|farine|sucre|flocons?|cannelle|vinaigre|spaghetti|orzo|bouillon)/.test(
+      s,
+    )
+  )
     return 'Épicerie';
   return 'Autres';
 }

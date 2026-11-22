@@ -1,6 +1,6 @@
 import type { PreferencesRow, EntityRow } from '../db/schema';
 import postgres from 'postgres';
-import { settings, type State, type Recipe } from './model';
+import { basis, settings, type State, type Recipe } from './model';
 const globalDb = globalThis as unknown as { tableSql?: ReturnType<typeof postgres> };
 export function db() {
   if (!process.env.DATABASE_URL) throw Error('Base non configurée');
@@ -26,7 +26,10 @@ export async function readState(tx: Tx, lock = false): Promise<State> {
     'select revision,data from preferences where id=1' + (lock ? ' for update' : ''),
   );
   const past = Object.fromEntries(
-    (await tx`select week::text as week,data from week_history`).map((r) => [r.week, r.data]),
+    (await tx`select week::text as week,data from week_history`).map((r) => [
+      r.week,
+      basis.parse(r.data),
+    ]),
   );
   const state = { past, revision: config.revision, prefs: settings.parse(config.data) } as State;
   for (const t of tables)

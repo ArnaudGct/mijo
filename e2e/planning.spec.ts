@@ -192,8 +192,8 @@ test('panier estimé, livraison et fusion des variantes sur mobile', async ({ pa
   await page.getByLabel('Mot de passe').fill(process.env.TABLE_TEST_PASSWORD!);
   await page.getByRole('button', { name: 'Ouvrir mon carnet' }).click();
   const dialog = page.getByRole('dialog');
-  await page.getByRole('button', { name: 'Article', exact: true }).click();
-  await dialog.getByLabel('Ingrédient', { exact: true }).fill('Riz E2E');
+  await page.getByRole('button', { name: 'Ajouter un article', exact: true }).click();
+  await dialog.getByLabel('Nom de l’article', { exact: true }).fill('Riz E2E');
   await dialog.getByLabel('Quantité', { exact: true }).fill('350');
   await dialog.getByLabel('Unité', { exact: true }).fill('g');
   await dialog.getByRole('button', { name: 'Enregistrer' }).click();
@@ -202,8 +202,8 @@ test('panier estimé, livraison et fusion des variantes sur mobile', async ({ pa
     page.locator('.grocery').filter({ hasText: 'Riz E2E' }).locator('.line-price'),
   ).toContainText('€');
   for (const name of ['Oignon rouge', 'Oignons jaunes']) {
-    await page.getByRole('button', { name: 'Article', exact: true }).click();
-    await dialog.getByLabel('Ingrédient', { exact: true }).fill(name);
+    await page.getByRole('button', { name: 'Ajouter un article', exact: true }).click();
+    await dialog.getByLabel('Nom de l’article', { exact: true }).fill(name);
     await dialog.getByLabel('Quantité', { exact: true }).fill('1');
     await dialog.getByLabel('Unité', { exact: true }).fill('pièce');
     await dialog.getByRole('button', { name: 'Enregistrer' }).click();
@@ -290,4 +290,87 @@ test('petit-déjeuner : portions modifiables, relevé en briques et en pots, rep
   await page.getByRole('button', { name: 'Placard', exact: true }).click();
   await page.getByRole('link', { name: 'Voir le stock du petit-déjeuner' }).click();
   await expect(foods.filter({ hasText: 'Skyr nature' })).toContainText('36 bols');
+  await page.getByRole('button', { name: 'Personnaliser mon petit-déjeuner' }).click();
+  await dialog.getByLabel('À partir du').fill(tuesday);
+  await dialog.getByRole('button', { name: 'Remplacer Pomme', exact: true }).click();
+  await dialog.getByLabel('Remplacer par').fill('Bananes');
+  await dialog.getByRole('button', { name: 'Confirmer le remplacement' }).click();
+  await dialog.getByRole('button', { name: 'Retirer Cannelle moulue' }).click();
+  await dialog.getByRole('button', { name: 'Ajouter un ingrédient' }).click();
+  await dialog.getByLabel('Nouvel ingrédient').fill('Graines de chia');
+  await dialog.getByLabel('Mesurer en').selectOption('g');
+  await dialog.getByRole('button', { name: 'Ajouter au bol' }).click();
+  await dialog
+    .getByRole('group', { name: 'Graines de chia' })
+    .getByLabel('Par matin (g)')
+    .fill('8');
+  await dialog.getByRole('button', { name: 'Enregistrer' }).click();
+  await expect(foods.filter({ hasText: 'Banane' })).toContainText('6 pièces sur la période');
+  await expect(foods.filter({ hasText: 'Graines de chia' })).toContainText('48 g sur la période');
+  await page.reload();
+  await page.getByRole('button', { name: 'Semaine suivante', exact: true }).click();
+  await expect(foods.filter({ hasText: 'Pomme' })).toHaveCount(0);
+  await expect(foods.filter({ hasText: 'Banane' })).toContainText('7 pièces sur la période');
+  await page.getByRole('button', { name: 'Relever mon stock' }).click();
+  await expect(dialog.getByLabel('Nombre de formats · Banane')).toBeVisible();
+  await dialog.getByRole('button', { name: 'Fermer', exact: true }).click();
+  await page.getByRole('link', { name: 'Voir ma liste de courses' }).click();
+  await expect(
+    page.locator('.grocery').filter({ has: page.getByText('Banane', { exact: true }) }),
+  ).toHaveCount(1);
+});
+test('articles du quotidien, rayon personnalisé réutilisable, export et coches hors ligne', async ({
+  page,
+  context,
+}) => {
+  const shoppingWeek = '2031-03-03';
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/courses?week=' + shoppingWeek);
+  await page.getByLabel('Mot de passe').fill(process.env.TABLE_TEST_PASSWORD!);
+  await page.getByRole('button', { name: 'Ouvrir mon carnet' }).click();
+  const dialog = page.getByRole('dialog');
+  const add = page.getByRole('button', { name: 'Ajouter un article', exact: true });
+  await add.click();
+  await dialog.getByLabel('Nom de l’article').fill('Liquide vaisselle au citron');
+  await expect(dialog.getByRole('combobox', { name: 'Rayon', exact: true })).toHaveValue(
+    'Entretien et vaisselle',
+  );
+  await dialog.getByLabel('Quantité').fill('2');
+  await dialog.getByLabel('Unité').fill('flacon');
+  await dialog.getByRole('button', { name: 'Enregistrer' }).click();
+  const detergent = page.locator('.grocery').filter({ hasText: 'Liquide vaisselle au citron' });
+  await expect(detergent.locator('.line-price')).toContainText('€');
+  await add.click();
+  await dialog.getByLabel('Nom de l’article').fill('Recharge de stylo');
+  await dialog.getByRole('combobox', { name: 'Rayon', exact: true }).selectOption('');
+  await dialog.getByLabel('Nom du nouveau rayon').fill('Bureau');
+  await dialog.getByRole('button', { name: 'Enregistrer' }).click();
+  const office = page
+    .locator('section.panel')
+    .filter({ has: page.getByRole('heading', { name: 'Bureau', exact: true }) });
+  await expect(office).toContainText('Recharge de stylo');
+  const downloading = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Exporter', exact: true }).click();
+  const download = await downloading;
+  const contents = await (
+    await import('node:fs/promises')
+  ).readFile((await download.path())!, 'utf8');
+  expect(contents).toMatch(/Bureau\n☐ Recharge de stylo/);
+  await page.getByRole('button', { name: 'Emporter hors ligne' }).click();
+  await expect(page.getByRole('heading', { name: 'Bureau', exact: true })).toBeVisible();
+  await context.setOffline(true);
+  await page.getByRole('checkbox', { name: /Recharge de stylo/ }).check();
+  await context.setOffline(false);
+  await expect(page.getByRole('status')).toContainText('synchronisées');
+  await page.goto('/courses?week=' + shoppingWeek);
+  await expect(office.getByRole('checkbox')).toBeChecked();
+  await office.getByRole('button', { name: /Retirer l’ajout/ }).click();
+  await expect(office).toHaveCount(0);
+  await page.getByRole('button', { name: 'Semaine suivante' }).click();
+  await add.click();
+  await expect(dialog.getByRole('option', { name: 'Bureau', exact: true })).toHaveCount(1);
+  await dialog.getByLabel('Nom de l’article').fill('Cotons-tiges');
+  await expect(dialog.getByRole('combobox', { name: 'Rayon', exact: true })).toHaveValue(
+    'Hygiène et soins',
+  );
 });

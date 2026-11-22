@@ -57,8 +57,16 @@ export const stores = z.object({
   delivery: z.number().int().nonnegative().nullable(),
   freeAt: z.number().int().nonnegative().nullable(),
 });
+export const aisleName = z
+  .string()
+  .trim()
+  .min(1)
+  .max(70)
+  .regex(/^[^\r\n\t]+$/)
+  .transform((s) => s.replace(/ +/g, ' '));
 export const settings = z.object({
   breakfast: breakfastSettings.optional(),
+  customAisles: z.array(aisleName).default([]),
   generatedWeeks: z.array(date).default([]),
   portions: portions.default(2),
   target: z.number().int().min(1).max(14).default(7),
@@ -138,7 +146,7 @@ export const item = z.object({
   name: label,
   quantity: qty.nullable(),
   unit: z.string().max(70),
-  category: z.enum(categories),
+  category: aisleName,
   manual: z.boolean(),
   inPantry: z.boolean().optional(),
   checked: z.boolean(),

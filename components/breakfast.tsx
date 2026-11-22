@@ -2,13 +2,8 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { ClipboardList, SlidersHorizontal } from 'lucide-react';
-import {
-  breakfastFoods,
-  breakfastKeys,
-  suggestedBowl,
-  type Reading,
-  type Routine,
-} from '@/lib/breakfast-model';
+import { foodsOn, orderedFoods, suggestedBowl, type Reading } from '@/lib/breakfast-model';
+import { BowlEditor } from './bowl-editor';
 import { marketBasket } from '@/lib/market';
 import { today, labelDate, money } from '@/lib/dates';
 import { Form, Field, Dialog, type UI } from './common';
@@ -17,77 +12,19 @@ const number = (q: number) => q.toLocaleString('fr-FR', { maximumFractionDigits:
 const amount = (q: number, unit: string) =>
   unit === 'ml' && q >= 1000
     ? number(q / 1000) + ' L'
-    : number(q) + ' ' + (unit === 'pièce' ? (q > 1 ? 'pommes' : 'pomme') : unit);
+    : number(q) + ' ' + (unit === 'pièce' && q > 1 ? 'pièces' : unit);
 const packCount = (n: number, label: string) => number(n) + ' ' + label + (n > 1 ? 's' : '');
 function formatSize(size: number, unit: string, container: string) {
-  return unit === 'pièce' && size === 1 ? 'la pomme' : container + ' de ' + amount(size, unit);
-}
-function RoutineForm({ ui, routine, from }: { ui: UI; routine: Routine['foods']; from: string }) {
-  return (
-    <Dialog title="Ajuster mon bol" close={ui.close}>
-      <Form
-        onSave={async (f) => {
-          const foods = structuredClone(routine);
-          for (const k of breakfastKeys)
-            foods[k] = {
-              serving: Number(f.get(k + '-portion')),
-              size: Number(f.get(k + '-format')),
-            };
-          if (
-            await ui.run(
-              { action: 'breakfastRoutine', routine: { from: String(f.get('from')), foods } },
-              'Quantités et formats enregistrés.',
-            )
-          )
-            ui.close();
-        }}
-      >
-        <Field label="À partir du">
-          <input type="date" required name="from" defaultValue={from} />
-        </Field>
-        {breakfastKeys.map((k) => (
-          <fieldset className="bowl-field" key={k}>
-            <legend>{breakfastFoods[k].name}</legend>
-            <div className="columns">
-              <Field label={'Par matin (' + breakfastFoods[k].unit + ')'}>
-                <input
-                  name={k + '-portion'}
-                  type="number"
-                  min="0"
-                  max="5000"
-                  step="any"
-                  required
-                  defaultValue={routine[k].serving}
-                />
-              </Field>
-              <Field
-                label={'Par ' + breakfastFoods[k].container + ' (' + breakfastFoods[k].unit + ')'}
-              >
-                <input
-                  name={k + '-format'}
-                  type="number"
-                  min="0.01"
-                  max="20000"
-                  step="any"
-                  required
-                  defaultValue={routine[k].size}
-                />
-              </Field>
-            </div>
-          </fieldset>
-        ))}
-      </Form>
-    </Dialog>
-  );
+  return unit === 'pièce' && size === 1 ? 'pièce' : container + ' de ' + amount(size, unit);
 }
 function StockForm({ ui }: { ui: UI }) {
   const [day, setDay] = useState(today());
   const editions = ui.s.prefs.breakfast?.routines ?? [];
   const first = [...editions].sort((a, b) => a.from.localeCompare(b.from))[0];
-  const routine =
-    editions.filter((r) => r.from <= day).sort((a, b) => b.from.localeCompare(a.from))[0]?.foods ??
-    first?.foods ??
-    suggestedBowl;
+  const routine = {
+    ...foodsOn(editions, ui.w),
+    ...(foodsOn(editions, day) ?? first?.foods ?? suggestedBowl),
+  };
   const [error, setError] = useState('');
   return (
     <Dialog title="Relever mon stock" close={ui.close}>
@@ -95,7 +32,7 @@ function StockForm({ ui }: { ui: UI }) {
         button="Enregistrer le relevé"
         onSave={async (f) => {
           const readings: Reading[] = [];
-          for (const k of breakfastKeys) {
+          for (const k of Object.keys(routine)) {
             const packs = String(f.get(k + '-count') ?? ''),
               loose = String(f.get(k + '-loose') ?? '');
             if (packs === '' && loose === '') continue;
@@ -129,17 +66,16 @@ function StockForm({ ui }: { ui: UI }) {
           Un zéro indique un produit épuisé. Laisse les autres lignes vides pour conserver leur
           relevé.
         </p>
-        {breakfastKeys.map((k) => {
-          const food = breakfastFoods[k],
-            size = routine[k].size;
+        {orderedFoods(routine).map(([k, food]) => {
+          const size = food.size;
           return (
             <fieldset className="bowl-field" key={k}>
               <legend>{food.name}</legend>
               <div className="columns">
                 <Field
                   label={
-                    k === 'apple' && size === 1
-                      ? 'Nombre de pommes'
+                    food.unit === 'pièce' && size === 1
+                      ? 'Nombre de pièces'
                       : 'Nombre de ' + food.container + 's de ' + amount(size, food.unit)
                   }
                 >
@@ -153,7 +89,7 @@ function StockForm({ ui }: { ui: UI }) {
                     placeholder="—"
                   />
                 </Field>
-                {k !== 'apple' && (
+                {(food.unit !== 'pièce' || size !== 1) && (
                   <Field label={'Reste en plus (' + food.unit + ')'}>
                     <input
                       aria-label={'Reste en plus · ' + food.name}
@@ -177,15 +113,12 @@ function StockForm({ ui }: { ui: UI }) {
 }
 export function Breakfast({ ui }: { ui: UI }) {
   const cart = marketBasket(ui.s, ui.w);
-  const forecast = cart.breakfast;
+  const forecast = cart.breakfast.filter((p) => p.activeDays > 0);
   const first = forecast[0],
     cfg = ui.s.prefs.breakfast;
   const day = ui.w > today() ? ui.w : today();
-  const latest = cfg?.routines
-    .filter((r) => r.from <= day)
-    .sort((a, b) => b.from.localeCompare(a.from))[0];
-  const edit = () =>
-    ui.open(<RoutineForm ui={ui} from={day} routine={latest?.foods ?? suggestedBowl} />);
+  const latest = foodsOn(cfg?.routines ?? [], day);
+  const edit = () => ui.open(<BowlEditor ui={ui} from={day} routine={latest ?? suggestedBowl} />);
   if (!first || !first.days)
     return (
       <section className="panel">
@@ -205,6 +138,7 @@ export function Breakfast({ ui }: { ui: UI }) {
     );
   const involved = cart.lines.filter((l) => l.breakfast);
   const bowl = involved.reduce((n, l) => n + (l.breakfast?.bowl ?? 0), 0);
+  const billable = involved.filter((l) => l.buy.length);
   const subtotal = involved.reduce((n, l) => n + (l.cents ?? 0), 0);
   return (
     <section className="breakfast-sheet">
@@ -218,7 +152,7 @@ export function Breakfast({ ui }: { ui: UI }) {
         </div>
         <div className="actions">
           <button onClick={edit}>
-            <SlidersHorizontal size={15} /> Ajuster mon bol
+            <SlidersHorizontal size={15} /> Personnaliser mon petit-déjeuner
           </button>
           <button className="primary" onClick={() => ui.open(<StockForm ui={ui} />)}>
             <ClipboardList size={16} /> Relever mon stock
@@ -227,8 +161,16 @@ export function Breakfast({ ui }: { ui: UI }) {
       </div>
       <div className="breakfast-cost">
         <div>
-          <small>Un bol estimé</small>
-          <strong>{money(Math.round(bowl))}</strong>
+          <small>
+            {involved.some((l) => l.breakfast?.bowl == null)
+              ? 'Part chiffrée par bol'
+              : 'Un bol estimé'}
+          </small>
+          <strong>
+            {involved.some((l) => l.breakfast?.bowl != null)
+              ? money(Math.round(bowl))
+              : 'Non chiffré'}
+          </strong>
         </div>
         <div>
           <small>
@@ -236,7 +178,11 @@ export function Breakfast({ ui }: { ui: UI }) {
               ? 'Sous-total chiffré'
               : 'À acheter pour ces produits'}
           </small>
-          <strong>{money(subtotal)}</strong>
+          <strong>
+            {billable.length && billable.every((l) => l.cents === null)
+              ? 'Non chiffré'
+              : money(subtotal)}
+          </strong>
         </div>
       </div>
       <p className="breakfast-note">
@@ -256,8 +202,11 @@ export function Breakfast({ ui }: { ui: UI }) {
               <div>
                 <h3>{p.name}</h3>
                 <small>
-                  {amount(p.serving, p.unit)} par matin · {amount(p.quantity, p.unit)} sur la
-                  période
+                  {p.activeDays === first.days &&
+                  Math.abs(p.serving * p.activeDays - p.quantity) < 0.0001
+                    ? amount(p.serving, p.unit) + ' par matin'
+                    : p.activeDays + ' matin' + (p.activeDays > 1 ? 's' : '')}{' '}
+                  · {amount(p.quantity, p.unit)} sur la période
                 </small>
               </div>
               <div>
@@ -285,7 +234,7 @@ export function Breakfast({ ui }: { ui: UI }) {
                       ? packCount(containers, p.container)
                       : 'À préciser'}
                 </b>
-                {line?.buy.length && !containers ? <small>Quantité à préciser</small> : null}
+                {line?.cents === null && <small>Prix non renseigné</small>}
                 {info?.packPrice != null && (
                   <small>
                     {info.observed ? '' : '≈ '}
