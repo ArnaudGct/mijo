@@ -129,7 +129,7 @@ export function BowlEditor({
     </div>
   );
   return (
-    <Dialog title="Personnaliser mon petit-déjeuner" close={ui.close}>
+    <Dialog title="Personnaliser mon bol" close={ui.close}>
       <Form
         disabled={editing !== null || !Object.keys(foods).length}
         onSave={async (data) => {
@@ -157,6 +157,13 @@ export function BowlEditor({
         <Field label="À partir du">
           <input name="from" type="date" required defaultValue={from} />
         </Field>
+        {editing === '' ? (
+          picker
+        ) : (
+          <button type="button" onClick={() => openPicker('')}>
+            <Plus size={15} /> Ajouter un ingrédient
+          </button>
+        )}
         {orderedFoods(foods).map(([key, f]) => (
           <fieldset className="bowl-field" aria-label={f.name} key={key}>
             <div className="bowl-item-actions">
@@ -220,13 +227,6 @@ export function BowlEditor({
             </details>
           </fieldset>
         ))}
-        {editing === '' ? (
-          picker
-        ) : (
-          <button type="button" onClick={() => openPicker('')}>
-            <Plus size={15} /> Ajouter un ingrédient
-          </button>
-        )}
       </Form>
     </Dialog>
   );
