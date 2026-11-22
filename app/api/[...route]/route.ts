@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { storePhoto, mediaDir } from '@/lib/media';
 import { db, state } from '@/lib/db';
 import { authenticated, login, logout } from '@/lib/auth';
-import { mutate, UserError } from '@/lib/commands';
+import { mutate, ensureWeek, UserError } from '@/lib/commands';
 import { backup, restore } from '@/lib/backup';
 import { previewUrl } from '@/lib/web-import';
 import { localObservations } from '@/lib/open-prices';
@@ -106,6 +106,7 @@ export async function POST(req: Request, ctx: Ctx) {
       await logout();
       return json({ ok: true });
     }
+    if (path === 'week') return json(await ensureWeek(z.iso.date().parse((await body(500)).week)));
     if (path === 'checks') return json(await syncChecks(await body()));
     if (path === 'command') {
       const v = await body(800000);

@@ -1,4 +1,5 @@
 import type { Ingredient, State, Offer } from './model';
+import { groceryName, fold, groceryMeasure } from './grocery-names';
 import { clean, normalize, rounded } from './ingredients';
 import { inWeek, addDays, today } from './dates';
 export type Need = {
@@ -20,11 +21,12 @@ export function needs(s: State, week: string) {
   const rows = new Map<string, Need>();
   const incomplete: string[] = [];
   function include(i: Ingredient, factor: number | null, title: string, manualKey?: string) {
-    const [q, unit] = normalize(i.quantity ?? 0, i.unit);
-    const key = manualKey ?? clean(i.name) + '|' + unit;
+    const [q, unit] = groceryMeasure(i.name, i.quantity ?? 0, i.unit);
+    const name = groceryName(i.name);
+    const key = clean(name) + '|' + unit;
     const row = rows.get(key) ?? {
       key,
-      name: i.name,
+      name,
       unit,
       quantity: 0,
       unknown: false,
@@ -38,6 +40,7 @@ export function needs(s: State, week: string) {
         : 'Épicerie',
       manual: !!manualKey,
     };
+    if (!manualKey) row.manual = false;
     if (i.quantity === null || factor === null || !unit) row.unknown = true;
     else row.quantity += q * factor;
     if (title && !row.recipes.includes(title)) row.recipes.push(title);
@@ -51,18 +54,22 @@ export function needs(s: State, week: string) {
   for (const i of s.items.filter((i) => i.week === week && i.manual))
     include({ ...i, raw: '' }, 1, '', i.key);
   for (const row of rows.values()) {
-    const saved = s.items.find((i) => i.week === week && i.key === row.key);
-    row.stock = row.manual
-      ? 0
-      : s.stock
-          .filter((i) => clean(i.name) === clean(row.name))
-          .reduce((n, i) => {
-            const [q, u] = normalize(i.quantity, i.unit);
-            return n + (u === row.unit ? q : 0);
-          }, 0);
+    const stored = s.items.filter(
+      (i) =>
+        i.week === week &&
+        fold(groceryName(i.name)) === fold(row.name) &&
+        groceryMeasure(i.name, 0, i.unit)[1] === row.unit,
+    );
+    const saved = stored.find((i) => i.key === row.key && !i.manual);
+    row.stock = s.stock
+      .filter((i) => fold(groceryName(i.name)) === fold(row.name))
+      .reduce((n, i) => {
+        const [q, u] = groceryMeasure(i.name, i.quantity, i.unit);
+        return n + (u === row.unit ? q : 0);
+      }, 0);
     row.quantity = rounded(row.quantity);
     row.buy = rounded(Math.max(0, row.quantity - row.stock));
-    row.checked = saved?.checked ?? false;
+    row.checked = saved?.checked ?? (stored.length > 0 && stored.every((i) => i.checked));
     row.bag = saved?.bag ?? row.bag;
   }
   return { rows: [...rows.values()], incomplete: [...new Set(incomplete)] };

@@ -1,0 +1,1449 @@
+[
+  {
+    "pattern": "^pesto",
+    "tags": [
+      "pestos"
+    ],
+    "piece": 0,
+    "portion": 50
+  },
+  {
+    "pattern": "^creme de basilic",
+    "tags": [
+      "pestos"
+    ],
+    "piece": 0,
+    "portion": 25
+  },
+  {
+    "pattern": "^cube de bouillon|^bouillon",
+    "tags": [
+      "bouillon-cubes"
+    ],
+    "piece": 10,
+    "portion": 10
+  },
+  {
+    "pattern": "^pur[eé]e de gingembre",
+    "tags": [
+      "ginger"
+    ],
+    "piece": 0,
+    "portion": 20
+  },
+  {
+    "pattern": "^pur[eé]e d.ail",
+    "tags": [
+      "garlic"
+    ],
+    "piece": 0,
+    "portion": 20
+  },
+  {
+    "pattern": "^nouilles",
+    "tags": [
+      "noodles"
+    ],
+    "piece": 0,
+    "portion": 150
+  },
+  {
+    "pattern": "^riz.*precuit",
+    "tags": [
+      "precooked-rices"
+    ],
+    "piece": 0,
+    "portion": 125
+  },
+  {
+    "pattern": "^vinaigre",
+    "tags": [
+      "vinegars"
+    ],
+    "piece": 0,
+    "portion": 15
+  },
+  {
+    "pattern": "^beurre de cacahu",
+    "tags": [
+      "peanut-butters"
+    ],
+    "piece": 0,
+    "portion": 25
+  },
+  {
+    "pattern": "(fromage de chevre)",
+    "tags": [
+      "goat-cheeses"
+    ],
+    "piece": 50,
+    "portion": 90
+  },
+  {
+    "pattern": "(fromage a la grecque)",
+    "tags": [
+      "feta"
+    ],
+    "piece": 0,
+    "portion": 100
+  },
+  {
+    "pattern": "fromage bleu",
+    "tags": [
+      "auvergne-blue-cheese-from-cow-s-milk"
+    ],
+    "piece": 0,
+    "portion": 80
+  },
+  {
+    "pattern": "(fromage|labneh|sarasson|panir)",
+    "tags": [
+      "cream-cheeses",
+      "cheese-spreads"
+    ],
+    "piece": 0,
+    "portion": 100
+  },
+  {
+    "pattern": "^fromage",
+    "tags": [
+      "cheeses"
+    ],
+    "piece": 0,
+    "portion": 60
+  },
+  {
+    "pattern": "^tortelloni",
+    "tags": [
+      "fresh-pasta-stuffed-with-cheese-and-vegetables"
+    ],
+    "piece": 0,
+    "portion": 250
+  },
+  {
+    "pattern": "^cuisse de poulet",
+    "tags": [
+      "chicken-thighs"
+    ],
+    "piece": 220,
+    "portion": 220
+  },
+  {
+    "pattern": "^pate epicee",
+    "tags": [
+      "curry-pastes",
+      "hot-sauces"
+    ],
+    "piece": 0,
+    "portion": 20
+  },
+  {
+    "pattern": "^chutney",
+    "tags": [
+      "chutneys"
+    ],
+    "piece": 0,
+    "portion": 25
+  },
+  {
+    "pattern": "sauce soja",
+    "tags": [
+      "soy-sauces"
+    ],
+    "piece": 0,
+    "portion": 20
+  },
+  {
+    "pattern": "sauce.*(chili|sriracha|zhoug)",
+    "tags": [
+      "hot-sauces",
+      "chili-sauces"
+    ],
+    "piece": 0,
+    "portion": 25
+  },
+  {
+    "pattern": "sauce (poisson|umami|hoisin|asiatique|churrasco|miel|ravigote)",
+    "tags": [
+      "asian-sauces",
+      "sauces"
+    ],
+    "piece": 0,
+    "portion": 25
+  },
+  {
+    "pattern": "^sauce",
+    "tags": [
+      "sauces"
+    ],
+    "piece": 0,
+    "portion": 25
+  },
+  {
+    "pattern": "^creme (liquide|epaisse)",
+    "tags": [
+      "creams"
+    ],
+    "piece": 0,
+    "portion": 200
+  },
+  {
+    "pattern": "^miettes de saumon",
+    "tags": [
+      "smoked-salmons"
+    ],
+    "piece": 0,
+    "portion": 100
+  },
+  {
+    "pattern": "^eminc[eé]s veggie",
+    "tags": [
+      "plain-tofu"
+    ],
+    "piece": 100,
+    "portion": 150
+  },
+  {
+    "pattern": "^beurre",
+    "tags": [
+      "butters"
+    ],
+    "piece": 0,
+    "portion": 15
+  },
+  {
+    "pattern": "^pain",
+    "tags": [
+      "breads"
+    ],
+    "piece": 65,
+    "portion": 120
+  },
+  {
+    "pattern": "^tomates cerises en boite|^chair de tomate",
+    "tags": [
+      "canned-tomatoes"
+    ],
+    "piece": 0,
+    "portion": 400
+  },
+  {
+    "pattern": "oignons? frit",
+    "tags": [
+      "fried-onions"
+    ],
+    "piece": 0,
+    "portion": 15
+  },
+  {
+    "pattern": "oignons? nouveau",
+    "tags": [
+      "spring-onions",
+      "leeks"
+    ],
+    "piece": 30,
+    "portion": 100
+  },
+  {
+    "pattern": "oignons?",
+    "tags": [
+      "onions",
+      "yellow-onions",
+      "red-onions"
+    ],
+    "piece": 100,
+    "portion": 100
+  },
+  {
+    "pattern": "echalot",
+    "tags": [
+      "shallots"
+    ],
+    "piece": 30,
+    "portion": 100
+  },
+  {
+    "pattern": "tomate.*(boite|chair)",
+    "tags": [
+      "canned-tomatoes",
+      "chopped-tomatoes"
+    ],
+    "piece": 0,
+    "portion": 400
+  },
+  {
+    "pattern": "concentre de tomate",
+    "tags": [
+      "tomato-pastes"
+    ],
+    "piece": 0,
+    "portion": 70
+  },
+  {
+    "pattern": "tomates? (semi-)?sechee",
+    "tags": [
+      "dried-tomatoes"
+    ],
+    "piece": 0,
+    "portion": 50
+  },
+  {
+    "pattern": "tomate.*cerise",
+    "tags": [
+      "cherry-tomatoes"
+    ],
+    "piece": 10,
+    "portion": 125
+  },
+  {
+    "pattern": "tomate",
+    "tags": [
+      "tomatoes"
+    ],
+    "piece": 120,
+    "portion": 125
+  },
+  {
+    "pattern": "poivron",
+    "tags": [
+      "red-bell-peppers",
+      "sweet-peppers"
+    ],
+    "piece": 150,
+    "portion": 150
+  },
+  {
+    "pattern": "piment$",
+    "tags": [
+      "chili-peppers",
+      "peppers"
+    ],
+    "piece": 15,
+    "portion": 20
+  },
+  {
+    "pattern": "pomme[s]? de terre",
+    "tags": [
+      "potatoes"
+    ],
+    "piece": 150,
+    "portion": 500
+  },
+  {
+    "pattern": "patate douce",
+    "tags": [
+      "sweet-potatoes"
+    ],
+    "piece": 230,
+    "portion": 250
+  },
+  {
+    "pattern": "pomme$",
+    "tags": [
+      "apples"
+    ],
+    "piece": 155,
+    "portion": 200
+  },
+  {
+    "pattern": "citron vert",
+    "tags": [
+      "limes"
+    ],
+    "piece": 85,
+    "portion": 85
+  },
+  {
+    "pattern": "citron",
+    "tags": [
+      "lemons"
+    ],
+    "piece": 120,
+    "portion": 120
+  },
+  {
+    "pattern": "concombre",
+    "tags": [
+      "cucumbers"
+    ],
+    "piece": 300,
+    "portion": 300
+  },
+  {
+    "pattern": "carotte",
+    "tags": [
+      "carrots"
+    ],
+    "piece": 100,
+    "portion": 100
+  },
+  {
+    "pattern": "courgette",
+    "tags": [
+      "zucchini"
+    ],
+    "piece": 220,
+    "portion": 250
+  },
+  {
+    "pattern": "aubergine",
+    "tags": [
+      "aubergines"
+    ],
+    "piece": 300,
+    "portion": 300
+  },
+  {
+    "pattern": "poireau",
+    "tags": [
+      "leeks"
+    ],
+    "piece": 180,
+    "portion": 180
+  },
+  {
+    "pattern": "betterave",
+    "tags": [
+      "beetroot"
+    ],
+    "piece": 120,
+    "portion": 250
+  },
+  {
+    "pattern": "avocat",
+    "tags": [
+      "avocados"
+    ],
+    "piece": 200,
+    "portion": 200
+  },
+  {
+    "pattern": "broc(c)?ol",
+    "tags": [
+      "broccoli"
+    ],
+    "piece": 350,
+    "portion": 200
+  },
+  {
+    "pattern": "epinard",
+    "tags": [
+      "spinachs"
+    ],
+    "piece": 0,
+    "portion": 100
+  },
+  {
+    "pattern": "champignon",
+    "tags": [
+      "champignon-mushrooms",
+      "mushrooms"
+    ],
+    "piece": 25,
+    "portion": 200
+  },
+  {
+    "pattern": "portobello",
+    "tags": [
+      "mushrooms"
+    ],
+    "piece": 90,
+    "portion": 180
+  },
+  {
+    "pattern": "celeri",
+    "tags": [
+      "celery-stalk"
+    ],
+    "piece": 50,
+    "portion": 200
+  },
+  {
+    "pattern": "navet",
+    "tags": [
+      "turnip"
+    ],
+    "piece": 100,
+    "portion": 150
+  },
+  {
+    "pattern": "radis",
+    "tags": [
+      "radishes"
+    ],
+    "piece": 15,
+    "portion": 150
+  },
+  {
+    "pattern": "salade",
+    "tags": [
+      "lettuces",
+      "salads"
+    ],
+    "piece": 250,
+    "portion": 75
+  },
+  {
+    "pattern": "pak choi",
+    "tags": [
+      "chinese-cabbages",
+      "cabbages"
+    ],
+    "piece": 230,
+    "portion": 200
+  },
+  {
+    "pattern": "oignon",
+    "tags": [
+      "onions"
+    ],
+    "piece": 100,
+    "portion": 100
+  },
+  {
+    "pattern": "gingembre",
+    "tags": [
+      "ginger"
+    ],
+    "piece": 15,
+    "portion": 20
+  },
+  {
+    "pattern": "puree d.ail",
+    "tags": [
+      "garlic-pastes",
+      "garlic"
+    ],
+    "piece": 10,
+    "portion": 15
+  },
+  {
+    "pattern": "ail des ours",
+    "tags": [
+      "wild-garlic",
+      "parsley"
+    ],
+    "piece": 0,
+    "portion": 5
+  },
+  {
+    "pattern": "tete d.ail",
+    "tags": [
+      "garlic"
+    ],
+    "piece": 45,
+    "portion": 45
+  },
+  {
+    "pattern": "(gousse d.ail|^ail$)",
+    "tags": [
+      "garlic"
+    ],
+    "piece": 5,
+    "portion": 45
+  },
+  {
+    "pattern": "melon",
+    "tags": [
+      "melons"
+    ],
+    "piece": 900,
+    "portion": 250
+  },
+  {
+    "pattern": "pasteque",
+    "tags": [
+      "watermelons"
+    ],
+    "piece": 3000,
+    "portion": 300
+  },
+  {
+    "pattern": "kiwi",
+    "tags": [
+      "kiwis"
+    ],
+    "piece": 90,
+    "portion": 90
+  },
+  {
+    "pattern": "abricot",
+    "tags": [
+      "apricots"
+    ],
+    "piece": 50,
+    "portion": 100
+  },
+  {
+    "pattern": "nectarine",
+    "tags": [
+      "nectarines"
+    ],
+    "piece": 140,
+    "portion": 150
+  },
+  {
+    "pattern": "mangue",
+    "tags": [
+      "mangoes"
+    ],
+    "piece": 350,
+    "portion": 200
+  },
+  {
+    "pattern": "myrtille",
+    "tags": [
+      "blueberries"
+    ],
+    "piece": 0,
+    "portion": 125
+  },
+  {
+    "pattern": "persil",
+    "tags": [
+      "parsley"
+    ],
+    "piece": 0,
+    "portion": 10
+  },
+  {
+    "pattern": "coriandre",
+    "tags": [
+      "coriander",
+      "parsley"
+    ],
+    "piece": 0,
+    "portion": 10
+  },
+  {
+    "pattern": "menthe",
+    "tags": [
+      "mint",
+      "parsley"
+    ],
+    "piece": 0,
+    "portion": 10
+  },
+  {
+    "pattern": "ciboulette",
+    "tags": [
+      "chives",
+      "parsley"
+    ],
+    "piece": 0,
+    "portion": 10
+  },
+  {
+    "pattern": "basilic",
+    "tags": [
+      "basils",
+      "parsley"
+    ],
+    "piece": 0,
+    "portion": 10
+  },
+  {
+    "pattern": "aneth",
+    "tags": [
+      "dill",
+      "parsley"
+    ],
+    "piece": 0,
+    "portion": 10
+  },
+  {
+    "pattern": "cerfeuil",
+    "tags": [
+      "parsley"
+    ],
+    "piece": 0,
+    "portion": 10
+  },
+  {
+    "pattern": "bouillon",
+    "tags": [
+      "bouillon-cubes"
+    ],
+    "piece": 10,
+    "portion": 10
+  },
+  {
+    "pattern": "lait de coco",
+    "tags": [
+      "coconut-milks"
+    ],
+    "piece": 0,
+    "portion": 200
+  },
+  {
+    "pattern": "huile d.olive",
+    "tags": [
+      "olive-oils"
+    ],
+    "piece": 0,
+    "portion": 15
+  },
+  {
+    "pattern": "huile de sesame",
+    "tags": [
+      "sesame-oils"
+    ],
+    "piece": 0,
+    "portion": 15
+  },
+  {
+    "pattern": "huile",
+    "tags": [
+      "sunflower-oils",
+      "vegetable-oils"
+    ],
+    "piece": 0,
+    "portion": 15
+  },
+  {
+    "pattern": "vinaigre balsamique",
+    "tags": [
+      "balsamic-vinegars"
+    ],
+    "piece": 0,
+    "portion": 15
+  },
+  {
+    "pattern": "vinaigre",
+    "tags": [
+      "wine-vinegars",
+      "vinegars"
+    ],
+    "piece": 0,
+    "portion": 15
+  },
+  {
+    "pattern": "poivre",
+    "tags": [
+      "ground-peppers"
+    ],
+    "piece": 0,
+    "portion": 1
+  },
+  {
+    "pattern": "^sel$",
+    "tags": [
+      "salts"
+    ],
+    "piece": 0,
+    "portion": 1
+  },
+  {
+    "pattern": "pate epicee",
+    "tags": [
+      "curry-pastes",
+      "hot-sauces"
+    ],
+    "piece": 0,
+    "portion": 20
+  },
+  {
+    "pattern": "miso",
+    "tags": [
+      "misos",
+      "soy-sauces"
+    ],
+    "piece": 0,
+    "portion": 20
+  },
+  {
+    "pattern": "pesto",
+    "tags": [
+      "pestos"
+    ],
+    "piece": 0,
+    "portion": 50
+  },
+  {
+    "pattern": "creme de basilic",
+    "tags": [
+      "pestos"
+    ],
+    "piece": 0,
+    "portion": 20
+  },
+  {
+    "pattern": "chutney",
+    "tags": [
+      "chutneys"
+    ],
+    "piece": 0,
+    "portion": 30
+  },
+  {
+    "pattern": "moutarde",
+    "tags": [
+      "mustards"
+    ],
+    "piece": 0,
+    "portion": 15
+  },
+  {
+    "pattern": "ketchup",
+    "tags": [
+      "ketchup"
+    ],
+    "piece": 0,
+    "portion": 25
+  },
+  {
+    "pattern": "mayonnaise",
+    "tags": [
+      "mayonnaises"
+    ],
+    "piece": 0,
+    "portion": 25
+  },
+  {
+    "pattern": "aioli",
+    "tags": [
+      "aiolis",
+      "mayonnaises"
+    ],
+    "piece": 0,
+    "portion": 25
+  },
+  {
+    "pattern": "guacamole",
+    "tags": [
+      "guacamoles"
+    ],
+    "piece": 0,
+    "portion": 75
+  },
+  {
+    "pattern": "paprika",
+    "tags": [
+      "paprika",
+      "spices"
+    ],
+    "piece": 0,
+    "portion": 4
+  },
+  {
+    "pattern": "cumin",
+    "tags": [
+      "cumins",
+      "spices"
+    ],
+    "piece": 0,
+    "portion": 4
+  },
+  {
+    "pattern": "(garam|assaisonnement|epice|zaatar|piri-piri|curry|gomasio|citronnelle|muscade|curcuma)",
+    "tags": [
+      "spices"
+    ],
+    "piece": 0,
+    "portion": 5
+  },
+  {
+    "pattern": "(origan|laurier|thym|herbes de provence|romarin)",
+    "tags": [
+      "herbes-de-provence",
+      "aromatic-herbs"
+    ],
+    "piece": 1,
+    "portion": 3
+  },
+  {
+    "pattern": "crevette",
+    "tags": [
+      "prawns",
+      "shrimps"
+    ],
+    "piece": 15,
+    "portion": 150
+  },
+  {
+    "pattern": "saumon fume",
+    "tags": [
+      "smoked-salmons"
+    ],
+    "piece": 100,
+    "portion": 100
+  },
+  {
+    "pattern": "saumon",
+    "tags": [
+      "salmon-fillets",
+      "salmons"
+    ],
+    "piece": 125,
+    "portion": 150
+  },
+  {
+    "pattern": "(haddock|lieu noir|cabillaud)",
+    "tags": [
+      "cod-fillets",
+      "cods"
+    ],
+    "piece": 125,
+    "portion": 150
+  },
+  {
+    "pattern": "canard",
+    "tags": [
+      "duck-breasts",
+      "duck-meats"
+    ],
+    "piece": 150,
+    "portion": 200
+  },
+  {
+    "pattern": "canette",
+    "tags": [
+      "duck-breasts",
+      "duck-meats"
+    ],
+    "piece": 150,
+    "portion": 200
+  },
+  {
+    "pattern": "paupiette",
+    "tags": [
+      "veal-meat",
+      "veal"
+    ],
+    "piece": 150,
+    "portion": 200
+  },
+  {
+    "pattern": "(eminces veggie|boulettes thai)",
+    "tags": [
+      "meat-analogues",
+      "plain-tofu"
+    ],
+    "piece": 90,
+    "portion": 150
+  },
+  {
+    "pattern": "poulet",
+    "tags": [
+      "chicken-breasts",
+      "chicken-meats"
+    ],
+    "piece": 125,
+    "portion": 180
+  },
+  {
+    "pattern": "dinde",
+    "tags": [
+      "turkey-cutlets",
+      "turkeys"
+    ],
+    "piece": 125,
+    "portion": 180
+  },
+  {
+    "pattern": "viande hachee",
+    "tags": [
+      "ground-beef-steaks"
+    ],
+    "piece": 125,
+    "portion": 200
+  },
+  {
+    "pattern": "(bavette|pave de boeuf|eminces de boeuf|steak)",
+    "tags": [
+      "beef-flank-steak",
+      "beef-rump-steak",
+      "beef"
+    ],
+    "piece": 150,
+    "portion": 200
+  },
+  {
+    "pattern": "(saucisse|chair a saucisse|farce au porc)",
+    "tags": [
+      "pork-sausages"
+    ],
+    "piece": 110,
+    "portion": 200
+  },
+  {
+    "pattern": "porc",
+    "tags": [
+      "pork-loin",
+      "pork"
+    ],
+    "piece": 125,
+    "portion": 200
+  },
+  {
+    "pattern": "(lardon|poitrine fumee)",
+    "tags": [
+      "lardons",
+      "bacons"
+    ],
+    "piece": 25,
+    "portion": 100
+  },
+  {
+    "pattern": "(prosciutto|coppa)",
+    "tags": [
+      "cured-hams"
+    ],
+    "piece": 18,
+    "portion": 80
+  },
+  {
+    "pattern": "jambon",
+    "tags": [
+      "white-hams",
+      "cooked-hams"
+    ],
+    "piece": 40,
+    "portion": 80
+  },
+  {
+    "pattern": "chorizo",
+    "tags": [
+      "chorizos"
+    ],
+    "piece": 80,
+    "portion": 80
+  },
+  {
+    "pattern": "thon",
+    "tags": [
+      "canned-tunas"
+    ],
+    "piece": 0,
+    "portion": 140
+  },
+  {
+    "pattern": "beurre de cacahuete",
+    "tags": [
+      "peanut-butters"
+    ],
+    "piece": 0,
+    "portion": 25
+  },
+  {
+    "pattern": "beurre",
+    "tags": [
+      "butters"
+    ],
+    "piece": 0,
+    "portion": 15
+  },
+  {
+    "pattern": "creme",
+    "tags": [
+      "creams"
+    ],
+    "piece": 0,
+    "portion": 200
+  },
+  {
+    "pattern": "(oeuf|jaune d.oeuf)",
+    "tags": [
+      "eggs"
+    ],
+    "piece": 60,
+    "portion": 360
+  },
+  {
+    "pattern": "lait",
+    "tags": [
+      "milks"
+    ],
+    "piece": 0,
+    "portion": 200
+  },
+  {
+    "pattern": "avoine cuisine",
+    "tags": [
+      "oat-based-creams-for-cooking"
+    ],
+    "piece": 0,
+    "portion": 200
+  },
+  {
+    "pattern": "yaourt",
+    "tags": [
+      "greek-yogurts",
+      "plain-yogurts"
+    ],
+    "piece": 125,
+    "portion": 125
+  },
+  {
+    "pattern": "(pecorino|grana padano|parmigiano|a l.italienne)",
+    "tags": [
+      "parmigiano-reggiano",
+      "grana-padano"
+    ],
+    "piece": 50,
+    "portion": 25
+  },
+  {
+    "pattern": "(mozzarella|burrata)",
+    "tags": [
+      "mozzarella",
+      "burrata"
+    ],
+    "piece": 125,
+    "portion": 125
+  },
+  {
+    "pattern": "cantal",
+    "tags": [
+      "cantals",
+      "cheeses"
+    ],
+    "piece": 50,
+    "portion": 50
+  },
+  {
+    "pattern": "gouda",
+    "tags": [
+      "gouda"
+    ],
+    "piece": 0,
+    "portion": 50
+  },
+  {
+    "pattern": "cheddar",
+    "tags": [
+      "cheddar-cheese"
+    ],
+    "piece": 0,
+    "portion": 50
+  },
+  {
+    "pattern": "mascarpone",
+    "tags": [
+      "mascarpone"
+    ],
+    "piece": 0,
+    "portion": 100
+  },
+  {
+    "pattern": "ricotta",
+    "tags": [
+      "ricotta"
+    ],
+    "piece": 0,
+    "portion": 100
+  },
+  {
+    "pattern": "tofu",
+    "tags": [
+      "plain-tofu"
+    ],
+    "piece": 100,
+    "portion": 100
+  },
+  {
+    "pattern": "raisins secs",
+    "tags": [
+      "raisins"
+    ],
+    "piece": 0,
+    "portion": 25
+  },
+  {
+    "pattern": "(noix de cajou|cajou)",
+    "tags": [
+      "cashew-nuts"
+    ],
+    "piece": 0,
+    "portion": 25
+  },
+  {
+    "pattern": "amande",
+    "tags": [
+      "almonds"
+    ],
+    "piece": 0,
+    "portion": 25
+  },
+  {
+    "pattern": "pistache",
+    "tags": [
+      "pistachios"
+    ],
+    "piece": 0,
+    "portion": 20
+  },
+  {
+    "pattern": "pignon",
+    "tags": [
+      "pine-nuts"
+    ],
+    "piece": 0,
+    "portion": 20
+  },
+  {
+    "pattern": "noisette",
+    "tags": [
+      "hazelnuts"
+    ],
+    "piece": 0,
+    "portion": 25
+  },
+  {
+    "pattern": "noix de coco",
+    "tags": [
+      "grated-coconut"
+    ],
+    "piece": 0,
+    "portion": 25
+  },
+  {
+    "pattern": "noix",
+    "tags": [
+      "walnuts"
+    ],
+    "piece": 0,
+    "portion": 25
+  },
+  {
+    "pattern": "cacahuete",
+    "tags": [
+      "peanuts"
+    ],
+    "piece": 0,
+    "portion": 25
+  },
+  {
+    "pattern": "graines de courge",
+    "tags": [
+      "pumpkin-seeds"
+    ],
+    "piece": 0,
+    "portion": 15
+  },
+  {
+    "pattern": "graines de tournesol",
+    "tags": [
+      "sunflower-seeds"
+    ],
+    "piece": 0,
+    "portion": 15
+  },
+  {
+    "pattern": "graines de sesame",
+    "tags": [
+      "sesame"
+    ],
+    "piece": 0,
+    "portion": 15
+  },
+  {
+    "pattern": "edamame",
+    "tags": [
+      "edamame",
+      "frozen-peas"
+    ],
+    "piece": 0,
+    "portion": 100
+  },
+  {
+    "pattern": "petits pois",
+    "tags": [
+      "canned-peas",
+      "peas"
+    ],
+    "piece": 140,
+    "portion": 200
+  },
+  {
+    "pattern": "haricots",
+    "tags": [
+      "canned-kidney-common-beans",
+      "beans"
+    ],
+    "piece": 0,
+    "portion": 240
+  },
+  {
+    "pattern": "pois chiche",
+    "tags": [
+      "canned-chickpeas",
+      "chickpeas"
+    ],
+    "piece": 0,
+    "portion": 240
+  },
+  {
+    "pattern": "lentille",
+    "tags": [
+      "lentils"
+    ],
+    "piece": 0,
+    "portion": 240
+  },
+  {
+    "pattern": "mais en conserve",
+    "tags": [
+      "canned-sweet-corn",
+      "canned-corns"
+    ],
+    "piece": 0,
+    "portion": 140
+  },
+  {
+    "pattern": "olive",
+    "tags": [
+      "olives"
+    ],
+    "piece": 0,
+    "portion": 50
+  },
+  {
+    "pattern": "riz",
+    "tags": [
+      "rices"
+    ],
+    "piece": 0,
+    "portion": 150
+  },
+  {
+    "pattern": "nouilles",
+    "tags": [
+      "noodles"
+    ],
+    "piece": 0,
+    "portion": 200
+  },
+  {
+    "pattern": "tortelloni",
+    "tags": [
+      "fresh-pasta-stuffed-with-cheese-and-vegetables"
+    ],
+    "piece": 0,
+    "portion": 250
+  },
+  {
+    "pattern": "gnocchi",
+    "tags": [
+      "gnocchi"
+    ],
+    "piece": 0,
+    "portion": 250
+  },
+  {
+    "pattern": "(tagliatelle|spaghetti frais)",
+    "tags": [
+      "fresh-pasta"
+    ],
+    "piece": 0,
+    "portion": 250
+  },
+  {
+    "pattern": "(penne|spaghetti|farfalle|conchiglie|rigatoni|coquillettes|fusilli|linguine|orzo|casarecce|pates?)",
+    "tags": [
+      "dry-pastas",
+      "pastas"
+    ],
+    "piece": 0,
+    "portion": 100
+  },
+  {
+    "pattern": "(semoule|couscous|boulgour|freekeh)",
+    "tags": [
+      "couscous",
+      "bulgur"
+    ],
+    "piece": 0,
+    "portion": 150
+  },
+  {
+    "pattern": "quinoa",
+    "tags": [
+      "quinoa"
+    ],
+    "piece": 0,
+    "portion": 150
+  },
+  {
+    "pattern": "(tortilla|naan)",
+    "tags": [
+      "tortillas",
+      "breads"
+    ],
+    "piece": 60,
+    "portion": 120
+  },
+  {
+    "pattern": "pain",
+    "tags": [
+      "breads"
+    ],
+    "piece": 65,
+    "portion": 120
+  },
+  {
+    "pattern": "chapelure",
+    "tags": [
+      "bread-crumbs"
+    ],
+    "piece": 0,
+    "portion": 25
+  },
+  {
+    "pattern": "farine",
+    "tags": [
+      "wheat-flours"
+    ],
+    "piece": 0,
+    "portion": 100
+  },
+  {
+    "pattern": "(sucre|cassonade)",
+    "tags": [
+      "sugars"
+    ],
+    "piece": 0,
+    "portion": 100
+  },
+  {
+    "pattern": "miel",
+    "tags": [
+      "honeys"
+    ],
+    "piece": 0,
+    "portion": 25
+  },
+  {
+    "pattern": "levure",
+    "tags": [
+      "baking-powder-or-raising-agent"
+    ],
+    "piece": 0,
+    "portion": 11
+  },
+  {
+    "pattern": "chocolat",
+    "tags": [
+      "chocolate-chips",
+      "dark-chocolates"
+    ],
+    "piece": 0,
+    "portion": 100
+  },
+  {
+    "pattern": "rhum",
+    "tags": [
+      "rums"
+    ],
+    "piece": 0,
+    "portion": 50
+  },
+  {
+    "pattern": "vanille",
+    "tags": [
+      "vanilla-sugars"
+    ],
+    "piece": 0,
+    "portion": 8
+  }
+]

@@ -23,11 +23,12 @@ function show() {
         ' ' +
           row.name +
           ' · ' +
-          (row.unknown
-            ? row.unit === 'selon le goût'
-              ? 'Selon le goût'
-              : 'À préciser'
-            : row.quantity + ' ' + row.unit),
+          (row.description ??
+            (row.unknown
+              ? row.unit === 'selon le goût'
+                ? 'Selon le goût'
+                : 'À préciser'
+              : row.quantity + ' ' + row.unit)),
       ),
     );
     document.querySelector('#rows').append(label);
@@ -38,7 +39,11 @@ async function sync() {
   if (!data || working) return;
   const edits = data.rows
     .filter((r) => r.checked !== r.before)
-    .map((r) => ({ week: data.week, ...r }));
+    .flatMap((r) =>
+      r.parts
+        ? r.parts.map((p) => ({ ...p, week: data.week, checked: r.checked }))
+        : [{ week: data.week, ...r }],
+    );
   if (!edits.length) {
     statusEl.textContent = 'Toutes les coches sont synchronisées.';
     return;
@@ -52,7 +57,14 @@ async function sync() {
     });
     const r = await res.json();
     if (!res.ok) throw Error(r.error);
-    for (const edit of edits) data.rows.find((r) => r.key === edit.key).before = edit.checked;
+    const submitted = new Map(edits.map((edit) => [edit.key, edit.checked]));
+    for (const row of data.rows) {
+      if (row.parts) {
+        for (const part of row.parts)
+          if (submitted.has(part.key)) part.before = submitted.get(part.key);
+        row.before = row.parts.every((part) => part.before);
+      } else if (submitted.has(row.key)) row.before = submitted.get(row.key);
+    }
     save();
     statusEl.textContent = 'Coches synchronisées.';
   } catch (e) {

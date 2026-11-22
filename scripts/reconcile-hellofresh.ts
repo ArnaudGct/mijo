@@ -99,12 +99,20 @@ try {
         equal(result.steps, d.steps)
       )
         result.verified = true;
-      const categoriesById = new Map(d.ingredients.map((i) => [i.sourceId, i.category]));
+      const officialById = new Map(d.ingredients.map((i) => [i.sourceId, i]));
       const previouslyReviewed = {
         ...row.data,
         ingredients: row.data.ingredients.map((i) => {
-          const category = i.sourceId && categoriesById.get(i.sourceId);
-          return i.category === 'Autres' && category ? { ...i, category } : i;
+          const official = i.sourceId && officialById.get(i.sourceId);
+          if (!official) return i;
+          return {
+            ...i,
+            category: i.category === 'Autres' ? official.category : i.category,
+            unit:
+              !i.unit && i.quantity === official.quantity && row.data.base === d.base
+                ? official.unit
+                : i.unit,
+          };
         }),
       };
       const data = recipe.parse(hasPrior ? previouslyReviewed : result);

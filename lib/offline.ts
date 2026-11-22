@@ -23,7 +23,7 @@ export async function syncChecks(input: unknown) {
           409,
         );
       if (r.checked === e.checked) continue;
-      const saved = s.items.find((i) => i.key === e.key && i.week === e.week);
+      const saved = s.items.find((i) => i.key === e.key && i.week === e.week && !i.manual);
       const row = {
         id: saved?.id ?? crypto.randomUUID(),
         week: e.week,
@@ -32,7 +32,7 @@ export async function syncChecks(input: unknown) {
         quantity: saved?.quantity ?? null,
         unit: r.unit,
         category: r.category,
-        manual: r.manual,
+        manual: false,
         checked: e.checked,
         bag: saved?.bag ?? null,
       };

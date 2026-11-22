@@ -4,7 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
 import { readFileSync } from 'node:fs';
 import { state, db } from '../lib/db';
-import { mutate, type Command } from '../lib/commands';
+import { ensureWeek, mutate, type Command } from '../lib/commands';
 import { blankRecipe } from '../lib/model';
 import { parseLine } from '../lib/ingredients';
 import { addDays, today, monday } from '../lib/dates';
@@ -218,6 +218,22 @@ test('transactions PostgreSQL, parcours complet, restauration et rejouabilité',
       assert.deepEqual(b.state.meals, a.state.meals);
       assert.deepEqual(b.state.preps, a.state.preps);
       assert.equal(b.versions.length, a.versions.length);
+    });
+    await t.test('semaine automatique concurrente, échange et retrait permanent', async () => {
+      const w = addDays(day, 70);
+      const result = await Promise.all([ensureWeek(w), ensureWeek(w)]);
+      assert.equal(result.filter((r) => r.changed).length, 1);
+      const rows = (await state()).meals.filter((m) => m.day >= w && m.day < addDays(w, 7));
+      assert.ok(rows.length >= 2);
+      const [a, b] = rows;
+      await write({ action: 'moveMeal', id: a.id, day: b.day, slot: b.slot });
+      const moved = (await state()).meals;
+      assert.equal(moved.find((m) => m.id === b.id)?.day, a.day);
+      assert.equal(moved.find((m) => m.id === b.id)?.slot, a.slot);
+      assert.equal(moved.find((m) => m.id === a.id)?.slot, b.slot);
+      await write({ action: 'removeMeal', id: a.id });
+      assert.equal((await ensureWeek(w)).changed, false);
+      assert.ok(!(await state()).meals.some((m) => m.day === b.day && m.slot === b.slot));
     });
   } finally {
     await db().end();

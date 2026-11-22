@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { blankRecipe, snapshot, type RecipeRow } from '../lib/model';
 import { parseLine, normalize, amount } from '../lib/ingredients';
 import { planned, defaultMeals, storageAlert, suggest } from '../lib/planner';
+import { marketBasket, shipping } from '../lib/market';
 import { needs, basket } from '../lib/shopping';
 import { parseNotion } from '../lib/notion';
 import { publicAddress, publicUrl, extract } from '../lib/web-import';
@@ -253,4 +254,33 @@ test('HelloFresh relie les identifiants au bon rendement et garde une étape par
   );
   assert.deepEqual(recipe.steps, [{ text: 'Émincer.\nFaire revenir.', image: '' }]);
   assert.throws(() => extract('<title>Fiche indisponible</title>', url));
+});
+
+test('un seul oignon pour plusieurs sources, stock et article manuel, livraison aux seuils', () => {
+  const s = fixture();
+  s.preps[0].snapshot.ingredients = [parseLine('Oignon rouge | 1 | pièce')];
+  s.preps[1].snapshot.ingredients = [parseLine('Oignons jaunes | 100 | g')];
+  s.items.push({
+    id: id(),
+    week: day,
+    key: 'manuel:oignon',
+    name: 'Oignon',
+    unit: 'g',
+    quantity: 100,
+    category: 'Fruits et légumes',
+    manual: true,
+    bag: null,
+    checked: false,
+  });
+  s.stock = [{ id: id(), name: 'Oignon blanc', quantity: 50, unit: 'g' }];
+  const [line] = marketBasket(s, day).lines;
+  assert.equal(marketBasket(s, day).lines.length, 1);
+  assert.equal(line.name, 'Oignon');
+  assert.equal(line.buy.find((p) => p.unit === 'g')?.buy, 150);
+  assert.ok(line.cents && line.cents > 0);
+  assert.equal(shipping('leclerc', 4999).fee, null);
+  assert.equal(shipping('leclerc', 5000).fee, 790);
+  assert.equal(shipping('monoprix', 11999).fee, 800);
+  assert.equal(shipping('monoprix', 15000).fee, 400);
+  assert.equal(shipping('monoprix', 15001).fee, 0);
 });

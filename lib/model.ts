@@ -57,6 +57,7 @@ export const stores = z.object({
   freeAt: z.number().int().nonnegative().nullable(),
 });
 export const settings = z.object({
+  generatedWeeks: z.array(date).default([]),
   portions: portions.default(2),
   target: z.number().int().min(1).max(14).default(7),
   budget: z.number().int().nonnegative().nullable().default(null),
@@ -85,6 +86,7 @@ export const recipeRow = z.object({
   data: recipe,
 });
 export const preparation = z.object({
+  automatic: z.boolean().optional(),
   id,
   recipeId: id,
   version: id,

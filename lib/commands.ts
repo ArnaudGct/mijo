@@ -14,7 +14,7 @@ import {
   type State,
   type Recipe,
 } from './model';
-import { planned, defaultMeals, uid } from './planner';
+import { planned, defaultMeals, uid, suggest } from './planner';
 import { addDays, inWeek, monday, today } from './dates';
 import { sourceUrl } from './source-url';
 import { clean } from './ingredients';
@@ -66,6 +66,7 @@ export const input = z.discriminatedUnion('action', [
     day: date,
     servings: portions,
     confirmedBase: portions.optional(),
+    replaceMeal: id.optional(),
     slot: z.enum(['soir', 'midi']).default('soir'),
     leftovers: z.boolean(),
   }),
@@ -81,6 +82,8 @@ export const input = z.discriminatedUnion('action', [
   z.object({ action: z.literal('removePrep'), id }),
   z.object({ action: z.literal('meal'), data: meal }),
   z.object({ action: z.literal('removeMeal'), id }),
+  z.object({ action: z.literal('moveMeal'), id, day: date, slot: z.enum(['midi', 'soir']) }),
+  z.object({ action: z.literal('fillWeek'), week: date }),
   z.object({ action: z.literal('duplicateWeek'), week: date, to: date }),
   z.object({ action: z.literal('session'), data: session }),
   z.object({ action: z.literal('stock'), data: inventory }),
@@ -172,6 +175,15 @@ export async function execute(tx: Tx, s: State, c: z.output<typeof input>) {
         r.data.ingredients.length && r.data.steps.length,
         'Cette recette a besoin de ses ingrédients et de ses étapes avant la planification.',
       );
+      if (c.replaceMeal) {
+        const old = s.meals.find((m) => m.id === c.replaceMeal);
+        requireThat(
+          old?.day === c.day && old.slot === c.slot && !old.consumed,
+          'Le créneau à remplacer a changé.',
+        );
+        await execute(tx, s, { action: 'removeMeal', id: old.id });
+        s.meals = s.meals.filter((m) => m.id !== old.id);
+      }
       const p = planned(r, c.day, c.servings);
       const meals = defaultMeals(p, c.leftovers, c.slot);
       meals.forEach(free);
@@ -198,9 +210,52 @@ export async function execute(tx: Tx, s: State, c: z.output<typeof input>) {
       await put(tx, 'meals', m);
       break;
     }
-    case 'removeMeal':
-      await del('meals', c.id);
+    case 'fillWeek':
+      await fillWeek(tx, s, c.week, true);
       break;
+    case 'moveMeal': {
+      const source = s.meals.find((m) => m.id === c.id);
+      requireThat(source && !source.consumed, 'Ce repas ne peut plus être déplacé.');
+      const target = s.meals.find((m) => m.day === c.day && m.slot === c.slot);
+      if (source.id === target?.id) break;
+      requireThat(!target?.consumed, 'Le repas de destination a déjà été consommé.');
+      const moved = [{ ...source, day: c.day, slot: c.slot }];
+      if (target) moved.push({ ...target, day: source.day, slot: source.slot });
+      const remaining = s.meals.filter((m) => !moved.some((x) => x.id === m.id)).concat(moved);
+      for (const prepId of new Set(moved.map((m) => m.prepId))) {
+        if (!prepId) continue;
+        const p = findPrep(prepId);
+        const first = remaining
+          .filter((m) => m.prepId === prepId)
+          .map((m) => m.day)
+          .sort()[0];
+        if (p.done || p.ticks.length || p.session)
+          requireThat(first >= p.day, 'Ce repas précéderait sa préparation.');
+        else if (
+          first < p.day ||
+          moved.some(
+            (m) => m.prepId === prepId && s.meals.find((old) => old.id === m.id)?.day === p.day,
+          )
+        )
+          await put(tx, 'preps', { ...p, day: first });
+      }
+      await del('meals', source.id);
+      if (target) await put(tx, 'meals', moved[1]);
+      await put(tx, 'meals', moved[0]);
+      break;
+    }
+    case 'removeMeal': {
+      const m = s.meals.find((m) => m.id === c.id);
+      requireThat(m && !m.consumed, 'Ce repas ne peut plus être retiré.');
+      await del('meals', c.id);
+      if (!m.prepId) break;
+      const p = findPrep(m.prepId);
+      if (p.done || p.ticks.length || p.session) break;
+      if (s.meals.some((x) => x.id !== m.id && x.prepId === p.id))
+        await put(tx, 'preps', { ...p, servings: Math.max(1, p.servings - m.servings) });
+      else await del('preps', p.id);
+      break;
+    }
     case 'prep': {
       const p = findPrep(c.id),
         ss = c.session ? s.sessions.find((x) => x.id === c.session) : null;
@@ -224,7 +279,9 @@ export async function execute(tx: Tx, s: State, c: z.output<typeof input>) {
       requireThat(!r || !p.done, 'Cette préparation est déjà terminée.');
       await put(tx, 'preps', {
         ...p,
-        ...(r ? { recipeId: r.id, version: r.version, snapshot: r.data, ticks: [] } : {}),
+        ...(r
+          ? { automatic: false, recipeId: r.id, version: r.version, snapshot: r.data, ticks: [] }
+          : {}),
         session: c.session,
         day,
         servings: c.servings,
@@ -376,9 +433,120 @@ export async function execute(tx: Tx, s: State, c: z.output<typeof input>) {
         new Set(c.data.shops.map((x) => clean(x.name))).size === c.data.shops.length,
         'Deux magasins portent le même nom.',
       );
-      await tx`update preferences set data=${tx.json(c.data)} where id=1`;
+      await tx`update preferences set data=${tx.json({ ...c.data, generatedWeeks: s.prefs.generatedWeeks })} where id=1`;
       break;
   }
+}
+async function fillWeek(tx: Tx, s: State, week: string, refill = false) {
+  requireThat(
+    monday(week) === week && week >= monday(today()),
+    'Choisissez une semaine présente ou future.',
+  );
+  const ideas = suggest(s, week, today());
+  for (const idea of ideas) {
+    const r = s.recipes.find((r) => r.id === idea.id)!;
+    const p = { ...planned(r, idea.day, s.prefs.portions), automatic: true };
+    const meals = defaultMeals(p, s.prefs.leftovers).filter(
+      (m) =>
+        !s.meals.some((t) => t.day === m.day && t.slot === m.slot) &&
+        // A week already opened belongs to the user, including its empty slots.
+        (inWeek(m.day, week) || !s.prefs.generatedWeeks.includes(monday(m.day))),
+    );
+    await put(tx, 'preps', p);
+    s.preps.push(p);
+    for (const m of meals) {
+      await put(tx, 'meals', m);
+      s.meals.push(m);
+    }
+  }
+  // A week opened before the preceding Sunday was planned has no leftover for Monday.
+  // Seed this single lunch independently, using a spare serving whenever possible.
+  if (
+    s.prefs.leftovers &&
+    s.prefs.target >= 7 &&
+    week >= today() &&
+    !s.meals.some((m) => m.day === week && m.slot === 'midi')
+  ) {
+    let lunch = s.preps.find(
+      (p) =>
+        p.day <= week &&
+        p.day >= addDays(week, -2) &&
+        s.meals.filter((m) => m.prepId === p.id).reduce((n, m) => n + m.servings, 0) < p.servings,
+    );
+    if (!lunch) {
+      const extra = suggest(
+        { ...s, meals: s.meals.filter((m) => m.day !== week || m.slot !== 'soir') },
+        week,
+        week,
+      )[0];
+      const r = extra && s.recipes.find((r) => r.id === extra.id);
+      if (r) {
+        lunch = { ...planned(r, week, 1), automatic: true };
+        await put(tx, 'preps', lunch);
+      }
+    }
+    if (lunch) {
+      const m = {
+        id: uid(),
+        prepId: lunch.id,
+        day: week,
+        slot: 'midi' as const,
+        servings: 1,
+        consumed: false,
+        frozen: false,
+      };
+      await put(tx, 'meals', m);
+      s.meals.push(m);
+    }
+  }
+  if (refill && s.prefs.leftovers && s.prefs.portions > 1) {
+    for (let i = 0; i < 7; i++) {
+      const day = addDays(week, i);
+      if (day < today() || s.meals.some((m) => m.day === day && m.slot === 'midi')) continue;
+      const dinner = s.meals.find((m) => m.day === addDays(day, -1) && m.slot === 'soir');
+      const p = s.preps.find((p) => p.id === dinner?.prepId);
+      if (!p || p.day < addDays(day, -2)) continue;
+      const allocated = s.meals
+        .filter((m) => m.prepId === p.id)
+        .reduce((n, m) => n + m.servings, 0);
+      if (allocated >= p.servings) {
+        if (!p.automatic || p.done || p.ticks.length || p.servings >= 100) continue;
+        p.servings += 1;
+        await put(tx, 'preps', p);
+      }
+      const m = {
+        id: uid(),
+        day,
+        slot: 'midi' as const,
+        prepId: p.id,
+        servings: 1,
+        frozen: false,
+        consumed: false,
+      };
+      await put(tx, 'meals', m);
+      s.meals.push(m);
+    }
+  }
+  if (!s.prefs.generatedWeeks.includes(week)) {
+    s.prefs.generatedWeeks.push(week);
+    await tx`update preferences set data=${tx.json(s.prefs)} where id=1`;
+  }
+}
+export async function ensureWeek(week: string) {
+  return db().begin(async (tx) => {
+    const s = await readState(tx, true);
+    if (
+      week < monday(today()) ||
+      s.prefs.generatedWeeks.includes(week) ||
+      !s.recipes.some(
+        (r) => !r.archived && r.data.base && r.data.steps.length && r.data.ingredients.length,
+      )
+    )
+      return { changed: false };
+    await fillWeek(tx, s, week);
+    await tx`update preferences set revision=revision+1 where id=1`;
+    return { changed: true };
+  });
 }
 export async function mutate(revision: number, cmd: unknown) {
   const c = input.parse(cmd);
@@ -396,8 +564,13 @@ export async function mutate(revision: number, cmd: unknown) {
           await tx`insert into week_history values(${w},${tx.json({ stock: s.stock, prices: s.prices, prefs: s.prefs })}) on conflict do nothing`;
       }
     }
+    const mealCount = s.meals.length;
     const id = await execute(tx, s, c);
     await tx`update preferences set revision=revision+1 where id=1`;
-    return { id, revision: revision + 1 };
+    return {
+      id,
+      revision: revision + 1,
+      addedMeals: c.action === 'fillWeek' ? s.meals.length - mealCount : undefined,
+    };
   });
 }

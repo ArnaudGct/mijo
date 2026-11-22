@@ -1,4 +1,7 @@
 import { test, expect } from '@playwright/test';
+import { today, monday, addDays } from '../lib/dates';
+const week = addDays(monday(today()), 14);
+const tuesday = addDays(week, 1);
 test('parcours privé sur ordinateur et liste emportée sur mobile', async ({
   page,
   context,
@@ -27,15 +30,19 @@ test('parcours privé sur ordinateur et liste emportée sur mobile', async ({
   await dialog.getByRole('button', { name: 'Enregistrer' }).click();
   await expect(dialog).toHaveCount(0);
   await page.getByRole('button', { name: 'Planifier Tarte aux poireaux E2E' }).click();
-  await dialog.getByLabel('Jour', { exact: true }).fill('2026-11-23');
+  await dialog.getByLabel('Jour', { exact: true }).fill(week);
   await dialog.getByRole('button', { name: 'Ajouter au planning' }).click();
   await expect(dialog).toHaveCount(0);
-  await page.goto('/semaine?week=2026-11-23');
-  await expect(page.getByRole('button', { name: /Tarte aux poireaux E2E/ })).toHaveCount(2);
-  await page.getByRole('button', { name: 'Proposer des dîners' }).click();
-  await expect(dialog.getByRole('heading', { name: 'Dîners proposés' })).toBeVisible();
-  await expect(dialog.getByRole('status')).toContainText('Aucun dîner');
-  await dialog.getByRole('button', { name: 'Fermer' }).click();
+  await page.goto(`/semaine?week=${week}`);
+  await expect(page.locator(`[data-mealslot="${week}soir"] .scheduled`)).toContainText(
+    'Tarte aux poireaux',
+  );
+  const source = page.locator(`[data-mealslot="${tuesday}midi"] .meal-card`);
+  await source.dragTo(page.locator(`[data-mealslot="${tuesday}soir"]`));
+  await expect(page.locator(`[data-mealslot="${tuesday}soir"] .scheduled`)).toContainText(
+    'Tarte aux poireaux',
+  );
+  await page.getByRole('button', { name: 'Compléter la semaine' }).click();
   await page.getByRole('button', { name: 'Planifier', exact: true }).click();
   await dialog.getByLabel('Rechercher un plat ou un ingrédient').fill('poireaux');
   await dialog.getByRole('button', { name: /Tarte aux poireaux/ }).click();
@@ -46,23 +53,22 @@ test('parcours privé sur ordinateur et liste emportée sur mobile', async ({
   await dialog.getByLabel(/Tarte aux poireaux E2E/).check();
   await dialog.getByRole('button', { name: 'Enregistrer' }).click();
   await expect(dialog).toHaveCount(0);
-  await page.goto('/cuisiner?week=2026-11-23');
+  await page.goto(`/cuisiner?week=${week}`);
   await page.getByLabel('Terminer étape 1').click();
   await expect(page.getByLabel('Terminer étape 1')).toBeChecked();
   await page.getByRole('button', { name: 'Terminer la préparation' }).click();
   await expect(page.getByRole('button', { name: 'Rouvrir la préparation' })).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/courses?week=2026-11-23');
-  await expect(page.getByText(/150 g à acheter/)).toBeVisible();
-  await page.getByRole('button', { name: 'Comparateur', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Référence HelloFresh' })).toBeVisible();
+  await page.goto(`/courses?week=${week}`);
+  await expect(page.getByText('150 g', { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Panier estimé' })).toBeVisible();
   for (const path of [
     '/',
     '/recettes',
-    '/semaine?week=2026-11-23',
-    '/cuisiner?week=2026-11-23',
+    `/semaine?week=${week}`,
+    `/cuisiner?week=${week}`,
     '/parametres',
-    '/courses?week=2026-11-23',
+    `/courses?week=${week}`,
   ]) {
     await page.goto(path);
     await expect(page.locator('h1')).toBeVisible();
@@ -74,12 +80,18 @@ test('parcours privé sur ordinateur et liste emportée sur mobile', async ({
   await expect(page).toHaveURL(/courses-hors-ligne/);
   await context.setOffline(true);
   await page.reload();
-  await page.getByRole('checkbox', { name: /Poireaux/ }).check();
+  await page.getByRole('checkbox', { name: /Poireau/ }).check();
   await context.setOffline(false);
   await page.getByRole('button', { name: 'Synchroniser les coches' }).click();
   await expect(page.getByRole('status')).toContainText(/synchronis/);
-  await page.goto('/courses?week=2026-11-23');
-  await expect(page.getByLabel('Acheté · Poireaux')).toBeChecked();
+  await page.goto(`/courses?week=${week}`);
+  await expect(page.getByLabel('Acheté · Poireau')).toBeChecked();
+  await page.goto('/semaine?week=' + week);
+  const movedMeal = page.locator(`[data-mealslot="${tuesday}soir"]`);
+  await movedMeal.getByRole('button', { name: /^Retirer / }).click();
+  await expect(movedMeal.locator('.scheduled')).toHaveCount(0);
+  await page.reload();
+  await expect(movedMeal.getByRole('button', { name: '+ Recette' })).toBeVisible();
   await page.getByRole('button', { name: 'Se déconnecter' }).click();
   await expect(page.getByLabel('Mot de passe')).toBeVisible();
   expect(errors).toEqual([]);
@@ -174,7 +186,7 @@ test('import corrigé, édition, archives, restauration et suppression sur tél�
   await expect(dialog).toHaveCount(0);
   await expect(page.getByText('Aucune recette dans cette sélection')).toBeVisible();
 });
-test('relevé de prix, conditionnements, poids et magasin sur mobile', async ({ page }) => {
+test('panier estimé, livraison et fusion des variantes sur mobile', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/courses?week=2030-01-07');
   await page.getByLabel('Mot de passe').fill(process.env.TABLE_TEST_PASSWORD!);
@@ -186,21 +198,25 @@ test('relevé de prix, conditionnements, poids et magasin sur mobile', async ({ 
   await dialog.getByLabel('Unité', { exact: true }).fill('g');
   await dialog.getByRole('button', { name: 'Enregistrer' }).click();
   await expect(dialog).toHaveCount(0);
-  await page.getByRole('button', { name: 'Prix inconnu', exact: true }).click();
-  await dialog.getByLabel('Produit et conditionnement').fill('Sachet test de 250 g');
-  await dialog.getByLabel('Quantité vendue').fill('250');
-  await dialog.getByLabel('Poids par paquet (g)').fill('260');
-  await dialog.getByLabel('Prix TTC (€)').fill('2.10');
-  await dialog.getByLabel('Origine du prix').fill('Relevé de test isolé');
-  await dialog.getByRole('button', { name: 'Enregistrer' }).click();
-  await expect(dialog).toHaveCount(0);
-  await expect(page.getByText(/2 × Sachet test de 250 g/)).toContainText('150 g');
-  await page.getByRole('button', { name: 'Comparateur', exact: true }).click();
-  await expect(page.getByText('4,20 €', { exact: true }).first()).toBeVisible();
-  await page.getByRole('button', { name: 'Mes sacs', exact: true }).click();
-  await expect(page.getByText(/0,52 kg connus/)).toBeVisible();
-  await page.getByLabel('Sac pour Riz E2E').selectOption('Troisième');
-  await expect(page.getByRole('heading', { name: 'Sac troisième' })).toBeVisible();
+  await expect(
+    page.locator('.grocery').filter({ hasText: 'Riz E2E' }).locator('.line-price'),
+  ).toContainText('€');
+  for (const name of ['Oignon rouge', 'Oignons jaunes']) {
+    await page.getByRole('button', { name: 'Article', exact: true }).click();
+    await dialog.getByLabel('Ingrédient', { exact: true }).fill(name);
+    await dialog.getByLabel('Quantité', { exact: true }).fill('1');
+    await dialog.getByLabel('Unité', { exact: true }).fill('pièce');
+    await dialog.getByRole('button', { name: 'Enregistrer' }).click();
+    await expect(dialog).toHaveCount(0);
+  }
+  const onions = page
+    .locator('.grocery')
+    .filter({ has: page.getByText('Oignon', { exact: true }) });
+  await expect(onions).toHaveCount(1);
+  await expect(onions).toContainText('2 pièce');
+  await page.getByLabel('Inclure la livraison').check();
+  await expect(page.getByText('Minimum de commande non atteint.', { exact: false })).toBeVisible();
+  await expect(page.getByLabel('Magasin du panier')).toHaveCount(0);
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
   ).toBeTruthy();

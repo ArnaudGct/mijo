@@ -1,10 +1,10 @@
 'use client';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
-import { Plus, ArrowUp, ArrowDown, Timer, Check } from 'lucide-react';
-import { monday, addDays, labelDate, inWeek } from '@/lib/dates';
+import { useState, useEffect, useRef } from 'react';
+import { Plus, ArrowUp, ArrowDown, Timer, Check, GripVertical, X } from 'lucide-react';
+import { monday, addDays, labelDate, inWeek, today } from '@/lib/dates';
 import { duration, type State, type Prep } from '@/lib/model';
-import { sessionTasks, storageAlert, suggest, commonMeasures } from '@/lib/planner';
+import { sessionTasks, storageAlert, commonMeasures } from '@/lib/planner';
 import { rounded } from '@/lib/ingredients';
 import { Dialog, Form, Field, WeekNav, Empty, Photo, str, num, quantity, type UI } from './common';
 import { PlanForm } from './recipes';
@@ -171,12 +171,7 @@ function MealForm({
       {meal && (
         <button
           onClick={async () => {
-            if (
-              await ui.run(
-                { action: 'removeMeal', id: meal.id },
-                'Créneau libéré. La préparation reste disponible.',
-              )
-            )
+            if (await ui.run({ action: 'removeMeal', id: meal.id }, 'Repas retiré du planning.'))
               ui.close();
           }}
         >
@@ -233,45 +228,19 @@ function BatchForm({ ui, group }: { ui: UI; group?: State['sessions'][number] })
     </Dialog>
   );
 }
-function DinnerIdeas({ ui }: { ui: UI }) {
-  const [ideas] = useState(() => suggest(ui.s, ui.w));
-  const targetReached = ui.s.preps.filter((p) => inWeek(p.day, ui.w)).length >= ui.s.prefs.target;
-  return (
-    <Dialog title="Dîners proposés" close={ui.close}>
-      {ideas.length ? (
-        <div className="idea-list">
-          {ideas.map((idea) => {
-            const r = ui.s.recipes.find((r) => r.id === idea.id)!;
-            return (
-              <button
-                className="picker-choice"
-                key={idea.id}
-                onClick={() => ui.open(<PlanForm ui={ui} day={idea.day} id={idea.id} />)}
-              >
-                <Photo src={r.data.image} />
-                <span>
-                  <small>
-                    {labelDate(idea.day, { weekday: 'long', day: 'numeric', month: 'long' })}
-                  </small>
-                  <strong>{r.data.title}</strong>
-                  <small>{idea.why}</small>
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      ) : (
-        <p role="status">
-          {targetReached
-            ? 'Votre objectif de préparations est atteint pour cette semaine.'
-            : 'Aucun dîner disponible avec ces préférences. Vous pouvez choisir un plat et son créneau dans le planning.'}
-        </p>
-      )}
-    </Dialog>
-  );
-}
 export function Planner({ ui }: { ui: UI }) {
   const [batch, setBatch] = useState(false);
+  const [moving, setMoving] = useState('');
+  const [over, setOver] = useState('');
+  const touch = useRef<{ x: number; y: number } | null>(null);
+  const finishMove = (id: string, day: string, slot: 'midi' | 'soir') => {
+    setMoving('');
+    setOver('');
+    if (id) void ui.run({ action: 'moveMeal', id, day, slot }, 'Planning réorganisé');
+  };
+  const locate = (x: number, y: number) =>
+    document.elementFromPoint(x, y)?.closest<HTMLElement>('[data-mealslot]');
+
   const { s, w } = ui;
   const preps = s.preps.filter((p) => inWeek(p.day, w));
   return (
@@ -290,7 +259,18 @@ export function Planner({ ui }: { ui: UI }) {
           </button>
         </div>
         <div className="actions">
-          <button onClick={() => ui.open(<DinnerIdeas ui={ui} />)}>Proposer des dîners</button>
+          {w >= monday(today()) && s.meals.filter((m) => inWeek(m.day, w)).length < 14 && (
+            <button
+              onClick={() =>
+                ui.run(
+                  { action: 'fillWeek', week: w },
+                  'Les dîners disponibles ont été planifiés selon votre objectif.',
+                )
+              }
+            >
+              Compléter la semaine
+            </button>
+          )}
           <button className="primary" onClick={() => ui.open(<PlanForm ui={ui} />)}>
             <Plus size={16} /> Planifier
           </button>
@@ -323,6 +303,19 @@ export function Planner({ ui }: { ui: UI }) {
           </p>
         </section>
       )}
+      {moving && (
+        <div className="move-help" role="status">
+          Choisir le créneau de destination. Deux repas occupés seront échangés.{' '}
+          <button
+            onClick={() => {
+              setMoving('');
+              setOver('');
+            }}
+          >
+            Annuler
+          </button>
+        </div>
+      )}
       <div className="calendar">
         {Array.from({ length: 7 }, (_, i) => {
           const day = addDays(w, i);
@@ -336,25 +329,137 @@ export function Planner({ ui }: { ui: UI }) {
                 const m = s.meals.find((m) => m.day === day && m.slot === slot);
                 const p = s.preps.find((p) => p.id === m?.prepId);
                 return (
-                  <div key={slot} className="slot">
+                  <div
+                    key={slot}
+                    data-mealslot={day + slot}
+                    data-day={day}
+                    data-slot={slot}
+                    className={'slot' + (over === day + slot ? ' drop-over' : '')}
+                    onDragOver={(e) => {
+                      if (moving) {
+                        e.preventDefault();
+                        setOver(day + slot);
+                      }
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      finishMove(e.dataTransfer.getData('text/meal-id') || moving, day, slot);
+                    }}
+                  >
                     <small>{slot === 'midi' ? 'Déjeuner' : 'Dîner'}</small>
-                    {m ? (
-                      <button
-                        className="scheduled"
-                        onClick={() => ui.open(<MealForm ui={ui} day={day} slot={slot} meal={m} />)}
-                      >
-                        {p?.snapshot.image && <Photo src={p.snapshot.image} />}
-                        <span>
-                          {p?.snapshot.title ?? 'Repas à l’extérieur'}
-                          <small>
-                            {m.servings} portion{m.servings > 1 ? 's' : ''}
-                            {m.consumed ? ' · consommée' : m.frozen ? ' · congélation prévue' : ''}
-                          </small>
-                          {p && storageAlert(p, m) && (
-                            <small className="warn">{storageAlert(p, m)}</small>
-                          )}
-                        </span>
+                    {moving && moving !== m?.id && !m?.consumed && (
+                      <button className="drop-target" onClick={() => finishMove(moving, day, slot)}>
+                        {m ? 'Échanger ici' : 'Déplacer ici'}
                       </button>
+                    )}
+                    {m ? (
+                      <div
+                        className="meal-card"
+                        draggable={!m.consumed}
+                        onDragStart={(e) => {
+                          e.dataTransfer.setData('text/meal-id', m.id);
+                          e.dataTransfer.effectAllowed = 'move';
+                          setMoving(m.id);
+                        }}
+                        onDragEnd={() => {
+                          setMoving('');
+                          setOver('');
+                        }}
+                      >
+                        {!m.consumed && (
+                          <button
+                            className="move-grip"
+                            aria-label={'Déplacer ' + (p?.snapshot.title ?? 'le repas')}
+                            title="Déplacer le repas"
+                            onClick={() => setMoving(moving === m.id ? '' : m.id)}
+                            onPointerDown={(e) => {
+                              if (e.pointerType === 'mouse') return;
+                              touch.current = { x: e.clientX, y: e.clientY };
+                              e.currentTarget.setPointerCapture(e.pointerId);
+                            }}
+                            onPointerMove={(e) => {
+                              if (
+                                !touch.current ||
+                                Math.hypot(
+                                  e.clientX - touch.current.x,
+                                  e.clientY - touch.current.y,
+                                ) < 8
+                              )
+                                return;
+                              setMoving(m.id);
+                              setOver(locate(e.clientX, e.clientY)?.dataset.mealslot ?? '');
+                            }}
+                            onPointerCancel={() => {
+                              touch.current = null;
+                              setMoving('');
+                              setOver('');
+                            }}
+                            onPointerUp={(e) => {
+                              const start = touch.current;
+                              touch.current = null;
+                              if (
+                                !start ||
+                                Math.hypot(e.clientX - start.x, e.clientY - start.y) < 8
+                              )
+                                return;
+                              const d = locate(e.clientX, e.clientY)?.dataset;
+                              if (d?.day && (d.slot === 'midi' || d.slot === 'soir'))
+                                finishMove(m.id, d.day, d.slot);
+                              else {
+                                setMoving('');
+                                setOver('');
+                              }
+                              e.currentTarget.addEventListener(
+                                'click',
+                                (ev) => ev.stopPropagation(),
+                                { once: true },
+                              );
+                            }}
+                          >
+                            <GripVertical size={16} />
+                          </button>
+                        )}
+                        <button
+                          className="scheduled"
+                          onClick={() =>
+                            ui.open(<MealForm ui={ui} day={day} slot={slot} meal={m} />)
+                          }
+                        >
+                          {p?.snapshot.image && <Photo src={p.snapshot.image} />}
+                          <span>
+                            {p?.snapshot.title ?? 'Repas à l’extérieur'}
+                            <small>
+                              {m.servings} portion{m.servings > 1 ? 's' : ''}
+                              {m.consumed
+                                ? ' · consommée'
+                                : m.frozen
+                                  ? ' · congélation prévue'
+                                  : ''}
+                            </small>
+                            {p && storageAlert(p, m) && (
+                              <small className="warn">{storageAlert(p, m)}</small>
+                            )}
+                          </span>
+                        </button>
+                        {!m.consumed && (
+                          <button
+                            className="meal-remove"
+                            aria-label={
+                              'Retirer ' +
+                              (p?.snapshot.title ?? 'le repas') +
+                              ' du ' +
+                              labelDate(day) +
+                              ' ' +
+                              slot
+                            }
+                            onClick={() =>
+                              ui.run({ action: 'removeMeal', id: m.id }, 'Repas retiré du planning')
+                            }
+                          >
+                            <X size={15} />
+                          </button>
+                        )}
+                      </div>
                     ) : (
                       <div className="slot-actions">
                         <button onClick={() => ui.open(<PlanForm ui={ui} day={day} slot={slot} />)}>
@@ -504,7 +609,9 @@ export function Cooking({ ui, initialSession }: { ui: UI; initialSession: string
       document.removeEventListener('visibilitychange', acquire);
     };
   }, [awake]);
-  const preps = ui.s.preps.filter((p) => inWeek(p.day, ui.w)),
+  const preps = ui.s.preps
+      .filter((p) => inWeek(p.day, ui.w))
+      .sort((a, b) => a.day.localeCompare(b.day)),
     groups = ui.s.sessions.filter((g) => inWeek(g.day, ui.w));
   const key = [...preps, ...groups].some((x) => x.id === selected)
     ? selected
@@ -536,22 +643,30 @@ export function Cooking({ ui, initialSession }: { ui: UI; initialSession: string
       ) : (
         <>
           {preps.length + groups.length > 1 && (
-            <div className="toolbar">
-              <Field label="Préparation ou session">
-                <select value={key} onChange={(e) => setSelected(e.target.value)}>
-                  {groups.map((g) => (
-                    <option key={g.id} value={g.id}>
-                      Session · {g.name}
-                    </option>
-                  ))}
-                  {preps.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.snapshot.title} · {labelDate(p.day)}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-            </div>
+            <nav className="cook-rail" aria-label="Choisir une préparation">
+              {[
+                ...groups.map((g) => ({
+                  id: g.id,
+                  title: g.name,
+                  meta: 'Session · ' + labelDate(g.day),
+                  image: '',
+                })),
+                ...preps.map((p) => ({
+                  id: p.id,
+                  title: p.snapshot.title,
+                  meta: labelDate(p.day),
+                  image: p.snapshot.image,
+                })),
+              ].map((v) => (
+                <button key={v.id} aria-pressed={key === v.id} onClick={() => setSelected(v.id)}>
+                  {v.image && <Photo src={v.image} />}
+                  <span>
+                    <small>{v.meta}</small>
+                    {v.title}
+                  </span>
+                </button>
+              ))}
+            </nav>
           )}
           <div className="panel cook-sheet">
             <div className="cook-title">

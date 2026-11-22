@@ -76,7 +76,13 @@ export function helloFreshRecipe(payload: unknown) {
       name,
       sourceId: 'hellofresh:' + i.id,
       quantity: q > 0 ? rounded(q) : null,
-      unit,
+      unit:
+        unit ||
+        (q > 0 && i.id === '6405bfefb9d07cd5d38d7c59'
+          ? 'sachet'
+          : q > 0 && i.id === '6405bf1cb9d07cd5d38d796e'
+            ? 'lot HelloFresh'
+            : ''),
       raw: [i.amount || '', i.unit, name].filter(Boolean).join(' '),
       category: shoppingCategory(name),
     };

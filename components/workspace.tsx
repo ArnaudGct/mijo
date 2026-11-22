@@ -16,11 +16,14 @@ import {
   Leaf,
   Check,
   ChevronRight,
+  ChevronLeft,
+  Pause,
+  Play,
   Plus,
 } from 'lucide-react';
 import { type State, duration, date } from '@/lib/model';
 import { today, monday, addDays, labelDate, inWeek, money } from '@/lib/dates';
-import { basket } from '@/lib/shopping';
+import { marketBasket } from '@/lib/market';
 import { Feedback, Brand, WeekNav, Photo, Field, Form, str, api, type UI } from './common';
 import { Catalog, RecipeDetail, RecipeCard, RecipeEditor } from './recipes';
 import { Planner, Cooking } from './weekly';
@@ -100,9 +103,30 @@ export function Workspace({ initial, children }: { initial: State; children: Rea
       throw Error('Actualisation impossible.');
     }
     const data = (await res.json()) as State;
+    if (data.revision < latest.current.revision) return;
     latest.current = data;
     setS(data);
   }
+  const hasRecipes = s.recipes.some(
+    (r) => !r.archived && r.data.base && r.data.steps.length && r.data.ingredients.length,
+  );
+  const generated = s.prefs.generatedWeeks.includes(w);
+  useEffect(() => {
+    if (!hasRecipes || generated || w < monday(today())) return;
+    let current = true;
+    api('week', { week: w })
+      .then(() => {
+        if (current) return reload();
+      })
+      .catch((e: Error) => {
+        if (current) setNotice(e.message);
+      });
+    return () => {
+      current = false;
+    };
+    // reload reads the current database and uses stable state setters.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasRecipes, generated, w]);
   const ui: UI = {
     s,
     w,
@@ -119,9 +143,18 @@ export function Workspace({ initial, children }: { initial: State; children: Rea
       lock.current = true;
       setBusy(true);
       try {
-        await api('command', { revision: latest.current.revision, command: cmd });
+        const result = await api('command', { revision: latest.current.revision, command: cmd });
         await reload();
-        setNotice(msg);
+        setNotice(
+          result.addedMeals === undefined
+            ? msg
+            : result.addedMeals
+              ? result.addedMeals +
+                ' repas ajouté' +
+                (result.addedMeals > 1 ? 's' : '') +
+                ' au planning.'
+              : 'Aucun repas à ajouter avec les recettes et les préférences actuelles.',
+        );
         return true;
       } catch (e) {
         setNotice((e as Error).message);
@@ -216,12 +249,44 @@ export function Workspace({ initial, children }: { initial: State; children: Rea
 function Home({ ui }: { ui: UI }) {
   const { s, w } = ui;
   const list = s.recipes.filter((r) => !r.archived);
-  const feature = list.find(
-    (r) => r.data.image && r.data.steps.length && r.data.ingredients.length,
-  );
-  const preps = s.preps.filter((p) => inWeek(p.day, w)).sort((a, b) => a.day.localeCompare(b.day));
+  const slides = list
+    .filter((r) => r.data.image && r.data.steps.length && r.data.ingredients.length)
+    .slice(0, 10);
+  const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+  useEffect(() => {
+    const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const sync = () => setPaused(motion.matches);
+    sync();
+    motion.addEventListener('change', sync);
+    return () => motion.removeEventListener('change', sync);
+  }, []);
+  const [interacting, setInteracting] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const count = slides.length;
+  const activeIndex = count ? index % count : 0;
+  const feature = slides[activeIndex];
+  useEffect(() => {
+    if (count < 2 || paused || interacting || focused) return;
+    let timer: ReturnType<typeof setInterval> | undefined;
+    function schedule() {
+      clearInterval(timer);
+      if (!document.hidden && !document.querySelector('[role="dialog"], dialog[open]')) {
+        timer = setInterval(() => {
+          if (!document.querySelector('[role="dialog"], dialog[open]'))
+            setIndex((i) => (i + 1) % count);
+        }, 5000);
+      }
+    }
+    schedule();
+    document.addEventListener('visibilitychange', schedule);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', schedule);
+    };
+  }, [count, paused, interacting, focused]);
   const meals = s.meals.filter((m) => inWeek(m.day, w));
-  const cart = basket(s, w, s.prefs.shops[0]?.name ?? '');
+  const cart = marketBasket(s, w);
   const openRecipe = () => {
     if (feature) ui.open(<RecipeDetail ui={ui} row={feature} />);
     else ui.open(<RecipeEditor ui={ui} />);
@@ -232,7 +297,17 @@ function Home({ ui }: { ui: UI }) {
         <h1>Mon tableau de bord</h1>
         <WeekNav ui={ui} />
       </header>
-      <section className="hero">
+      <section
+        className="hero"
+        aria-label="Recettes à découvrir"
+        aria-roledescription="carrousel"
+        onMouseEnter={() => setInteracting(true)}
+        onMouseLeave={() => setInteracting(false)}
+        onFocus={() => setFocused(true)}
+        onBlur={(e) => {
+          if (!e.currentTarget.contains(e.relatedTarget)) setFocused(false);
+        }}
+      >
         <div className="hero-copy">
           <span className="hero-label">
             <Leaf size={15} />
@@ -252,27 +327,63 @@ function Home({ ui }: { ui: UI }) {
           </button>
         </div>
         <div className="hero-image">
-          <Photo src={feature?.data.image || '/cuisine.jpg'} title={feature?.data.title || ''} />
+          <Photo
+            key={feature?.id}
+            src={feature?.data.image || '/cuisine.jpg'}
+            title={feature?.data.title || ''}
+          />
+          {count > 1 && (
+            <div className="slide-controls">
+              <button
+                aria-label="Recette précédente"
+                onClick={() => setIndex((activeIndex + count - 1) % count)}
+              >
+                <ChevronLeft size={17} />
+              </button>
+              <span>
+                {activeIndex + 1} / {count}
+              </span>
+              <button
+                aria-label="Recette suivante"
+                onClick={() => setIndex((activeIndex + 1) % count)}
+              >
+                <ChevronRight size={17} />
+              </button>
+              <button
+                className="motion-toggle"
+                aria-label={paused ? 'Reprendre le défilement' : 'Suspendre le défilement'}
+                onClick={() => {
+                  setPaused(!paused);
+                  if (paused) {
+                    setFocused(false);
+                    setInteracting(false);
+                  }
+                }}
+              >
+                {paused ? <Play size={14} /> : <Pause size={14} />}
+              </button>
+            </div>
+          )}
         </div>
       </section>
       <div className="stats">
         {[
           {
             i: BookOpen,
-            n: 'Recettes sélectionnées',
-            v: preps.length + ' / ' + s.prefs.target,
+            n: 'Dîners planifiés',
+            v: String(meals.filter((m) => m.slot === 'soir').length) + ' / 7',
             p: 'semaine',
           },
           {
             i: UtensilsCrossed,
-            n: 'Portions prévues',
-            v: String(preps.reduce((n, p) => n + p.servings, 0)),
+            n: 'Portions au menu',
+            v: String(meals.reduce((n, m) => n + m.servings, 0)),
             p: 'semaine',
           },
           {
             i: ShoppingBasket,
-            n: cart.complete ? 'Panier prévisionnel' : 'Sous-total chiffré',
-            v: cart.complete || cart.known ? money(cart.cash) : 'À chiffrer',
+            n: cart.missing ? 'Sous-total estimé' : 'Panier estimé',
+            v: money(cart.cash),
             p: 'courses',
           },
         ].map((k) => (
@@ -287,47 +398,44 @@ function Home({ ui }: { ui: UI }) {
           </Link>
         ))}
       </div>
-      <div className="section-heading">
-        <h2>Au menu cette semaine</h2>
-        <Link className="text-link" href={'/semaine?week=' + w}>
-          Organiser <ArrowRight size={16} />
-        </Link>
-      </div>
-      <div className="weekstrip">
-        {Array.from({ length: 7 }, (_, i) => {
-          const d = addDays(w, i);
-          return (
-            <Link
-              href={'/semaine?week=' + w + '#jour-' + d}
-              key={d}
-              className={d === today() ? 'day today' : 'day'}
-            >
-              <small>{labelDate(d, { weekday: 'short' })}</small>
-              <b>{Number(d.slice(-2))}</b>
-              <span>
-                {meals.filter((m) => m.day === d).length
-                  ? meals.filter((m) => m.day === d).length + ' repas'
-                  : 'Libre'}
-              </span>
-            </Link>
-          );
-        })}
-      </div>
-      {preps.length > 0 && (
-        <section>
-          <h2>Prochaines préparations</h2>
-          {preps
-            .filter((p) => !p.done)
-            .map((p) => (
-              <Link className="row" key={p.id} href={'/cuisiner?week=' + w + '&session=' + p.id}>
-                {p.snapshot.title}
-                <small>
-                  {labelDate(p.day)} · {p.servings} portions
-                </small>
-              </Link>
-            ))}
-        </section>
-      )}
+      <section className="home-section">
+        <div className="section-heading">
+          <h2>Au menu cette semaine</h2>
+          <Link className="text-link" href={'/semaine?week=' + w}>
+            Organiser <ArrowRight size={16} />
+          </Link>
+        </div>
+        <div className="home-menu">
+          {Array.from({ length: 7 }, (_, i) => {
+            const day = addDays(w, i);
+            const planner = '/semaine?week=' + w + '#jour-' + day;
+            return (
+              <div className="menu-day" key={day}>
+                <Link className="menu-date" href={planner}>
+                  {labelDate(day, { weekday: 'short', day: 'numeric' })}
+                </Link>
+                {(['midi', 'soir'] as const).map((slot) => {
+                  const m = meals.find((m) => m.day === day && m.slot === slot);
+                  const p = m && s.preps.find((p) => p.id === m.prepId);
+                  return (
+                    <Link
+                      className="menu-meal"
+                      key={slot}
+                      href={p ? '/cuisiner?week=' + monday(p.day) + '&session=' + p.id : planner}
+                    >
+                      {p?.snapshot.image && <Photo src={p.snapshot.image} />}
+                      <span>
+                        <small>{slot === 'midi' ? 'Déjeuner' : 'Dîner'}</small>
+                        {p?.snapshot.title ?? (m ? 'Repas à l’extérieur' : 'Libre')}
+                      </span>
+                    </Link>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
+      </section>
       <div className="section-heading">
         <h2>Mon carnet de recettes</h2>
         <Link className="text-link" href={'/recettes?week=' + w}>

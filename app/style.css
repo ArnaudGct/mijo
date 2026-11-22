@@ -1375,3 +1375,288 @@ html {
     transition: none !important;
   }
 }
+.hero {
+  min-height: clamp(310px, 30vw, 430px);
+}
+.slide-controls {
+  position: absolute;
+  bottom: 14px;
+  right: 14px;
+  display: flex;
+  align-items: center;
+  background: #263a2af0;
+  color: white;
+  border-radius: 30px;
+  padding: 3px;
+  font: 500 12px var(--font-sans, sans-serif);
+  font-variant-numeric: tabular-nums;
+}
+.slide-controls button {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 50%;
+}
+.slide-controls button:hover {
+  background: #ffffff24;
+}
+.slide-controls .motion-toggle {
+  border-left: 1px solid #ffffff45;
+  border-radius: 0 20px 20px 0;
+}
+.home-section {
+  margin-block: clamp(26px, 3vw, 44px);
+}
+.home-section .section-heading {
+  margin-top: 0;
+}
+.home-menu {
+  border-block: 1px solid var(--line);
+}
+.menu-day {
+  display: grid;
+  grid-template-columns: 84px 1fr 1fr;
+  align-items: stretch;
+}
+.menu-day + .menu-day {
+  border-top: 1px solid var(--line);
+}
+.menu-date,
+.menu-meal {
+  display: flex;
+  align-items: center;
+  padding: 11px 8px;
+  gap: 10px;
+  color: inherit;
+  text-decoration: none;
+  min-width: 0;
+}
+.menu-date {
+  text-transform: capitalize;
+  font-weight: 650;
+}
+.menu-meal {
+  font-size: 14px;
+  line-height: 1.3;
+}
+.menu-meal .photo {
+  border-radius: 5px;
+  width: 45px;
+  height: 45px;
+  flex: none;
+}
+.menu-meal small {
+  display: block;
+  color: var(--muted);
+  margin-bottom: 3px;
+}
+.menu-meal:hover,
+.menu-date:hover {
+  background: var(--surface);
+}
+@media (max-width: 650px) {
+  .hero {
+    min-height: 295px;
+  }
+  .slide-controls {
+    right: 5px;
+    bottom: 7px;
+  }
+  .slide-controls button {
+    width: 29px;
+  }
+  .menu-day {
+    grid-template-columns: 1fr 1fr;
+  }
+  .menu-date {
+    grid-column: span 2;
+    padding-bottom: 0;
+  }
+  .menu-meal {
+    align-items: start;
+    font-size: 13px;
+  }
+  .menu-meal .photo {
+    display: none;
+  }
+}
+.slot {
+  position: relative;
+  min-width: 0;
+}
+.meal-card {
+  display: flex;
+  align-items: start;
+  gap: 2px;
+}
+.meal-card .scheduled {
+  min-width: 0;
+  flex: 1;
+  align-items: start;
+}
+.meal-card .move-grip,
+.meal-card .meal-remove {
+  border: 0;
+  color: var(--muted);
+  background: transparent;
+  padding: 5px 2px;
+  flex: none;
+}
+.move-grip {
+  cursor: grab;
+  touch-action: none;
+}
+.meal-remove:hover {
+  color: #922c26;
+}
+.drop-over {
+  background: #dbe7d6;
+  outline: 2px solid #587258;
+  outline-offset: -2px;
+}
+.drop-target {
+  float: right;
+  padding: 1px 5px;
+  font-size: 11px;
+}
+.move-help {
+  margin-block: 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.move-help button {
+  padding: 3px 8px;
+}
+.cook-rail {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 2px 2px 12px;
+  margin-bottom: 12px;
+  scroll-snap-type: x proximity;
+}
+.cook-rail button {
+  flex: 0 0 min(245px, 75vw);
+  padding: 7px;
+  justify-content: start;
+  text-align: left;
+  scroll-snap-align: start;
+  line-height: 1.25;
+}
+.cook-rail button[aria-pressed='true'] {
+  border-color: var(--green, #35533a);
+  background: #e8efdf;
+}
+.cook-rail .photo {
+  width: 46px;
+  height: 52px;
+  border-radius: 5px;
+}
+.cook-rail small {
+  display: block;
+  color: var(--muted);
+  margin-bottom: 3px;
+}
+@media (max-width: 650px) {
+  .meal-card {
+    position: relative;
+    padding-top: 22px;
+  }
+  .meal-card .move-grip,
+  .meal-card .meal-remove {
+    position: absolute;
+    top: -3px;
+  }
+  .meal-card .meal-remove {
+    right: 0;
+  }
+  .meal-card .move-grip {
+    left: 0;
+  }
+}
+.basket-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+  align-items: center;
+  padding: clamp(18px, 3vw, 32px);
+  background: #eaf0e1;
+  border-radius: 14px;
+  margin: 18px 0 7px;
+}
+.basket-summary h2 {
+  margin: 0;
+}
+.basket-summary small,
+.price-method,
+.line-price small {
+  display: block;
+  color: var(--muted);
+}
+.receipt > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+.receipt label {
+  cursor: pointer;
+}
+.receipt small {
+  margin-top: 8px;
+}
+.price-method {
+  font-size: 13px;
+  padding: 8px 2px;
+}
+.price-method summary {
+  cursor: pointer;
+}
+.line-price {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.line-price small {
+  font-size: 11px;
+}
+.manual-remove {
+  padding: 3px 6px;
+  font-size: 11px;
+}
+@media (max-width: 650px) {
+  .basket-summary {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
+.carriers {
+  border: 0;
+  padding: 0;
+  margin: 8px 0;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 13px;
+}
+.carriers legend {
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .hero-image > img {
+    animation: reveal-dish 0.32s ease-out;
+  }
+  @keyframes reveal-dish {
+    from {
+      opacity: 0.65;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}

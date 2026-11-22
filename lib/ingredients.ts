@@ -17,6 +17,8 @@ const units: Record<string, [string, number]> = {
   unité: ['pièce', 1],
   cs: ['càs', 1],
   càs: ['càs', 1],
+  'cuillères à soupe': ['càs', 1],
+  'cuillères à café': ['càc', 1],
   'cuillère à soupe': ['càs', 1],
   cc: ['càc', 1],
   càc: ['càc', 1],

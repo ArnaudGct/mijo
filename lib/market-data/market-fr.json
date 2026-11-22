@@ -1,0 +1,2346 @@
+{
+  "source": "https://huggingface.co/datasets/openfoodfacts/open-prices/resolve/main/prices.parquet",
+  "fromDate": "2025-11-20",
+  "toDate": "2026-11-20",
+  "prices": {
+    "aiolis": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.765385,
+        "pack": 235,
+        "n": 43,
+        "latest": "2026-11-18",
+        "example": 364929
+      }
+    ],
+    "almonds": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 2.4375,
+        "pack": 145,
+        "n": 150,
+        "latest": "2026-11-17",
+        "example": 363713
+      },
+      {
+        "kind": "pack",
+        "unit": "ml",
+        "rate": 0.189,
+        "pack": 1000,
+        "n": 5,
+        "latest": "2026-09-12",
+        "example": 334720
+      }
+    ],
+    "apples": [
+      {
+        "kind": "loose",
+        "unit": "g",
+        "rate": 0.299,
+        "pack": 0,
+        "n": 64,
+        "latest": "2026-11-19",
+        "example": 364936
+      },
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.39648,
+        "pack": 400,
+        "n": 68,
+        "latest": "2026-10-29",
+        "example": 356422
+      }
+    ],
+    "apricots": [
+      {
+        "kind": "loose",
+        "unit": "g",
+        "rate": 0.78,
+        "pack": 0,
+        "n": 18,
+        "latest": "2026-09-04",
+        "example": 325454
+      },
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.499,
+        "pack": 500,
+        "n": 11,
+        "latest": "2026-08-16",
+        "example": 310016
+      }
+    ],
+    "aubergines": [
+      {
+        "kind": "loose",
+        "unit": "g",
+        "rate": 0.4675,
+        "pack": 0,
+        "n": 26,
+        "latest": "2026-10-12",
+        "example": 344687
+      },
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.92,
+        "pack": 375,
+        "n": 63,
+        "latest": "2026-11-04",
+        "example": 359299
+      }
+    ],
+    "auvergne-blue-cheese-from-cow-s-milk": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.269,
+        "pack": 125,
+        "n": 10,
+        "latest": "2026-11-20",
+        "example": 365770
+      }
+    ],
+    "avocados": [
+      {
+        "kind": "loose",
+        "unit": "g",
+        "rate": 0.585,
+        "pack": 0,
+        "n": 7,
+        "latest": "2026-07-15",
+        "example": 293602
+      }
+    ],
+    "baking-powder-or-raising-agent": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.971591,
+        "pack": 88,
+        "n": 10,
+        "latest": "2026-08-23",
+        "example": 316296
+      }
+    ],
+    "balsamic-vinegars": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.686,
+        "pack": 250,
+        "n": 6,
+        "latest": "2026-08-20",
+        "example": 314603
+      },
+      {
+        "kind": "pack",
+        "unit": "ml",
+        "rate": 0.95,
+        "pack": 500,
+        "n": 121,
+        "latest": "2026-11-17",
+        "example": 364238
+      }
+    ],
+    "basils": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 12.818182,
+        "pack": 15,
+        "n": 45,
+        "latest": "2026-11-02",
+        "example": 358340
+      },
+      {
+        "kind": "pack",
+        "unit": "ml",
+        "rate": 2.15,
+        "pack": 100,
+        "n": 3,
+        "latest": "2026-10-11",
+        "example": 345753
+      }
+    ],
+    "beef": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.796,
+        "pack": 400,
+        "n": 607,
+        "latest": "2026-11-14",
+        "example": 362825
+      }
+    ],
+    "beef-flank-steak": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 3.034351,
+        "pack": 262,
+        "n": 5,
+        "latest": "2026-11-04",
+        "example": 359390
+      }
+    ],
+    "beef-rump-steak": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 2.645833,
+        "pack": 240,
+        "n": 5,
+        "latest": "2026-08-20",
+        "example": 314697
+      }
+    ],
+    "beetroot": [
+      {
+        "kind": "loose",
+        "unit": "g",
+        "rate": 0.3215,
+        "pack": 0,
+        "n": 8,
+        "latest": "2026-07-15",
+        "example": 293563
+      },
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.498,
+        "pack": 300,
+        "n": 50,
+        "latest": "2026-11-19",
+        "example": 365099
+      }
+    ],
+    "blueberries": [
+      {
+        "kind": "loose",
+        "unit": "g",
+        "rate": 2.07,
+        "pack": 0,
+        "n": 3,
+        "latest": "2026-06-17",
+        "example": 287925
+      },
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.445333,
+        "pack": 340,
+        "n": 12,
+        "latest": "2026-05-13",
+        "example": 274367
+      }
+    ],
+    "bouillon-cubes": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.666667,
+        "pack": 105,
+        "n": 321,
+        "latest": "2026-11-17",
+        "example": 363551
+      },
+      {
+        "kind": "pack",
+        "unit": "ml",
+        "rate": 2.076389,
+        "pack": 72,
+        "n": 6,
+        "latest": "2026-10-11",
+        "example": 345866
+      }
+    ],
+    "bread-crumbs": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.482,
+        "pack": 250,
+        "n": 28,
+        "latest": "2026-11-20",
+        "example": 365426
+      }
+    ],
+    "breads": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.616,
+        "pack": 308,
+        "n": 2433,
+        "latest": "2026-11-20",
+        "example": 365638
+      }
+    ],
+    "broccoli": [
+      {
+        "kind": "loose",
+        "unit": "g",
+        "rate": 0.53,
+        "pack": 0,
+        "n": 11,
+        "latest": "2026-11-18",
+        "example": 364893
+      },
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.325,
+        "pack": 750,
+        "n": 24,
+        "latest": "2026-09-14",
+        "example": 330998
+      }
+    ],
+    "bulgur": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.688889,
+        "pack": 300,
+        "n": 50,
+        "latest": "2026-11-17",
+        "example": 363962
+      }
+    ],
+    "burrata": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 2.005,
+        "pack": 200,
+        "n": 26,
+        "latest": "2026-09-02",
+        "example": 324565
+      }
+    ],
+    "butters": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.192,
+        "pack": 250,
+        "n": 708,
+        "latest": "2026-11-20",
+        "example": 365611
+      }
+    ],
+    "cabbages": [
+      {
+        "kind": "loose",
+        "unit": "g",
+        "rate": 0.3625,
+        "pack": 0,
+        "n": 4,
+        "latest": "2026-11-04",
+        "example": 360025
+      },
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.74,
+        "pack": 250,
+        "n": 17,
+        "latest": "2026-09-23",
+        "example": 334352
+      }
+    ],
+    "canned-chickpeas": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.445283,
+        "pack": 360,
+        "n": 120,
+        "latest": "2026-11-06",
+        "example": 360398
+      }
+    ],
+    "canned-kidney-common-beans": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.488,
+        "pack": 250,
+        "n": 32,
+        "latest": "2026-10-04",
+        "example": 340554
+      }
+    ],
+    "canned-peas": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.486792,
+        "pack": 340,
+        "n": 294,
+        "latest": "2026-11-16",
+        "example": 363242
+      }
+    ],
+    "canned-sweet-corn": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.508772,
+        "pack": 285,
+        "n": 186,
+        "latest": "2026-10-16",
+        "example": 348062
+      }
+    ],
+    "canned-tomatoes": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.42,
+        "pack": 400,
+        "n": 191,
+        "latest": "2026-11-17",
+        "example": 363369
+      }
+    ],
+    "canned-tunas": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.732182,
+        "pack": 140,
+        "n": 382,
+        "latest": "2026-11-17",
+        "example": 363408
+      }
+    ],
+    "carrots": [
+      {
+        "kind": "loose",
+        "unit": "g",
+        "rate": 0.224,
+        "pack": 0,
+        "n": 54,
+        "latest": "2026-11-16",
+        "example": 364979
+      },
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.470294,
+        "pack": 300,
+        "n": 222,
+        "latest": "2026-11-18",
+        "example": 364899
+      }
+    ],
+    "cashew-nuts": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 2.165833,
+        "pack": 150,
+        "n": 150,
+        "latest": "2026-11-12",
+        "example": 362664
+      }
+    ],
+    "celery-stalk": [
+      {
+        "kind": "loose",
+        "unit": "g",
+        "rate": 0.299,
+        "pack": 0,
+        "n": 9,
+        "latest": "2026-10-12",
+        "example": 344684
+      }
+    ],
+    "champignon-mushrooms": [
+      {
+        "kind": "loose",
+        "unit": "g",
+        "rate": 1.095,
+        "pack": 0,
+        "n": 5,
+        "latest": "2026-11-07",
+        "example": 361382
+      },
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.593333,
+        "pack": 230,
+        "n": 123,
+        "latest": "2026-11-20",
+        "example": 365816
+      }
+    ],
+    "cheddar-cheese": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.8295,
+        "pack": 200,
+        "n": 72,
+        "latest": "2026-11-13",
+        "example": 362566
+      }
+    ],
+    "cheese-spreads": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.305556,
+        "pack": 150,
+        "n": 331,
+        "latest": "2026-11-20",
+        "example": 365615
+      }
+    ],
+    "cheeses": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.36,
+        "pack": 200,
+        "n": 3156,
+        "latest": "2026-11-20",
+        "example": 365591
+      },
+      {
+        "kind": "pack",
+        "unit": "ml",
+        "rate": 0.909091,
+        "pack": 330,
+        "n": 5,
+        "latest": "2026-03-27",
+        "example": 252926
+      }
+    ],
+    "cherry-tomatoes": [
+      {
+        "kind": "loose",
+        "unit": "g",
+        "rate": 0.799,
+        "pack": 0,
+        "n": 11,
+        "latest": "2026-09-04",
+        "example": 325576
+      },
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.6725,
+        "pack": 250,
+        "n": 31,
+        "latest": "2026-10-29",
+        "example": 364968
+      }
+    ],
+    "chicken-breasts": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.493611,
+        "pack": 300,
+        "n": 32,
+        "latest": "2026-11-19",
+        "example": 365138
+      }
+    ],
+    "chicken-thighs": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.3025,
+        "pack": 400,
+        "n": 15,
+        "latest": "2026-11-01",
+        "example": 357601
+      }
+    ],
+    "chickpeas": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.48625,
+        "pack": 400,
+        "n": 180,
+        "latest": "2026-11-14",
+        "example": 362794
+      }
+    ],
+    "chili-peppers": [
+      {
+        "kind": "loose",
+        "unit": "g",
+        "rate": 1.299,
+        "pack": 0,
+        "n": 4,
+        "latest": "2026-07-04",
+        "example": 293495
+      },
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 3.861111,
+        "pack": 90,
+        "n": 127,
+        "latest": "2026-11-18",
+        "example": 364925
+      },
+      {
+        "kind": "pack",
+        "unit": "ml",
+        "rate": 1.059574,
+        "pack": 235,
+        "n": 4,
+        "latest": "2026-08-21",
+        "example": 315167
+      }
+    ],
+    "chives": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 42.75,
+        "pack": 5,
+        "n": 39,
+        "latest": "2026-11-17",
+        "example": 363907
+      }
+    ],
+    "chorizos": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.844444,
+        "pack": 225,
+        "n": 87,
+        "latest": "2026-11-13",
+        "example": 362459
+      }
+    ],
+    "chutneys": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.44,
+        "pack": 115,
+        "n": 53,
+        "latest": "2026-11-18",
+        "example": 364910
+      }
+    ],
+    "coconut-milks": [
+      {
+        "kind": "pack",
+        "unit": "ml",
+        "rate": 0.506,
+        "pack": 500,
+        "n": 19,
+        "latest": "2026-11-07",
+        "example": 360819
+      }
+    ],
+    "cod-fillets": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.9975,
+        "pack": 400,
+        "n": 41,
+        "latest": "2026-11-02",
+        "example": 358454
+      }
+    ],
+    "cods": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 2.016463,
+        "pack": 400,
+        "n": 98,
+        "latest": "2026-11-02",
+        "example": 358454
+      }
+    ],
+    "cream-cheeses": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.11,
+        "pack": 240,
+        "n": 231,
+        "latest": "2026-11-20",
+        "example": 365615
+      },
+      {
+        "kind": "pack",
+        "unit": "ml",
+        "rate": 0.909091,
+        "pack": 330,
+        "n": 5,
+        "latest": "2026-03-27",
+        "example": 252926
+      }
+    ],
+    "creams": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.599383,
+        "pack": 250,
+        "n": 184,
+        "latest": "2026-11-20",
+        "example": 365763
+      },
+      {
+        "kind": "pack",
+        "unit": "ml",
+        "rate": 0.5945,
+        "pack": 500,
+        "n": 404,
+        "latest": "2026-11-20",
+        "example": 365727
+      }
+    ],
+    "cucumbers": [
+      {
+        "kind": "loose",
+        "unit": "g",
+        "rate": 0.2895,
+        "pack": 0,
+        "n": 4,
+        "latest": "2026-08-07",
+        "example": 304780
+      },
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.79375,
+        "pack": 320,
+        "n": 55,
+        "latest": "2026-11-20",
+        "example": 365602
+      }
+    ],
+    "cured-hams": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 3.15,
+        "pack": 100,
+        "n": 185,
+        "latest": "2026-11-19",
+        "example": 365135
+      }
+    ],
+    "curry-pastes": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 2.15,
+        "pack": 130,
+        "n": 96,
+        "latest": "2026-11-20",
+        "example": 365642
+      }
+    ],
+    "dark-chocolates": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 2.476111,
+        "pack": 100,
+        "n": 944,
+        "latest": "2026-11-17",
+        "example": 363705
+      }
+    ],
+    "dill": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 16.846154,
+        "pack": 13,
+        "n": 19,
+        "latest": "2026-11-02",
+        "example": 358255
+      }
+    ],
+    "dried-tomatoes": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.95141,
+        "pack": 190,
+        "n": 50,
+        "latest": "2026-11-04",
+        "example": 359368
+      }
+    ],
+    "dry-pastas": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.27,
+        "pack": 500,
+        "n": 1213,
+        "latest": "2026-11-20",
+        "example": 365428
+      }
+    ],
+    "duck-breasts": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 5.282143,
+        "pack": 70,
+        "n": 6,
+        "latest": "2026-11-01",
+        "example": 357602
+      }
+    ],
+    "edamame": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.434615,
+        "pack": 260,
+        "n": 7,
+        "latest": "2026-10-04",
+        "example": 340528
+      }
+    ],
+    "eggs": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.494444,
+        "pack": 378,
+        "n": 109,
+        "latest": "2026-11-13",
+        "example": 362574
+      }
+    ],
+    "feta": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.486111,
+        "pack": 150,
+        "n": 38,
+        "latest": "2026-11-19",
+        "example": 364957
+      }
+    ],
+    "fresh-pasta": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.866667,
+        "pack": 300,
+        "n": 381,
+        "latest": "2026-11-20",
+        "example": 365590
+      }
+    ],
+    "fresh-pasta-stuffed-with-cheese-and-vegetables": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.316,
+        "pack": 250,
+        "n": 38,
+        "latest": "2026-11-19",
+        "example": 365096
+      }
+    ],
+    "fried-onions": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.764615,
+        "pack": 100,
+        "n": 24,
+        "latest": "2026-11-17",
+        "example": 363397
+      }
+    ],
+    "garlic": [
+      {
+        "kind": "loose",
+        "unit": "g",
+        "rate": 1.4925,
+        "pack": 0,
+        "n": 18,
+        "latest": "2026-07-21",
+        "example": 295956
+      },
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 9.8875,
+        "pack": 40,
+        "n": 18,
+        "latest": "2026-11-02",
+        "example": 358427
+      }
+    ],
+    "ginger": [
+      {
+        "kind": "loose",
+        "unit": "g",
+        "rate": 0.699,
+        "pack": 0,
+        "n": 26,
+        "latest": "2026-11-04",
+        "example": 360030
+      },
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 3.542857,
+        "pack": 70,
+        "n": 55,
+        "latest": "2026-11-20",
+        "example": 365424
+      }
+    ],
+    "gnocchi": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.635385,
+        "pack": 380,
+        "n": 178,
+        "latest": "2026-11-20",
+        "example": 365590
+      }
+    ],
+    "goat-cheeses": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.675,
+        "pack": 180,
+        "n": 263,
+        "latest": "2026-11-20",
+        "example": 365772
+      }
+    ],
+    "gouda": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.125,
+        "pack": 200,
+        "n": 31,
+        "latest": "2026-08-23",
+        "example": 316239
+      }
+    ],
+    "grana-padano": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 2.14,
+        "pack": 100,
+        "n": 20,
+        "latest": "2026-11-13",
+        "example": 362452
+      }
+    ],
+    "grated-coconut": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.472,
+        "pack": 125,
+        "n": 16,
+        "latest": "2026-11-17",
+        "example": 364482
+      }
+    ],
+    "ground-beef-steaks": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.87,
+        "pack": 400,
+        "n": 233,
+        "latest": "2026-11-14",
+        "example": 362875
+      }
+    ],
+    "ground-peppers": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 5.463158,
+        "pack": 42,
+        "n": 57,
+        "latest": "2026-11-20",
+        "example": 365802
+      }
+    ],
+    "guacamoles": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.145,
+        "pack": 265,
+        "n": 93,
+        "latest": "2026-11-17",
+        "example": 364492
+      }
+    ],
+    "hazelnuts": [
+      {
+        "kind": "loose",
+        "unit": "g",
+        "rate": 1.19,
+        "pack": 0,
+        "n": 3,
+        "latest": "2026-08-01",
+        "example": 302965
+      },
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 2.945,
+        "pack": 125,
+        "n": 33,
+        "latest": "2026-10-28",
+        "example": 356029
+      },
+      {
+        "kind": "pack",
+        "unit": "ml",
+        "rate": 0.1995,
+        "pack": 1000,
+        "n": 4,
+        "latest": "2026-09-04",
+        "example": 325390
+      }
+    ],
+    "herbes-de-provence": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 4.6125,
+        "pack": 40,
+        "n": 60,
+        "latest": "2026-10-11",
+        "example": 345756
+      },
+      {
+        "kind": "pack",
+        "unit": "ml",
+        "rate": 3.1,
+        "pack": 100,
+        "n": 3,
+        "latest": "2026-08-27",
+        "example": 322105
+      }
+    ],
+    "honeys": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.692667,
+        "pack": 375,
+        "n": 252,
+        "latest": "2026-11-20",
+        "example": 365750
+      }
+    ],
+    "hot-sauces": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.45,
+        "pack": 200,
+        "n": 73,
+        "latest": "2026-11-18",
+        "example": 364918
+      },
+      {
+        "kind": "pack",
+        "unit": "ml",
+        "rate": 2.066667,
+        "pack": 148,
+        "n": 176,
+        "latest": "2026-11-18",
+        "example": 364928
+      }
+    ],
+    "ketchup": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.482456,
+        "pack": 390,
+        "n": 221,
+        "latest": "2026-11-20",
+        "example": 365818
+      },
+      {
+        "kind": "pack",
+        "unit": "ml",
+        "rate": 0.59875,
+        "pack": 400,
+        "n": 20,
+        "latest": "2026-10-12",
+        "example": 345081
+      }
+    ],
+    "kiwis": [
+      {
+        "kind": "loose",
+        "unit": "g",
+        "rate": 0.5475,
+        "pack": 0,
+        "n": 12,
+        "latest": "2026-08-11",
+        "example": 308016
+      }
+    ],
+    "lardons": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.073333,
+        "pack": 180,
+        "n": 141,
+        "latest": "2026-11-13",
+        "example": 362546
+      }
+    ],
+    "leeks": [
+      {
+        "kind": "loose",
+        "unit": "g",
+        "rate": 0.299,
+        "pack": 0,
+        "n": 32,
+        "latest": "2026-11-18",
+        "example": 364891
+      },
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.895556,
+        "pack": 900,
+        "n": 21,
+        "latest": "2026-11-14",
+        "example": 363078
+      }
+    ],
+    "lemons": [
+      {
+        "kind": "loose",
+        "unit": "g",
+        "rate": 0.3975,
+        "pack": 0,
+        "n": 30,
+        "latest": "2026-11-04",
+        "example": 360023
+      },
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 2.81,
+        "pack": 200,
+        "n": 6,
+        "latest": "2026-09-23",
+        "example": 334397
+      }
+    ],
+    "lentils": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.555,
+        "pack": 410,
+        "n": 439,
+        "latest": "2026-11-20",
+        "example": 365646
+      }
+    ],
+    "lettuces": [
+      {
+        "kind": "loose",
+        "unit": "g",
+        "rate": 1.495,
+        "pack": 0,
+        "n": 3,
+        "latest": "2026-10-13",
+        "example": 346244
+      },
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.823929,
+        "pack": 200,
+        "n": 30,
+        "latest": "2026-10-29",
+        "example": 362280
+      }
+    ],
+    "limes": [
+      {
+        "kind": "loose",
+        "unit": "g",
+        "rate": 0.56,
+        "pack": 0,
+        "n": 15,
+        "latest": "2026-08-31",
+        "example": 323887
+      }
+    ],
+    "mangoes": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.760526,
+        "pack": 380,
+        "n": 3,
+        "latest": "2026-03-19",
+        "example": 248321
+      }
+    ],
+    "mascarpone": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.989,
+        "pack": 250,
+        "n": 34,
+        "latest": "2026-09-12",
+        "example": 330403
+      },
+      {
+        "kind": "pack",
+        "unit": "ml",
+        "rate": 0.909091,
+        "pack": 330,
+        "n": 5,
+        "latest": "2026-03-27",
+        "example": 252926
+      }
+    ],
+    "mayonnaises": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.797647,
+        "pack": 255,
+        "n": 561,
+        "latest": "2026-11-20",
+        "example": 365819
+      },
+      {
+        "kind": "pack",
+        "unit": "ml",
+        "rate": 0.64,
+        "pack": 450,
+        "n": 19,
+        "latest": "2026-08-26",
+        "example": 320046
+      }
+    ],
+    "meat-analogues": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.972222,
+        "pack": 180,
+        "n": 924,
+        "latest": "2026-11-20",
+        "example": 365645
+      }
+    ],
+    "melons": [
+      {
+        "kind": "loose",
+        "unit": "g",
+        "rate": 0.25,
+        "pack": 0,
+        "n": 3,
+        "latest": "2026-08-21",
+        "example": 315045
+      }
+    ],
+    "milks": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.836667,
+        "pack": 397,
+        "n": 143,
+        "latest": "2026-11-10",
+        "example": 361602
+      },
+      {
+        "kind": "pack",
+        "unit": "ml",
+        "rate": 0.184,
+        "pack": 1000,
+        "n": 1033,
+        "latest": "2026-11-11",
+        "example": 361835
+      }
+    ],
+    "mint": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 18.0,
+        "pack": 13,
+        "n": 13,
+        "latest": "2026-11-20",
+        "example": 365572
+      }
+    ],
+    "misos": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 2.552857,
+        "pack": 300,
+        "n": 14,
+        "latest": "2026-10-03",
+        "example": 339372
+      }
+    ],
+    "mozzarella": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.924,
+        "pack": 150,
+        "n": 152,
+        "latest": "2026-11-20",
+        "example": 365834
+      }
+    ],
+    "mushrooms": [
+      {
+        "kind": "loose",
+        "unit": "g",
+        "rate": 0.739,
+        "pack": 0,
+        "n": 13,
+        "latest": "2026-07-28",
+        "example": 299985
+      },
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.661204,
+        "pack": 250,
+        "n": 252,
+        "latest": "2026-11-20",
+        "example": 365816
+      }
+    ],
+    "mustards": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.8625,
+        "pack": 260,
+        "n": 475,
+        "latest": "2026-11-20",
+        "example": 365603
+      },
+      {
+        "kind": "pack",
+        "unit": "ml",
+        "rate": 0.981579,
+        "pack": 380,
+        "n": 11,
+        "latest": "2026-10-12",
+        "example": 345187
+      }
+    ],
+    "nectarines": [
+      {
+        "kind": "loose",
+        "unit": "g",
+        "rate": 0.499,
+        "pack": 0,
+        "n": 25,
+        "latest": "2026-09-20",
+        "example": 333783
+      }
+    ],
+    "noodles": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.2,
+        "pack": 140,
+        "n": 472,
+        "latest": "2026-11-20",
+        "example": 365709
+      }
+    ],
+    "oat-based-creams-for-cooking": [
+      {
+        "kind": "pack",
+        "unit": "ml",
+        "rate": 0.795,
+        "pack": 200,
+        "n": 11,
+        "latest": "2026-10-26",
+        "example": 354370
+      }
+    ],
+    "olive-oils": [
+      {
+        "kind": "pack",
+        "unit": "ml",
+        "rate": 1.345333,
+        "pack": 750,
+        "n": 333,
+        "latest": "2026-11-20",
+        "example": 365576
+      }
+    ],
+    "olives": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.304,
+        "pack": 200,
+        "n": 401,
+        "latest": "2026-11-20",
+        "example": 365760
+      }
+    ],
+    "onions": [
+      {
+        "kind": "loose",
+        "unit": "g",
+        "rate": 0.244,
+        "pack": 0,
+        "n": 15,
+        "latest": "2026-10-06",
+        "example": 341628
+      },
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 4.420833,
+        "pack": 40,
+        "n": 60,
+        "latest": "2026-11-20",
+        "example": 365571
+      }
+    ],
+    "paprika": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 6.1025,
+        "pack": 40,
+        "n": 30,
+        "latest": "2026-11-02",
+        "example": 358472
+      }
+    ],
+    "parmigiano-reggiano": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 3.166667,
+        "pack": 80,
+        "n": 45,
+        "latest": "2026-10-31",
+        "example": 356890
+      }
+    ],
+    "parsley": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 15.633333,
+        "pack": 10,
+        "n": 38,
+        "latest": "2026-11-05",
+        "example": 359864
+      }
+    ],
+    "pastas": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.493333,
+        "pack": 500,
+        "n": 2473,
+        "latest": "2026-11-20",
+        "example": 365639
+      }
+    ],
+    "peanut-butters": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.033846,
+        "pack": 350,
+        "n": 394,
+        "latest": "2026-11-17",
+        "example": 363356
+      }
+    ],
+    "peanuts": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.678676,
+        "pack": 250,
+        "n": 272,
+        "latest": "2026-11-12",
+        "example": 362667
+      }
+    ],
+    "peas": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.356604,
+        "pack": 500,
+        "n": 60,
+        "latest": "2026-10-10",
+        "example": 346213
+      }
+    ],
+    "peppers": [
+      {
+        "kind": "loose",
+        "unit": "g",
+        "rate": 0.449,
+        "pack": 0,
+        "n": 10,
+        "latest": "2026-07-22",
+        "example": 296030
+      },
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 7.25731,
+        "pack": 40,
+        "n": 188,
+        "latest": "2026-11-20",
+        "example": 365753
+      },
+      {
+        "kind": "pack",
+        "unit": "ml",
+        "rate": 4.99,
+        "pack": 100,
+        "n": 3,
+        "latest": "2026-04-23",
+        "example": 268478
+      }
+    ],
+    "pestos": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.415789,
+        "pack": 190,
+        "n": 373,
+        "latest": "2026-11-20",
+        "example": 365432
+      }
+    ],
+    "pine-nuts": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 8.18,
+        "pack": 50,
+        "n": 11,
+        "latest": "2026-11-17",
+        "example": 363501
+      }
+    ],
+    "pistachios": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 2.092593,
+        "pack": 175,
+        "n": 105,
+        "latest": "2026-11-12",
+        "example": 362663
+      }
+    ],
+    "plain-tofu": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.036,
+        "pack": 250,
+        "n": 49,
+        "latest": "2026-11-17",
+        "example": 363836
+      }
+    ],
+    "plain-yogurts": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.281833,
+        "pack": 500,
+        "n": 272,
+        "latest": "2026-11-17",
+        "example": 364068
+      }
+    ],
+    "pork": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.193333,
+        "pack": 180,
+        "n": 491,
+        "latest": "2026-11-17",
+        "example": 363672
+      }
+    ],
+    "pork-loin": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 2.97,
+        "pack": 80,
+        "n": 6,
+        "latest": "2026-08-24",
+        "example": 317616
+      }
+    ],
+    "pork-sausages": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.094286,
+        "pack": 210,
+        "n": 109,
+        "latest": "2026-11-17",
+        "example": 363914
+      }
+    ],
+    "potatoes": [
+      {
+        "kind": "loose",
+        "unit": "g",
+        "rate": 0.224,
+        "pack": 0,
+        "n": 40,
+        "latest": "2026-10-19",
+        "example": 353504
+      },
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.357051,
+        "pack": 600,
+        "n": 192,
+        "latest": "2026-11-07",
+        "example": 360818
+      }
+    ],
+    "prawns": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 2.463333,
+        "pack": 300,
+        "n": 39,
+        "latest": "2026-11-19",
+        "example": 365247
+      }
+    ],
+    "precooked-rices": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.745455,
+        "pack": 220,
+        "n": 18,
+        "latest": "2026-11-05",
+        "example": 359785
+      }
+    ],
+    "pumpkin-seeds": [
+      {
+        "kind": "loose",
+        "unit": "g",
+        "rate": 1.79,
+        "pack": 0,
+        "n": 3,
+        "latest": "2026-08-10",
+        "example": 306849
+      },
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 2.344,
+        "pack": 250,
+        "n": 14,
+        "latest": "2026-11-14",
+        "example": 362800
+      }
+    ],
+    "quinoa": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.992,
+        "pack": 400,
+        "n": 79,
+        "latest": "2026-11-17",
+        "example": 363891
+      }
+    ],
+    "radishes": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.0,
+        "pack": 250,
+        "n": 9,
+        "latest": "2026-10-19",
+        "example": 350763
+      }
+    ],
+    "raisins": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.882,
+        "pack": 250,
+        "n": 41,
+        "latest": "2026-10-26",
+        "example": 354335
+      }
+    ],
+    "red-bell-peppers": [
+      {
+        "kind": "loose",
+        "unit": "g",
+        "rate": 0.5095,
+        "pack": 0,
+        "n": 24,
+        "latest": "2026-08-08",
+        "example": 304941
+      },
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.55,
+        "pack": 100,
+        "n": 4,
+        "latest": "2026-04-04",
+        "example": 259118
+      }
+    ],
+    "red-onions": [
+      {
+        "kind": "loose",
+        "unit": "g",
+        "rate": 0.326,
+        "pack": 0,
+        "n": 28,
+        "latest": "2026-11-02",
+        "example": 358720
+      }
+    ],
+    "rices": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.52,
+        "pack": 500,
+        "n": 589,
+        "latest": "2026-11-19",
+        "example": 365172
+      },
+      {
+        "kind": "pack",
+        "unit": "ml",
+        "rate": 0.165,
+        "pack": 1000,
+        "n": 7,
+        "latest": "2026-09-20",
+        "example": 333642
+      }
+    ],
+    "ricotta": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.752,
+        "pack": 250,
+        "n": 29,
+        "latest": "2026-10-07",
+        "example": 342343
+      }
+    ],
+    "rums": [
+      {
+        "kind": "pack",
+        "unit": "ml",
+        "rate": 2.483571,
+        "pack": 700,
+        "n": 122,
+        "latest": "2026-11-05",
+        "example": 359872
+      }
+    ],
+    "salads": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.946667,
+        "pack": 300,
+        "n": 201,
+        "latest": "2026-11-17",
+        "example": 363934
+      }
+    ],
+    "salmon-fillets": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 2.697727,
+        "pack": 440,
+        "n": 23,
+        "latest": "2026-11-11",
+        "example": 361882
+      }
+    ],
+    "salmons": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 2.88875,
+        "pack": 200,
+        "n": 224,
+        "latest": "2026-11-19",
+        "example": 365097
+      }
+    ],
+    "salts": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.122727,
+        "pack": 250,
+        "n": 229,
+        "latest": "2026-11-19",
+        "example": 365227
+      }
+    ],
+    "sauces": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.889474,
+        "pack": 251,
+        "n": 4435,
+        "latest": "2026-11-20",
+        "example": 365600
+      },
+      {
+        "kind": "pack",
+        "unit": "ml",
+        "rate": 1.197143,
+        "pack": 250,
+        "n": 1191,
+        "latest": "2026-11-20",
+        "example": 365640
+      }
+    ],
+    "sesame": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 3.147368,
+        "pack": 95,
+        "n": 39,
+        "latest": "2026-11-14",
+        "example": 362805
+      }
+    ],
+    "sesame-oils": [
+      {
+        "kind": "pack",
+        "unit": "ml",
+        "rate": 1.932,
+        "pack": 250,
+        "n": 44,
+        "latest": "2026-09-20",
+        "example": 333564
+      }
+    ],
+    "shallots": [
+      {
+        "kind": "loose",
+        "unit": "g",
+        "rate": 0.554,
+        "pack": 0,
+        "n": 17,
+        "latest": "2026-08-29",
+        "example": 323068
+      },
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 5.3125,
+        "pack": 35,
+        "n": 42,
+        "latest": "2026-11-20",
+        "example": 365571
+      }
+    ],
+    "shrimps": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 2.722222,
+        "pack": 270,
+        "n": 135,
+        "latest": "2026-11-19",
+        "example": 365243
+      }
+    ],
+    "smoked-salmons": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 4.83,
+        "pack": 120,
+        "n": 105,
+        "latest": "2026-11-19",
+        "example": 365097
+      }
+    ],
+    "soy-sauces": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.1,
+        "pack": 250,
+        "n": 9,
+        "latest": "2026-08-28",
+        "example": 322325
+      },
+      {
+        "kind": "pack",
+        "unit": "ml",
+        "rate": 1.855,
+        "pack": 150,
+        "n": 287,
+        "latest": "2026-11-20",
+        "example": 365427
+      }
+    ],
+    "spices": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 6.515625,
+        "pack": 40,
+        "n": 1304,
+        "latest": "2026-11-20",
+        "example": 365424
+      },
+      {
+        "kind": "pack",
+        "unit": "ml",
+        "rate": 3.25,
+        "pack": 100,
+        "n": 67,
+        "latest": "2026-11-07",
+        "example": 361135
+      }
+    ],
+    "spinachs": [
+      {
+        "kind": "loose",
+        "unit": "g",
+        "rate": 0.66,
+        "pack": 0,
+        "n": 8,
+        "latest": "2026-11-02",
+        "example": 360014
+      },
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.313208,
+        "pack": 600,
+        "n": 63,
+        "latest": "2026-10-27",
+        "example": 357970
+      }
+    ],
+    "sugars": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.303038,
+        "pack": 750,
+        "n": 300,
+        "latest": "2026-11-19",
+        "example": 365021
+      },
+      {
+        "kind": "pack",
+        "unit": "ml",
+        "rate": 0.492857,
+        "pack": 700,
+        "n": 8,
+        "latest": "2026-11-19",
+        "example": 365154
+      }
+    ],
+    "sunflower-oils": [
+      {
+        "kind": "pack",
+        "unit": "ml",
+        "rate": 0.2225,
+        "pack": 1000,
+        "n": 72,
+        "latest": "2026-11-03",
+        "example": 359031
+      }
+    ],
+    "sunflower-seeds": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.194,
+        "pack": 250,
+        "n": 14,
+        "latest": "2026-11-09",
+        "example": 362472
+      }
+    ],
+    "sweet-peppers": [
+      {
+        "kind": "loose",
+        "unit": "g",
+        "rate": 0.452,
+        "pack": 0,
+        "n": 4,
+        "latest": "2026-08-01",
+        "example": 302955
+      },
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.167333,
+        "pack": 312,
+        "n": 74,
+        "latest": "2026-11-05",
+        "example": 359852
+      }
+    ],
+    "sweet-potatoes": [
+      {
+        "kind": "loose",
+        "unit": "g",
+        "rate": 0.299,
+        "pack": 0,
+        "n": 25,
+        "latest": "2026-09-20",
+        "example": 333899
+      },
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.346667,
+        "pack": 600,
+        "n": 5,
+        "latest": "2026-11-06",
+        "example": 360370
+      }
+    ],
+    "tomato-pastes": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.802703,
+        "pack": 210,
+        "n": 91,
+        "latest": "2026-10-30",
+        "example": 362489
+      }
+    ],
+    "tomatoes": [
+      {
+        "kind": "loose",
+        "unit": "g",
+        "rate": 0.4695,
+        "pack": 0,
+        "n": 60,
+        "latest": "2026-11-05",
+        "example": 359608
+      },
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.464912,
+        "pack": 400,
+        "n": 249,
+        "latest": "2026-11-17",
+        "example": 363369
+      }
+    ],
+    "tortillas": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.889552,
+        "pack": 216,
+        "n": 11,
+        "latest": "2026-08-18",
+        "example": 313607
+      }
+    ],
+    "turkey-cutlets": [
+      {
+        "kind": "loose",
+        "unit": "g",
+        "rate": 2.193,
+        "pack": 0,
+        "n": 3,
+        "latest": "2025-12-15",
+        "example": 173377
+      },
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.689583,
+        "pack": 250,
+        "n": 4,
+        "latest": "2026-06-29",
+        "example": 289688
+      }
+    ],
+    "turkeys": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.428964,
+        "pack": 200,
+        "n": 100,
+        "latest": "2026-11-03",
+        "example": 359200
+      }
+    ],
+    "turnip": [
+      {
+        "kind": "loose",
+        "unit": "g",
+        "rate": 0.269,
+        "pack": 0,
+        "n": 17,
+        "latest": "2026-10-10",
+        "example": 343945
+      }
+    ],
+    "vanilla-sugars": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 5.0,
+        "pack": 35,
+        "n": 21,
+        "latest": "2026-11-19",
+        "example": 365020
+      }
+    ],
+    "veal-meat": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.486429,
+        "pack": 300,
+        "n": 28,
+        "latest": "2026-09-20",
+        "example": 333422
+      }
+    ],
+    "vegetable-oils": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 2.166667,
+        "pack": 205,
+        "n": 25,
+        "latest": "2026-11-20",
+        "example": 365413
+      },
+      {
+        "kind": "pack",
+        "unit": "ml",
+        "rate": 1.112667,
+        "pack": 750,
+        "n": 710,
+        "latest": "2026-11-20",
+        "example": 365576
+      }
+    ],
+    "vinegars": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.076333,
+        "pack": 250,
+        "n": 10,
+        "latest": "2026-08-28",
+        "example": 321657
+      },
+      {
+        "kind": "pack",
+        "unit": "ml",
+        "rate": 0.688444,
+        "pack": 500,
+        "n": 426,
+        "latest": "2026-11-17",
+        "example": 363525
+      }
+    ],
+    "walnuts": [
+      {
+        "kind": "loose",
+        "unit": "g",
+        "rate": 0.749,
+        "pack": 0,
+        "n": 11,
+        "latest": "2026-09-15",
+        "example": 334062
+      },
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 2.92,
+        "pack": 130,
+        "n": 42,
+        "latest": "2026-11-17",
+        "example": 364505
+      }
+    ],
+    "watermelons": [
+      {
+        "kind": "loose",
+        "unit": "g",
+        "rate": 0.199,
+        "pack": 0,
+        "n": 6,
+        "latest": "2026-08-28",
+        "example": 322064
+      }
+    ],
+    "wheat-flours": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.155,
+        "pack": 1000,
+        "n": 138,
+        "latest": "2026-11-19",
+        "example": 365023
+      }
+    ],
+    "white-hams": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 1.965476,
+        "pack": 140,
+        "n": 420,
+        "latest": "2026-11-19",
+        "example": 365334
+      }
+    ],
+    "wild-garlic": [
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 30.222222,
+        "pack": 9,
+        "n": 3,
+        "latest": "2026-08-26",
+        "example": 320165
+      }
+    ],
+    "wine-vinegars": [
+      {
+        "kind": "pack",
+        "unit": "ml",
+        "rate": 0.48,
+        "pack": 500,
+        "n": 91,
+        "latest": "2026-11-17",
+        "example": 363525
+      }
+    ],
+    "yellow-onions": [
+      {
+        "kind": "loose",
+        "unit": "g",
+        "rate": 0.295,
+        "pack": 0,
+        "n": 35,
+        "latest": "2026-11-02",
+        "example": 358721
+      },
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.299,
+        "pack": 1000,
+        "n": 8,
+        "latest": "2026-10-27",
+        "example": 361365
+      }
+    ],
+    "zucchini": [
+      {
+        "kind": "loose",
+        "unit": "g",
+        "rate": 0.289,
+        "pack": 0,
+        "n": 36,
+        "latest": "2026-10-30",
+        "example": 360036
+      },
+      {
+        "kind": "pack",
+        "unit": "g",
+        "rate": 0.875758,
+        "pack": 375,
+        "n": 83,
+        "latest": "2026-11-20",
+        "example": 365598
+      }
+    ]
+  }
+}

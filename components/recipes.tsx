@@ -21,7 +21,7 @@ import {
 } from '@/lib/model';
 import { sourceUrl } from '@/lib/source-url';
 import { clean, amount } from '@/lib/ingredients';
-import { labelDate, today, inWeek, monday } from '@/lib/dates';
+import { labelDate, today, inWeek, monday, addDays } from '@/lib/dates';
 import { Field, Form, Photo, Dialog, Empty, api, str, num, quantity, type UI } from './common';
 export function RecipeCard({ row, ui }: { row: RecipeRow; ui: UI }) {
   const r = row.data;
@@ -87,6 +87,12 @@ export function PlanForm({
   const active = ui.s.recipes
     .filter((r) => !r.archived && r.data.ingredients.length && r.data.steps.length)
     .sort((a, b) => a.data.title.localeCompare(b.data.title));
+  const [planDay, setPlanDay] = useState(day ?? (inWeek(today(), ui.w) ? today() : ui.w));
+  const [planSlot, setPlanSlot] = useState(slot);
+  const occupied = ui.s.meals.find((m) => m.day === planDay && m.slot === planSlot);
+  const nextLunch = ui.s.meals.find(
+    (m) => m.day === addDays(planDay || ui.w, 1) && m.slot === 'midi',
+  );
   const [selected, setSelected] = useState(id ?? '');
   const [query, setQuery] = useState(''),
     [limit, setLimit] = useState(12);
@@ -101,7 +107,7 @@ export function PlanForm({
     <Dialog title="Planifier une préparation" close={ui.close}>
       <Form
         button="Ajouter au planning"
-        disabled={!row}
+        disabled={!row || occupied?.consumed}
         onSave={async (f) => {
           if (
             await ui.run(
@@ -111,6 +117,7 @@ export function PlanForm({
                 day: str(f, 'day'),
                 servings: Number(f.get('servings')),
                 leftovers: f.has('leftovers'),
+                replaceMeal: f.has('replace') ? occupied?.id : undefined,
                 confirmedBase: num(f, 'confirmedBase') ?? undefined,
                 slot: str(f, 'slot') as typeof slot,
               },
@@ -200,11 +207,16 @@ export function PlanForm({
               name="day"
               type="date"
               required
-              defaultValue={day ?? (inWeek(today(), ui.w) ? today() : ui.w)}
+              value={planDay}
+              onChange={(e) => setPlanDay(e.target.value)}
             />
           </Field>
           <Field label="Repas">
-            <select name="slot" defaultValue={slot}>
+            <select
+              name="slot"
+              value={planSlot}
+              onChange={(e) => setPlanSlot(e.target.value as typeof slot)}
+            >
               <option value="soir">Dîner</option>
               <option value="midi">Déjeuner</option>
             </select>
@@ -220,10 +232,29 @@ export function PlanForm({
             />
           </Field>
         </div>
-        <label>
-          <input name="leftovers" type="checkbox" defaultChecked={ui.s.prefs.leftovers} /> Réserver
-          une portion du dîner pour le déjeuner suivant
-        </label>
+        {occupied && (
+          <label key={occupied.id}>
+            {occupied.consumed ? (
+              'Ce repas a déjà été consommé.'
+            ) : (
+              <>
+                <input type="checkbox" name="replace" required /> Remplacer{' '}
+                {ui.s.preps.find((p) => p.id === occupied.prepId)?.snapshot.title ??
+                  'le repas extérieur'}{' '}
+                sur ce créneau
+              </>
+            )}
+          </label>
+        )}
+        {planSlot === 'soir' &&
+          (nextLunch ? (
+            <small>Le déjeuner suivant est déjà prévu.</small>
+          ) : (
+            <label>
+              <input name="leftovers" type="checkbox" defaultChecked={ui.s.prefs.leftovers} />{' '}
+              Réserver une portion pour le déjeuner suivant
+            </label>
+          ))}
       </Form>
     </Dialog>
   );

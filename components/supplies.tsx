@@ -2,9 +2,10 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { Plus, Download, WifiOff } from 'lucide-react';
-import { basket, needs, type Need } from '@/lib/shopping';
+import { marketBasket, marketDate, priceSource, shipping } from '@/lib/market';
+import { fold, groceryName } from '@/lib/grocery-names';
 import { categories, type State } from '@/lib/model';
-import { today, money, inWeek } from '@/lib/dates';
+import { money, labelDate } from '@/lib/dates';
 import { Form, Field, Dialog, WeekNav, Empty, quantity, api, str, num, type UI } from './common';
 function download(name: string, txt: string) {
   const url = URL.createObjectURL(new Blob([txt], { type: 'text/plain;charset=utf-8' }));
@@ -109,198 +110,39 @@ function StockForm({ ui, v }: { ui: UI; v?: State['stock'][number] }) {
     </Dialog>
   );
 }
-function PriceForm({
-  ui,
-  v,
-  shop,
-}: {
-  ui: UI;
-  v?: Partial<State['prices'][number]>;
-  shop: string;
-}) {
-  return (
-    <Dialog title="Relever un prix" close={ui.close}>
-      <Form
-        onSave={async (f) => {
-          if (
-            await ui.run({
-              action: 'price',
-              data: {
-                id: v?.id ?? crypto.randomUUID(),
-                name: str(f, 'name'),
-                product: str(f, 'product'),
-                shop: str(f, 'shop'),
-                quantity: num(f, 'quantity')!,
-                unit: str(f, 'unit'),
-                weight: num(f, 'weight'),
-                cents: num(f, 'price') === null ? null : Math.round(100 * num(f, 'price')!),
-                equivalent:
-                  num(f, 'equivQty') === null
-                    ? null
-                    : { quantity: num(f, 'equivQty')!, unit: str(f, 'equivUnit') },
-                day: str(f, 'day'),
-                source: str(f, 'source'),
-                barcode: str(f, 'barcode'),
-                estimated: f.has('estimate'),
-              },
-            })
-          )
-            ui.close();
-        }}
-      >
-        <Field label="Ingrédient de la liste">
-          <input name="name" defaultValue={v?.name} required />
-        </Field>
-        <Field label="Produit et conditionnement">
-          <input
-            name="product"
-            defaultValue={v?.product}
-            placeholder="Nom exact du produit vendu"
-            required
-          />
-        </Field>
-        <Field label="Magasin">
-          <input name="shop" defaultValue={v?.shop ?? shop} list="shops" required />
-          <datalist id="shops">
-            {ui.s.prefs.shops.map((s) => (
-              <option key={s.name}>{s.name}</option>
-            ))}
-          </datalist>
-        </Field>
-        <div className="columns">
-          {[
-            ['quantity', 'Quantité vendue', v?.quantity, '0.000001'],
-            ['weight', 'Poids par paquet (g)', v?.weight, '0.000001'],
-            ['price', 'Prix TTC (€)', v?.cents != null ? v.cents / 100 : null, '0'],
-          ].map(([k, l, d, min]) => (
-            <Field key={String(k)} label={String(l)}>
-              <input
-                name={String(k)}
-                type="number"
-                min={String(min)}
-                step="any"
-                defaultValue={d ?? ''}
-                required={k === 'quantity'}
-              />
-            </Field>
-          ))}
-          <Field label="Unité vendue">
-            <input name="unit" defaultValue={v?.unit} required />
-          </Field>
-        </div>
-        <details>
-          <summary>Équivalence nette mesurée du conditionnement</summary>
-          <small>
-            Renseignez par exemple le poids net indiqué sur une brique vendue en cl. Le poids du sac
-            peut inclure l’emballage.
-          </small>
-          <div className="columns">
-            <Field label="Quantité nette équivalente">
-              <input
-                type="number"
-                step="any"
-                min="0.000001"
-                name="equivQty"
-                defaultValue={v?.equivalent?.quantity}
-              />
-            </Field>
-            <Field label="Unité équivalente">
-              <input name="equivUnit" defaultValue={v?.equivalent?.unit} />
-            </Field>
-          </div>
-        </details>
-        <Field label="Date du relevé">
-          <input name="day" type="date" defaultValue={v?.day ?? today()} max={today()} required />
-        </Field>
-        <Field label="Origine du prix">
-          <input
-            name="source"
-            defaultValue={v?.source}
-            placeholder="Ticket, rayon, catalogue…"
-            required
-          />
-        </Field>
-        <Field label="Code-barres (facultatif)">
-          <input name="barcode" defaultValue={v?.barcode} />
-        </Field>
-        <label>
-          <input type="checkbox" name="estimate" defaultChecked={v?.estimated} /> Prix estimé
-        </label>
-      </Form>
-    </Dialog>
-  );
-}
-function FindPrice({ ui, shop }: { ui: UI; shop: string }) {
-  const [rows, setRows] = useState<Partial<State['prices'][number]>[] | null>(null),
-    [error, setError] = useState('');
-  return (
-    <Dialog title="Relevés Open Prices à La Rochelle" close={ui.close}>
-      <Form
-        button="Chercher les relevés"
-        onSave={async (f) => {
-          try {
-            setError('');
-            setRows((await api('observations', { barcode: str(f, 'barcode') })).rows);
-          } catch (e) {
-            setError((e as Error).message);
-          }
-        }}
-      >
-        <Field label="Code-barres du produit">
-          <input name="barcode" inputMode="numeric" pattern="[0-9]{8,14}" required />
-        </Field>
-      </Form>
-      {error && <p role="alert">{error}</p>}
-      {rows?.length === 0 && (
-        <p>Aucun prix observé pour ce code-barres dans les magasins recensés à La Rochelle.</p>
-      )}
-      {rows?.map((r, i) => (
-        <div className="row" key={i}>
-          <div>
-            {r.product}
-            <small>
-              {r.shop} · {r.day} · {money(r.cents ?? null)}
-            </small>
-          </div>
-          <button onClick={() => ui.open(<PriceForm ui={ui} shop={shop} v={r} />)}>
-            Vérifier le conditionnement
-          </button>
-        </div>
-      ))}
-    </Dialog>
-  );
-}
 export function Shopping({ ui }: { ui: UI }) {
   const { s, w } = ui;
-  const shops = [...new Set([...s.prefs.shops.map((v) => v.name), ...s.prices.map((p) => p.shop)])];
-  const [shop, setShop] = useState(shops[0] ?? ''),
-    [tab, setTab] = useState('Liste'),
-    [third, setThird] = useState(false);
-  const cart = basket(s, w, shop),
-    { rows, incomplete } = needs(s, w);
-  const saveItem = (
-    r: Need,
-    changes: { bag?: 'Frais' | 'Épicerie' | 'Troisième'; checked?: boolean },
-  ) => {
-    const saved = s.items.find((i) => i.week === w && i.key === r.key);
-    return ui.run({
-      action: 'item',
-      data: {
-        id: saved?.id ?? crypto.randomUUID(),
-        key: r.key,
-        week: w,
-        name: r.name,
-        quantity: saved?.quantity ?? null,
-        unit: r.unit,
-        category: r.category,
-        manual: r.manual,
-        checked: r.checked,
-        bag: saved?.bag ?? null,
-        ...changes,
-      },
-    });
-  };
-  const line = (r: Need) => cart.lines.find((l) => l.key === r.key);
+  const [tab, setTab] = useState('Liste'),
+    [delivery, setDelivery] = useState(false);
+  const [carrier, setCarrier] = useState<'leclerc' | 'monoprix'>('leclerc');
+  const cart = marketBasket(s, w);
+  type Line = (typeof cart.lines)[number];
+  const describe = (line: Line) =>
+    line.buy.length
+      ? line.buy
+          .map((r) =>
+            r.unknown
+              ? r.unit === 'selon le goût'
+                ? 'Selon le goût'
+                : 'Quantité à préciser'
+              : quantity(r.buy) + ' ' + r.unit,
+          )
+          .join(' + ')
+      : 'En stock';
+  const parts = (line: Line) =>
+    line.buy.map((r) => ({ key: r.key, quantity: r.buy, unknown: r.unknown, before: r.checked }));
+  async function toggle(line: Line, checked: boolean) {
+    try {
+      await api(
+        'checks',
+        parts(line).map((r) => ({ ...r, week: w, checked })),
+      );
+      await ui.reload();
+    } catch (e) {
+      ui.notify((e as Error).message);
+      await ui.reload().catch(() => {});
+    }
+  }
   async function offline() {
     try {
       const old = JSON.parse(localStorage.getItem('table-offline') || 'null');
@@ -315,15 +157,15 @@ export function Shopping({ ui }: { ui: UI }) {
         'table-offline',
         JSON.stringify({
           week: w,
-          rows: cart.lines.map((r) => ({
-            key: r.key,
-            name: r.name,
-            unit: r.unit,
-            quantity: r.buy,
-            unknown: r.unknown,
-            checked: r.checked,
-            before: r.checked,
-          })),
+          rows: cart.lines
+            .filter((l) => l.buy.length)
+            .map((l) => ({
+              name: l.name,
+              description: describe(l),
+              parts: parts(l),
+              checked: l.checked,
+              before: l.checked,
+            })),
         }),
       );
       window.location.assign(new URL('courses-hors-ligne.html', window.location.origin));
@@ -331,126 +173,174 @@ export function Shopping({ ui }: { ui: UI }) {
       ui.notify((e as Error).message);
     }
   }
-  const weeklyPreps = s.preps.filter((p) => inWeek(p.day, w));
-  const single = weeklyPreps.length === 1 ? weeklyPreps[0] : null;
+  const deliveryRate = shipping(carrier, cart.cash);
+  const withFee = delivery && deliveryRate.fee !== null;
+  const total = cart.cash + (withFee ? deliveryRate.fee! : 0);
+  const partial = cart.missing > 0 || cart.incomplete.length > 0;
   return (
     <>
       <header className="page-heading">
         <h1>Mes courses</h1>
         <WeekNav ui={ui} />
       </header>
-      <div className="toolbar wrap">
-        <div className="tabs">
-          {['Liste', 'Comparateur', 'Mes sacs', 'Placard', 'Relevés'].map((t) => (
-            <button className={tab === t ? 'selected' : ''} key={t} onClick={() => setTab(t)}>
-              {t}
-            </button>
-          ))}
-        </div>
-        <select
-          aria-label="Magasin du panier"
-          value={shop}
-          onChange={(e) => setShop(e.target.value)}
-        >
-          {shops.map((x) => (
-            <option key={x}>{x}</option>
-          ))}
-        </select>
+      <div className="tabs">
+        <button className={tab === 'Liste' ? 'selected' : ''} onClick={() => setTab('Liste')}>
+          Liste
+        </button>
+        <button className={tab === 'Placard' ? 'selected' : ''} onClick={() => setTab('Placard')}>
+          Placard
+        </button>
       </div>
-      {incomplete.length > 0 && (
-        <div className="notice">
-          Courses incomplètes · Portions ou ingrédients à préciser pour {incomplete.join(', ')}.
-        </div>
-      )}
       {tab === 'Liste' && (
         <>
+          <section className="basket-summary" aria-label="Estimation du panier">
+            <div>
+              <h2>{partial ? 'Sous-total estimé' : 'Panier estimé'}</h2>
+              <strong className="large-money">
+                {withFee && deliveryRate.from ? 'dès ' : ''}
+                {money(total)}
+              </strong>
+              <small>
+                {cart.count} articles · {withFee ? 'livraison incluse' : 'hors livraison'}
+              </small>
+              {partial && (
+                <p>
+                  {cart.missing > 0 && cart.missing + ' article(s) sans estimation. '}
+                  {cart.incomplete.join(', ')}
+                </p>
+              )}
+            </div>
+            <div className="receipt">
+              <div>
+                <span>Courses</span>
+                <b>{money(cart.cash)}</b>
+              </div>
+              <div>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={delivery}
+                    onChange={(e) => setDelivery(e.target.checked)}
+                  />{' '}
+                  Inclure la livraison
+                </label>
+                <b>
+                  {!delivery
+                    ? '—'
+                    : deliveryRate.fee === null
+                      ? 'Minimum ' + money(deliveryRate.minimum)
+                      : (deliveryRate.from ? 'dès ' : '') + money(deliveryRate.fee)}
+                </b>
+              </div>
+              {delivery && (
+                <>
+                  <fieldset className="carriers">
+                    <legend>Service de livraison</legend>
+                    <label>
+                      <input
+                        type="radio"
+                        checked={carrier === 'leclerc'}
+                        onChange={() => setCarrier('leclerc')}
+                      />{' '}
+                      E.Leclerc Périgny
+                    </label>
+                    <label>
+                      <input
+                        type="radio"
+                        checked={carrier === 'monoprix'}
+                        onChange={() => setCarrier('monoprix')}
+                      />{' '}
+                      Monoprix
+                    </label>
+                  </fieldset>
+                  <small>
+                    {deliveryRate.fee === null
+                      ? 'Minimum de commande non atteint.'
+                      : 'Sous réserve de desserte à votre adresse.'}{' '}
+                    <a href={deliveryRate.url} target="_blank" rel="noreferrer">
+                      Barème de livraison ↗
+                    </a>
+                  </small>
+                </>
+              )}
+            </div>
+          </section>
+          <details className="price-method">
+            <summary>Comment le panier est-il estimé ?</summary>
+            <p>
+              Prix médians observés en France hors promotions, sur douze mois jusqu’au{' '}
+              {labelDate(marketDate, { day: 'numeric', month: 'long', year: 'numeric' })}. Les
+              produits en vrac sont comptés au poids et les autres par emballage entier. Les pièces
+              et dosettes sont converties avec des poids indicatifs. Le sel et le poivre « selon le
+              goût » sont supposés au placard.
+            </p>
+            <p>
+              Votre panier HelloFresh de référence est de {money(s.prefs.hello)}.{' '}
+              <a href={priceSource} target="_blank" rel="noreferrer">
+                Relevés Open Prices ↗
+              </a>
+            </p>
+          </details>
           <div className="section-heading">
             <h2>
-              {cart.lines.filter((r) => r.checked).length} / {cart.lines.length} articles cochés
+              {cart.lines.filter((l) => l.checked).length} / {cart.count} articles cochés
             </h2>
             <button className="primary" onClick={() => ui.open(<Article ui={ui} />)}>
               <Plus size={16} /> Article
             </button>
           </div>
-          {single && (
-            <p className="list-origin">
-              {single.snapshot.title}{' '}
-              <span>
-                · {single.servings} portion{single.servings > 1 ? 's' : ''}
-              </span>
-            </p>
-          )}
-          {categories.map((c) => {
-            const group = rows.filter((r) => r.category === c);
-            return (
-              !!group.length && (
-                <section className="panel" key={c}>
-                  <h3>{c}</h3>
-                  {group.map((r) => (
-                    <div className={'grocery ' + (r.checked ? 'done' : '')} key={r.key}>
-                      <input
-                        type="checkbox"
-                        aria-label={'Acheté · ' + r.name}
-                        checked={r.checked}
-                        onChange={(e) => saveItem(r, { checked: e.target.checked })}
-                      />
-                      <div>
-                        <strong>{r.name}</strong>
-                        <small>
-                          {r.unknown
-                            ? r.unit === 'selon le goût'
-                              ? 'Selon le goût'
-                              : 'Quantité à préciser'
-                            : quantity(r.buy) + ' ' + r.unit + ' à acheter'}
-                          {r.stock > 0 && ' · en stock ' + quantity(r.stock) + ' ' + r.unit}
-                        </small>
-                        {(r.manual || !single) && (
-                          <small>{r.manual ? 'Article manuel' : r.recipes.join(' · ')}</small>
-                        )}
-                        {line(r)?.best && (
-                          <small>
-                            {line(r)!.best!.count} × {line(r)!.best!.p.product} ·{' '}
-                            {money(line(r)!.best!.cost)} · reste{' '}
-                            {quantity(
-                              Math.max(0, line(r)!.best!.count * line(r)!.best!.size - r.buy),
-                            )}{' '}
-                            {r.unit} · {line(r)!.stale ? 'relevé ancien' : 'relevé récent'}
-                          </small>
-                        )}
-                      </div>
-                      <button
-                        className="tiny"
-                        onClick={() =>
-                          ui.open(
-                            <PriceForm ui={ui} shop={shop} v={{ name: r.name, unit: r.unit }} />,
-                          )
-                        }
-                      >
-                        {line(r)?.best
-                          ? 'Relever un prix'
-                          : r.buy || r.unknown
-                            ? 'Prix inconnu'
-                            : 'En stock'}
-                      </button>
-                      {r.manual && (
-                        <button
-                          className="icon"
-                          aria-label="Retirer l’article manuel"
-                          onClick={() => {
-                            const i = s.items.find((i) => i.week === w && i.key === r.key);
-                            if (i) void ui.run({ action: 'remove', table: 'items', id: i.id });
-                          }}
-                        >
-                          ×
-                        </button>
-                      )}
+          {categories.map((cat) => {
+            const group = cart.lines.filter((l) => l.category === cat);
+            return !group.length ? null : (
+              <section key={cat} className="panel">
+                <h3>{cat}</h3>
+                {group.map((l) => (
+                  <div key={l.key} className={'grocery ' + (l.checked ? 'done' : '')}>
+                    <input
+                      type="checkbox"
+                      aria-label={'Acheté · ' + l.name}
+                      disabled={!l.buy.length}
+                      checked={l.checked}
+                      onChange={(e) => void toggle(l, e.target.checked)}
+                    />
+                    <div>
+                      <strong>{l.name}</strong>
+                      <small>{describe(l)}</small>
+                      {l.parts.some((p) => p.stock > 0) && <small>Stock déduit du placard</small>}
+                      {s.items
+                        .filter(
+                          (i) => i.manual && i.week === w && fold(groceryName(i.name)) === l.key,
+                        )
+                        .map((i) => (
+                          <button
+                            className="manual-remove"
+                            key={i.id}
+                            onClick={() => ui.run({ action: 'remove', table: 'items', id: i.id })}
+                          >
+                            Retirer l’ajout de {quantity(i.quantity)} {i.unit}
+                          </button>
+                        ))}
                     </div>
-                  ))}
-                </section>
-              )
+                    <span className="line-price">
+                      {l.pantry
+                        ? 'Placard'
+                        : !l.buy.length
+                          ? 'En stock'
+                          : l.cents === null
+                            ? 'Non chiffré'
+                            : money(l.cents)}
+                      {l.ref && l.packs > 0 && (
+                        <small>
+                          {l.packs} × {l.pack} {l.ref.unit}
+                        </small>
+                      )}
+                    </span>
+                  </div>
+                ))}
+              </section>
             );
           })}
-          {!rows.length && (
+          {!cart.lines.length && (
             <Empty title="La liste de courses est vide">
               <Link href={'/semaine?week=' + w}>Planifier une recette →</Link>
             </Empty>
@@ -463,19 +353,8 @@ export function Shopping({ ui }: { ui: UI }) {
               onClick={() =>
                 download(
                   'courses-' + w + '.txt',
-                  rows
-                    .map(
-                      (r) =>
-                        (r.checked ? '☑' : '☐') +
-                        ' ' +
-                        r.name +
-                        ' · ' +
-                        (r.unknown
-                          ? r.unit === 'selon le goût'
-                            ? 'Selon le goût'
-                            : 'À préciser'
-                          : quantity(r.buy) + ' ' + r.unit),
-                    )
+                  cart.lines
+                    .map((l) => (l.checked ? '☑ ' : '☐ ') + l.name + ' · ' + describe(l))
                     .join('\n'),
                 )
               }
@@ -483,125 +362,6 @@ export function Shopping({ ui }: { ui: UI }) {
               <Download size={16} /> Exporter
             </button>
           </div>
-        </>
-      )}
-      {tab === 'Comparateur' && (
-        <>
-          <div className="panel">
-            <h2>Référence HelloFresh</h2>
-            <strong className="large-money">{money(s.prefs.hello)}</strong>
-            <small>
-              {s.prefs.helloMeals ?? '—'} recettes · {s.prefs.helloPortions ?? '—'} portions au
-              total
-            </small>
-          </div>
-          {shops.map((name) => {
-            const b = basket(s, w, name);
-            return (
-              <div className="panel" key={name}>
-                <div className="split">
-                  <h2>{name}</h2>
-                  <span className="pill">
-                    {b.known}/{b.lines.length} articles chiffrés
-                  </span>
-                </div>
-                <div className="pricegrid">
-                  <div>
-                    <small>
-                      Ingrédients utilisés {b.consumedComplete ? '' : '· part chiffrée'}
-                    </small>
-                    <b>{money(b.used)}</b>
-                  </div>
-                  <div>
-                    <small>{b.complete ? 'En caisse' : 'Sous-total connu'}</small>
-                    <b>{money(b.cash)}</b>
-                  </div>
-                  <div>
-                    <small>Livraison incluse</small>
-                    <b>{money(b.delivered)}</b>
-                  </div>
-                </div>
-                <p>
-                  Frais de livraison · {money(b.delivery)}.{' '}
-                  {b.estimated ? 'Contient des estimations.' : ''} Disponibilité à confirmer auprès
-                  du magasin.
-                </p>
-                {b.comparable && b.servings > 0 ? (
-                  <p>
-                    Écart magasin − HelloFresh · {money(b.cash - s.prefs.hello)} ·{' '}
-                    {money(Math.round(b.cash / b.servings))} par portion.{' '}
-                    {b.delivered !== null
-                      ? 'Écart livré · ' + money(b.delivered - s.prefs.hello)
-                      : ''}
-                  </p>
-                ) : (
-                  <p className="hint">
-                    Comparaison directe indisponible · panier complet et mêmes nombres de recettes
-                    et de portions requis.
-                  </p>
-                )}
-                <small>
-                  Non chiffrés ·{' '}
-                  {b.lines
-                    .filter((l) => l.best?.cost == null)
-                    .map((l) => l.name)
-                    .join(', ') || 'Aucun'}
-                </small>
-                <small>
-                  Poids connu à porter ·{' '}
-                  {quantity(b.lines.reduce((n, l) => n + (l.weight ?? 0), 0) / 1000)} kg ·{' '}
-                  {b.lines.filter((l) => l.weight === null).length} poids inconnus
-                </small>
-              </div>
-            );
-          })}
-        </>
-      )}
-      {tab === 'Mes sacs' && (
-        <>
-          <div className="section-heading">
-            <h2>Répartition à pied</h2>
-            <button onClick={() => setThird(true)}>Ajouter un troisième sac</button>
-          </div>
-          {[
-            'Frais',
-            'Épicerie',
-            ...(third || cart.lines.some((l) => l.bag === 'Troisième') ? ['Troisième'] : []),
-          ].map((b) => {
-            const ls = cart.lines.filter((l) => l.bag === b),
-              g = ls.reduce((n, l) => n + (l.weight ?? 0), 0),
-              cap = b === 'Frais' ? s.prefs.bagFresh : b === 'Épicerie' ? s.prefs.bagDry : null;
-            return (
-              <div className="panel" key={b}>
-                <h2>Sac {b.toLowerCase()}</h2>
-                <p>
-                  {quantity(g / 1000)} kg connus {cap ? ' / ' + quantity(cap / 1000) + ' kg' : ''} ·{' '}
-                  {ls.filter((l) => l.weight === null).length} poids inconnus{' '}
-                  {cap && g > cap ? ' · Capacité dépassée' : ''}
-                </p>
-                {ls.map((l) => (
-                  <div className="row" key={l.key}>
-                    <div>
-                      {l.name}
-                      <small>
-                        {l.weight === null ? 'Poids inconnu' : quantity(l.weight) + ' g'}{' '}
-                        {l.best ? ' · ' + l.best.count + ' conditionnement(s)' : ''}
-                      </small>
-                    </div>
-                    <select
-                      aria-label={'Sac pour ' + l.name}
-                      value={b}
-                      onChange={(e) => saveItem(l, { bag: e.target.value as 'Frais' })}
-                    >
-                      {['Frais', 'Épicerie', 'Troisième'].map((v) => (
-                        <option key={v}>{v}</option>
-                      ))}
-                    </select>
-                  </div>
-                ))}
-              </div>
-            );
-          })}
         </>
       )}
       {tab === 'Placard' && (
@@ -620,44 +380,12 @@ export function Shopping({ ui }: { ui: UI }) {
           ))}
         </div>
       )}
-      {tab === 'Relevés' && (
-        <div className="panel">
-          <div className="split">
-            <h2>Prix et conditionnements</h2>
-            <button onClick={() => ui.open(<FindPrice ui={ui} shop={shop} />)}>Open Prices</button>
-            <button onClick={() => ui.open(<PriceForm ui={ui} shop={shop} />)}>+ Relevé</button>
-          </div>
-          {s.prices
-            .slice()
-            .sort((a, b) => b.day.localeCompare(a.day))
-            .map((p) => (
-              <div className="row" key={p.id}>
-                <div>
-                  <b>
-                    {p.product} · {money(p.cents)}
-                  </b>
-                  <small>
-                    {p.shop} · {quantity(p.quantity)} {p.unit} · {p.day} · {p.source} ·{' '}
-                    {p.estimated ? 'Estimation' : 'Observé'} ·{' '}
-                    {Date.parse(today()) - Date.parse(p.day) > 30 * 86400000
-                      ? 'Plus de 30 jours'
-                      : 'Récent'}
-                  </small>
-                </div>
-                <button onClick={() => ui.open(<PriceForm ui={ui} shop={p.shop} v={p} />)}>
-                  Modifier
-                </button>
-              </div>
-            ))}
-        </div>
-      )}
     </>
   );
 }
 export function Preferences({ ui }: { ui: UI }) {
   const p = ui.s.prefs;
-  const [shops, setShops] = useState(p.shops),
-    [file, setFile] = useState<File | null>(null),
+  const [file, setFile] = useState<File | null>(null),
     [report, setReport] = useState<{
       total: number;
       added: number;
@@ -679,17 +407,13 @@ export function Preferences({ ui }: { ui: UI }) {
             await ui.run({
               action: 'prefs',
               data: {
+                ...p,
                 portions: num(f, 'portions')!,
                 target: num(f, 'target')!,
                 budget: cents(f, 'budget'),
                 hello: cents(f, 'hello')!,
-                helloMeals: num(f, 'helloMeals'),
-                helloPortions: num(f, 'helloPortions'),
                 diet: str(f, 'diet'),
                 maxTime: num(f, 'maxTime'),
-                bagDry: num(f, 'dry') === null ? null : num(f, 'dry')! * 1000,
-                bagFresh: num(f, 'fresh') === null ? null : num(f, 'fresh')! * 1000,
-                shops,
                 leftovers: f.has('leftovers'),
               },
             });
@@ -703,14 +427,6 @@ export function Preferences({ ui }: { ui: UI }) {
               ['maxTime', 'Durée souhaitée (min)', p.maxTime],
               ['budget', 'Budget hebdomadaire (€)', p.budget === null ? null : p.budget / 100],
               ['hello', 'Panier HelloFresh (€)', p.hello / 100],
-              ['helloMeals', 'Recettes dans le panier HelloFresh', p.helloMeals],
-              ['helloPortions', 'Total de portions HelloFresh', p.helloPortions],
-              [
-                'fresh',
-                'Capacité du sac frais (kg)',
-                p.bagFresh === null ? null : p.bagFresh / 1000,
-              ],
-              ['dry', 'Capacité du sac épicerie (kg)', p.bagDry === null ? null : p.bagDry / 1000],
             ].map(([k, l, v]) => (
               <Field key={k} label={String(l)}>
                 <input
@@ -736,47 +452,6 @@ export function Preferences({ ui }: { ui: UI }) {
             <input name="leftovers" type="checkbox" defaultChecked={p.leftovers} /> Réserver une
             portion pour le déjeuner suivant
           </label>
-          <h3>Magasins et livraison</h3>
-          {shops.map((v, i) => (
-            <div className="columns" key={i}>
-              {(['name', 'delivery', 'freeAt'] as const).map((k, j) => (
-                <Field key={k} label={['Magasin', 'Livraison (€)', 'Gratuité dès (€)'][j]}>
-                  <input
-                    required={!j}
-                    type={j ? 'number' : 'text'}
-                    step="0.01"
-                    min="0"
-                    value={k === 'name' ? v.name : v[k] === null ? '' : v[k]! / 100}
-                    onChange={(e) =>
-                      setShops(
-                        shops.map((a, n) =>
-                          i === n
-                            ? {
-                                ...a,
-                                [k]: j
-                                  ? e.target.value === ''
-                                    ? null
-                                    : Math.round(Number(e.target.value) * 100)
-                                  : e.target.value,
-                              }
-                            : a,
-                        ),
-                      )
-                    }
-                  />
-                </Field>
-              ))}
-              <button type="button" onClick={() => setShops(shops.filter((_, n) => n !== i))}>
-                Retirer
-              </button>
-            </div>
-          ))}
-          <button
-            type="button"
-            onClick={() => setShops([...shops, { name: '', delivery: null, freeAt: null }])}
-          >
-            + Magasin
-          </button>
           <small>Fuseau Europe/Paris · Devise EUR</small>
         </Form>
       </div>
