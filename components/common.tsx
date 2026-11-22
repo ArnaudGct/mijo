@@ -1,6 +1,7 @@
 'use client';
 import {
   useEffect,
+  useState,
   useRef,
   useContext,
   createContext,
@@ -91,13 +92,16 @@ export function Form({
   onSave,
   children,
   button = 'Enregistrer',
+  disabled = false,
 }: {
   onSave: (f: FormData) => Promise<void> | void;
   children: ReactNode;
   button?: string;
+  disabled?: boolean;
 }) {
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (disabled) return;
     const el = e.currentTarget;
     const b = el.querySelector<HTMLButtonElement>('button[type=submit]');
     if (b) b.disabled = true;
@@ -110,7 +114,7 @@ export function Form({
   return (
     <form onSubmit={submit} className="editor">
       {children}
-      <button type="submit" className="primary">
+      <button type="submit" className="primary" disabled={disabled}>
         {button}
       </button>
     </form>
@@ -168,8 +172,10 @@ export function Photo({
   title?: string;
   className?: string;
 }) {
-  return src ? (
+  const [failed, setFailed] = useState('');
+  return src && src !== failed ? (
     <img
+      onError={() => setFailed(src)}
       className={'photo ' + className}
       src={src}
       alt={title}

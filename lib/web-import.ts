@@ -5,6 +5,7 @@ import ipaddr from 'ipaddr.js';
 import robotsParser from 'robots-parser';
 import { load } from 'cheerio';
 import { recipe, blankRecipe } from './model';
+import { fromHelloFreshPage } from './hellofresh';
 import { parseLine } from './ingredients';
 const agent = 'TableDeSaison/1.0';
 class DestinationError extends Error {}
@@ -164,6 +165,10 @@ function steps(x: unknown, base: string): { text: string; image: string }[] {
   });
 }
 export function extract(html: string, url: string) {
+  const official = fromHelloFreshPage(html, url);
+  if (official) return official;
+  if (new URL(url).origin === 'https://www.hellofresh.fr')
+    throw Error('La fiche HelloFresh ne fournit pas de recette complète.');
   const $ = load(html);
   let found: Obj | undefined;
   for (const el of $('script[type="application/ld+json"]').toArray()) {

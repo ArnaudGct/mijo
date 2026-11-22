@@ -118,7 +118,9 @@ test('transactions PostgreSQL, parcours complet, restauration et rejouabilité',
       const parsed = await archivePages(readFileSync(zip));
       assert.equal(parsed.length, 2);
       assert.equal(parsed[0].data.base, 2);
-      assert.equal((await importBatch(parsed, false)).added, 2);
+      const preview = await importBatch(parsed, false);
+      assert.equal(preview.added, 1);
+      assert.equal(preview.withheld, 1);
       await importBatch(parsed, true);
       const target = (await state()).recipes.find((r) => r.sourceKey === parsed[0].sourceKey)!;
       await write({
@@ -126,7 +128,10 @@ test('transactions PostgreSQL, parcours complet, restauration et rejouabilité',
         id: target.id,
         data: { ...target.data, notes: 'Correction locale' },
       });
-      assert.equal((await importBatch(parsed, true)).skipped, 2);
+      const replay = await importBatch(parsed, true);
+      assert.equal(replay.skipped, 1);
+      assert.equal(replay.withheld, 1);
+      assert(!(await state()).recipes.some((r) => r.data.title === 'Autre plat'));
       assert.equal(
         (await state()).recipes.find((r) => r.id === target.id)?.data.notes,
         'Correction locale',

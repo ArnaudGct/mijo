@@ -20,7 +20,14 @@ function show() {
     label.append(
       box,
       document.createTextNode(
-        ' ' + row.name + ' · ' + (row.unknown ? 'À préciser' : row.quantity + ' ' + row.unit),
+        ' ' +
+          row.name +
+          ' · ' +
+          (row.unknown
+            ? row.unit === 'selon le goût'
+              ? 'Selon le goût'
+              : 'À préciser'
+            : row.quantity + ' ' + row.unit),
       ),
     );
     document.querySelector('#rows').append(label);

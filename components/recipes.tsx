@@ -21,7 +21,7 @@ import {
 } from '@/lib/model';
 import { sourceUrl } from '@/lib/source-url';
 import { clean, amount } from '@/lib/ingredients';
-import { labelDate, today, inWeek } from '@/lib/dates';
+import { labelDate, today, inWeek, monday } from '@/lib/dates';
 import { Field, Form, Photo, Dialog, Empty, api, str, num, quantity, type UI } from './common';
 export function RecipeCard({ row, ui }: { row: RecipeRow; ui: UI }) {
   const r = row.data;
@@ -61,6 +61,7 @@ export function RecipeCard({ row, ui }: { row: RecipeRow; ui: UI }) {
             {r.diet ? ' · ' + r.diet : ''}
           </small>
           <button
+            disabled={row.archived || !r.steps.length || !r.ingredients.length}
             className="icon"
             aria-label={'Planifier ' + r.title}
             onClick={() => ui.open(<PlanForm ui={ui} id={row.id} />)}
@@ -84,43 +85,98 @@ export function PlanForm({
   slot?: 'soir' | 'midi';
 }) {
   const active = ui.s.recipes
-    .filter((r) => !r.archived)
+    .filter((r) => !r.archived && r.data.ingredients.length && r.data.steps.length)
     .sort((a, b) => a.data.title.localeCompare(b.data.title));
-  const [selected, setSelected] = useState(id ?? active[0]?.id ?? '');
+  const [selected, setSelected] = useState(id ?? '');
+  const [query, setQuery] = useState(''),
+    [limit, setLimit] = useState(12);
+  const fold = (v: string) => clean(v).normalize('NFD').replace(/\p{M}/gu, '');
+  const choices = active.filter((r) =>
+    fold(r.data.title + ' ' + r.data.ingredients.map((i) => i.name).join(' ')).includes(
+      fold(query),
+    ),
+  );
   const row = active.find((r) => r.id === selected);
   return (
     <Dialog title="Planifier une préparation" close={ui.close}>
       <Form
         button="Ajouter au planning"
+        disabled={!row}
         onSave={async (f) => {
           if (
-            await ui.run({
-              action: 'plan',
-              id: str(f, 'recipe'),
-              day: str(f, 'day'),
-              servings: Number(f.get('servings')),
-              leftovers: f.has('leftovers'),
-              confirmedBase: num(f, 'confirmedBase') ?? undefined,
-              slot: str(f, 'slot') as typeof slot,
-            })
-          )
+            await ui.run(
+              {
+                action: 'plan',
+                id: str(f, 'recipe'),
+                day: str(f, 'day'),
+                servings: Number(f.get('servings')),
+                leftovers: f.has('leftovers'),
+                confirmedBase: num(f, 'confirmedBase') ?? undefined,
+                slot: str(f, 'slot') as typeof slot,
+              },
+              'Repas planifié pour le ' + labelDate(str(f, 'day')),
+            )
+          ) {
+            ui.setW(monday(str(f, 'day')));
             ui.close();
+          }
         }}
       >
-        <Field label="Recette">
-          <select
-            name="recipe"
-            value={selected}
-            onChange={(e) => setSelected(e.target.value)}
-            required
-          >
-            {active.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.data.title}
-              </option>
-            ))}
-          </select>
-        </Field>
+        <input name="recipe" type="hidden" value={selected} />
+        {row ? (
+          <div className="picker-selected">
+            <Photo src={row.data.image} />
+            <div>
+              <strong>{row.data.title}</strong>
+              {duration(row.data) !== null && <small>{duration(row.data)} min</small>}
+            </div>
+            <button type="button" onClick={() => setSelected('')}>
+              Changer
+            </button>
+          </div>
+        ) : (
+          <section className="picker" aria-label="Choix de la recette">
+            <Field label="Rechercher un plat ou un ingrédient">
+              <input
+                autoFocus
+                type="search"
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setLimit(12);
+                }}
+              />
+            </Field>
+            <div className="picker-results">
+              {choices.slice(0, limit).map((r) => (
+                <button
+                  type="button"
+                  className="picker-choice"
+                  key={r.id}
+                  onClick={() => setSelected(r.id)}
+                >
+                  <Photo src={r.data.image} />
+                  <span>
+                    <strong>{r.data.title}</strong>
+                    {duration(r.data) !== null && <small>{duration(r.data)} min</small>}
+                  </span>
+                </button>
+              ))}
+              {choices.length > limit && (
+                <button type="button" onClick={() => setLimit(limit + 12)}>
+                  Afficher davantage
+                </button>
+              )}
+            </div>
+            {!choices.length && (
+              <p role="status">
+                {active.length
+                  ? 'Aucun plat ne correspond à la recherche.'
+                  : 'Ajoutez une recette avec ses ingrédients et ses étapes pour planifier un repas.'}
+              </p>
+            )}
+          </section>
+        )}
         {row && row.data.base === null && (
           <div className="notice">
             <Field label="Portions correspondant aux quantités de la fiche">
@@ -222,10 +278,7 @@ export function Catalog({ ui }: { ui: UI }) {
   return (
     <>
       <header className="page-heading">
-        <div>
-          <span className="eyebrow">Bibliothèque personnelle</span>
-          <h1>Mon carnet de recettes</h1>
-        </div>
+        <h1>Mon carnet de recettes</h1>
         <div className="actions">
           <button onClick={() => ui.open(<UrlImport ui={ui} />)}>
             <Link2 size={16} /> Importer une URL
@@ -342,6 +395,13 @@ function UrlImport({ ui }: { ui: UI }) {
               setError('Cette recette figure déjà dans le carnet : ' + existing.data.title);
               return;
             }
+            if (!v.data.ingredients.length || !v.data.steps.length || !v.data.base) {
+              setError(
+                v.warning ||
+                  'La source ne fournit pas les ingrédients, les étapes ou le nombre de portions. La recette n’a pas été ajoutée.',
+              );
+              return;
+            }
             ui.open(
               <RecipeEditor
                 ui={ui}
@@ -385,7 +445,11 @@ export function RecipeDetail({ row, ui }: { row: RecipeRow; ui: UI }) {
       </div>
       <p>{r.description}</p>
       <div className="actions">
-        <button className="primary" onClick={() => ui.open(<PlanForm ui={ui} id={row.id} />)}>
+        <button
+          disabled={row.archived || !r.ingredients.length || !r.steps.length}
+          className="primary"
+          onClick={() => ui.open(<PlanForm ui={ui} id={row.id} />)}
+        >
           Planifier <ArrowRight size={16} />
         </button>
         <button onClick={() => ui.open(<RecipeEditor ui={ui} row={row} />)}>Modifier</button>
@@ -408,7 +472,9 @@ export function RecipeDetail({ row, ui }: { row: RecipeRow; ui: UI }) {
         <div className="row" key={n}>
           <span>{i.name}</span>
           <b>
-            {quantity(i.quantity)} {i.unit}
+            {i.unit === 'selon le goût'
+              ? 'Selon le goût'
+              : [quantity(i.quantity), i.unit].join(' ')}
           </b>
         </div>
       ))}

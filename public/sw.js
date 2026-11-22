@@ -1,4 +1,4 @@
-const cacheName = 'table-shell-v2';
+const cacheName = 'table-shell-v3';
 self.addEventListener('install', (event) =>
   event.waitUntil(
     caches

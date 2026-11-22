@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useRef, type ReactNode } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import {
   LayoutGrid,
   BookOpen,
@@ -14,13 +14,12 @@ import {
   UtensilsCrossed,
   LogOut,
   Leaf,
-  LockKeyhole,
   Check,
   ChevronRight,
   Plus,
 } from 'lucide-react';
-import { type State, duration } from '@/lib/model';
-import { today, addDays, labelDate, inWeek, money } from '@/lib/dates';
+import { type State, duration, date } from '@/lib/model';
+import { today, monday, addDays, labelDate, inWeek, money } from '@/lib/dates';
 import { basket } from '@/lib/shopping';
 import { Feedback, Brand, WeekNav, Photo, Field, Form, str, api, type UI } from './common';
 import { Catalog, RecipeDetail, RecipeCard, RecipeEditor } from './recipes';
@@ -45,18 +44,13 @@ export function Login() {
           alt="Légumes frais et ingrédients disposés sur un plan de travail"
         />
         <div className="login-caption">
-          <span>Le carnet de cuisine</span>
           <h1>Table de saison.</h1>
         </div>
       </div>
       <div className="login-form">
         <Brand />
         <div>
-          <span className="eyebrow">
-            <LockKeyhole size={14} /> Espace privé
-          </span>
-          <h2>À table.</h2>
-          <p>Retrouvez vos recettes, votre semaine et vos courses.</p>
+          <h2>Mon carnet de cuisine</h2>
           <Form
             button="Ouvrir mon carnet"
             onSave={async (f) => {
@@ -78,19 +72,13 @@ export function Login() {
     </main>
   );
 }
-export function Workspace({
-  initial,
-  view,
-  initialWeek,
-  initialSession,
-}: {
-  initial: State;
-  view: string;
-  initialWeek: string;
-  initialSession: string;
-}) {
+export function Workspace({ initial, children }: { initial: State; children: ReactNode }) {
+  const view = usePathname().replace(/^\/|\/$/g, '');
+  const query = useSearchParams();
+  const requested = date.safeParse(query.get('week'));
+  const w = monday(requested.success ? requested.data : today());
+  const initialSession = query.get('session') ?? '';
   const [s, setS] = useState(initial),
-    [w, setWeek] = useState(initialWeek),
     [dialog, setDialog] = useState<ReactNode>(null),
     [notice, setNotice] = useState(''),
     [busy, setBusy] = useState(false);
@@ -101,7 +89,6 @@ export function Workspace({
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
   }, []);
   const setW = (d: string) => {
-    setWeek(d);
     const u = new URL(location.href);
     u.searchParams.set('week', d);
     history.replaceState(null, '', u);
@@ -148,16 +135,17 @@ export function Workspace({
     },
   };
   const weekLink = (p: string) => '/' + p + '?week=' + w;
-  const current = nav.find((n) => n.p === view)!;
+  const current = nav.find((n) => n.p === view);
+  if (!current) return children;
   return (
     <div className="app-shell">
       <aside>
-        <Link className="brand-link" href="/">
+        <Link className="brand-link" href={weekLink('')}>
           <Brand />
         </Link>
         <nav aria-label="Navigation principale">
           {nav.map((n) => (
-            <a
+            <Link
               key={n.p}
               className={n.p === view ? 'active' : ''}
               aria-current={n.p === view ? 'page' : undefined}
@@ -165,7 +153,7 @@ export function Workspace({
             >
               <n.i size={19} />
               {n.n}
-            </a>
+            </Link>
           ))}
         </nav>
         <div className="side-end">
@@ -181,7 +169,7 @@ export function Workspace({
               try {
                 await api('logout', {});
                 localStorage.removeItem('table-offline');
-                router.refresh();
+                window.location.reload();
               } catch (e) {
                 setNotice((e as Error).message);
               }
@@ -203,11 +191,11 @@ export function Workspace({
         ) : view === 'recettes' ? (
           <Catalog ui={ui} />
         ) : view === 'semaine' ? (
-          <Planner ui={ui} />
+          <Planner key={w} ui={ui} />
         ) : view === 'courses' ? (
           <Shopping ui={ui} />
         ) : view === 'cuisiner' ? (
-          <Cooking ui={ui} initialSession={initialSession} />
+          <Cooking key={w + initialSession} ui={ui} initialSession={initialSession} />
         ) : (
           <Preferences ui={ui} />
         )}
@@ -241,10 +229,7 @@ function Home({ ui }: { ui: UI }) {
   return (
     <>
       <header className="page-heading">
-        <div>
-          <span className="eyebrow">Planification hebdomadaire</span>
-          <h1>Mon tableau de bord</h1>
-        </div>
+        <h1>Mon tableau de bord</h1>
         <WeekNav ui={ui} />
       </header>
       <section className="hero">
@@ -291,7 +276,7 @@ function Home({ ui }: { ui: UI }) {
             p: 'courses',
           },
         ].map((k) => (
-          <a className="stat" href={'/' + k.p + '?week=' + w} key={k.n}>
+          <Link className="stat" href={'/' + k.p + '?week=' + w} key={k.n}>
             <div className="stat-icon">
               <k.i size={20} />
             </div>
@@ -299,23 +284,20 @@ function Home({ ui }: { ui: UI }) {
               <small>{k.n}</small>
               <strong>{k.v}</strong>
             </div>
-          </a>
+          </Link>
         ))}
       </div>
       <div className="section-heading">
-        <div>
-          <span className="eyebrow">Calendrier</span>
-          <h2>Au menu cette semaine</h2>
-        </div>
-        <a className="text-link" href={'/semaine?week=' + w}>
+        <h2>Au menu cette semaine</h2>
+        <Link className="text-link" href={'/semaine?week=' + w}>
           Organiser <ArrowRight size={16} />
-        </a>
+        </Link>
       </div>
       <div className="weekstrip">
         {Array.from({ length: 7 }, (_, i) => {
           const d = addDays(w, i);
           return (
-            <a
+            <Link
               href={'/semaine?week=' + w + '#jour-' + d}
               key={d}
               className={d === today() ? 'day today' : 'day'}
@@ -327,7 +309,7 @@ function Home({ ui }: { ui: UI }) {
                   ? meals.filter((m) => m.day === d).length + ' repas'
                   : 'Libre'}
               </span>
-            </a>
+            </Link>
           );
         })}
       </div>
@@ -337,21 +319,18 @@ function Home({ ui }: { ui: UI }) {
           {preps
             .filter((p) => !p.done)
             .map((p) => (
-              <a className="row" key={p.id} href={'/cuisiner?week=' + w}>
+              <Link className="row" key={p.id} href={'/cuisiner?week=' + w + '&session=' + p.id}>
                 {p.snapshot.title}
                 <small>
                   {labelDate(p.day)} · {p.servings} portions
                 </small>
-              </a>
+              </Link>
             ))}
         </section>
       )}
       <div className="section-heading">
-        <div>
-          <span className="eyebrow">Bibliothèque</span>
-          <h2>Mon carnet de recettes</h2>
-        </div>
-        <Link className="text-link" href="/recettes">
+        <h2>Mon carnet de recettes</h2>
+        <Link className="text-link" href={'/recettes?week=' + w}>
           Tout voir <ArrowRight size={16} />
         </Link>
       </div>

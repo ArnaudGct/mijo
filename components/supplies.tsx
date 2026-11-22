@@ -1,9 +1,10 @@
 'use client';
+import Link from 'next/link';
 import { useState } from 'react';
 import { Plus, Download, WifiOff } from 'lucide-react';
 import { basket, needs, type Need } from '@/lib/shopping';
 import { categories, type State } from '@/lib/model';
-import { today, money } from '@/lib/dates';
+import { today, money, inWeek } from '@/lib/dates';
 import { Form, Field, Dialog, WeekNav, Empty, quantity, api, str, num, type UI } from './common';
 function download(name: string, txt: string) {
   const url = URL.createObjectURL(new Blob([txt], { type: 'text/plain;charset=utf-8' }));
@@ -330,13 +331,12 @@ export function Shopping({ ui }: { ui: UI }) {
       ui.notify((e as Error).message);
     }
   }
+  const weeklyPreps = s.preps.filter((p) => inWeek(p.day, w));
+  const single = weeklyPreps.length === 1 ? weeklyPreps[0] : null;
   return (
     <>
       <header className="page-heading">
-        <div>
-          <span className="eyebrow">Panier hebdomadaire</span>
-          <h1>Mes courses</h1>
-        </div>
+        <h1>Mes courses</h1>
         <WeekNav ui={ui} />
       </header>
       <div className="toolbar wrap">
@@ -372,6 +372,14 @@ export function Shopping({ ui }: { ui: UI }) {
               <Plus size={16} /> Article
             </button>
           </div>
+          {single && (
+            <p className="list-origin">
+              {single.snapshot.title}{' '}
+              <span>
+                · {single.servings} portion{single.servings > 1 ? 's' : ''}
+              </span>
+            </p>
+          )}
           {categories.map((c) => {
             const group = rows.filter((r) => r.category === c);
             return (
@@ -390,12 +398,15 @@ export function Shopping({ ui }: { ui: UI }) {
                         <strong>{r.name}</strong>
                         <small>
                           {r.unknown
-                            ? 'Quantité à préciser'
+                            ? r.unit === 'selon le goût'
+                              ? 'Selon le goût'
+                              : 'Quantité à préciser'
                             : quantity(r.buy) + ' ' + r.unit + ' à acheter'}
-                          {r.stock > 0 ? ' · stock ' + quantity(r.stock) + ' ' + r.unit : ''} ·
-                          besoin {quantity(r.quantity)} {r.unit}
+                          {r.stock > 0 && ' · en stock ' + quantity(r.stock) + ' ' + r.unit}
                         </small>
-                        <small>{r.manual ? 'Article manuel' : r.recipes.join(' · ')}</small>
+                        {(r.manual || !single) && (
+                          <small>{r.manual ? 'Article manuel' : r.recipes.join(' · ')}</small>
+                        )}
                         {line(r)?.best && (
                           <small>
                             {line(r)!.best!.count} × {line(r)!.best!.p.product} ·{' '}
@@ -441,7 +452,7 @@ export function Shopping({ ui }: { ui: UI }) {
           })}
           {!rows.length && (
             <Empty title="La liste de courses est vide">
-              <a href={'/semaine?week=' + w}>Planifier une recette →</a>
+              <Link href={'/semaine?week=' + w}>Planifier une recette →</Link>
             </Empty>
           )}
           <div className="actions">
@@ -459,7 +470,11 @@ export function Shopping({ ui }: { ui: UI }) {
                         ' ' +
                         r.name +
                         ' · ' +
-                        (r.unknown ? 'À préciser' : quantity(r.buy) + ' ' + r.unit),
+                        (r.unknown
+                          ? r.unit === 'selon le goût'
+                            ? 'Selon le goût'
+                            : 'À préciser'
+                          : quantity(r.buy) + ' ' + r.unit),
                     )
                     .join('\n'),
                 )
@@ -647,6 +662,7 @@ export function Preferences({ ui }: { ui: UI }) {
       total: number;
       added: number;
       skipped: number;
+      withheld: number;
       incomplete: number;
       rows: { title: string; issues: string[] }[];
     } | null>(null);
@@ -655,10 +671,7 @@ export function Preferences({ ui }: { ui: UI }) {
   return (
     <>
       <header className="page-heading">
-        <div>
-          <span className="eyebrow">Carnet personnel</span>
-          <h1>Paramètres</h1>
-        </div>
+        <h1>Paramètres</h1>
       </header>
       <div className="panel">
         <Form
@@ -817,7 +830,7 @@ export function Preferences({ ui }: { ui: UI }) {
           <details open>
             <summary>
               {report.total} fiches · {report.added} nouvelles · {report.skipped} existantes ·{' '}
-              {report.incomplete} incomplètes
+              {report.withheld} écartées
             </summary>
             {report.rows.map((r, i) => (
               <small key={i}>

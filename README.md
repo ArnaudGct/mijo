@@ -44,7 +44,7 @@ Le fichier de développement rend PostgreSQL accessible à Node sur `127.0.0.1:5
 
 ## Importer les recettes
 
-L’importeur Notion accepte trois entrées. Le mode par défaut prévisualise. Ajouter `--apply` pour écrire. Les identifiants de page servent de clés d’import. Un rejeu ignore les fiches existantes et respecte les corrections locales. Le résultat détaillé est écrit sous `data/private/import/`.
+L’importeur Notion accepte trois entrées. Le mode par défaut prévisualise. Ajouter `--apply` pour écrire. Les identifiants de page servent de clés d’import. Un rejeu ignore les fiches existantes et respecte les corrections locales. Les nouvelles fiches doivent fournir ingrédients, étapes et portions pour entrer dans le carnet. Le rapport sous `data/private/import/` indique les fiches écartées.
 
 ```sh
 npm run import:notion -- data/private/import/notion.json
@@ -53,13 +53,26 @@ npm run import:notion -- /chemin/export-notion.zip
 npm run import:notion -- /chemin/export-notion.zip --apply
 ```
 
-Les deux premières commandes exploitent la copie privée de la source de données **5d63f744-aa67-822c-8ab1-8761427eeca5** déjà récupérée avec le connecteur Notion. Le JSON a une liste `pages` dont chaque objet contient `id`, `title`, `content` Markdown et, si disponibles, `url`, `cover`, `rating` et `truncated`. Pour interroger directement l’API, configurer `NOTION_TOKEN` dans l’environnement du script et omettre le chemin. Le script pagine la collection et les blocs enfants. Il ne modifie jamais la source. Les erreurs par page sont inscrites dans le rapport. `--enrich` tente uniquement les liens HelloFresh originaux présents dans les fiches incomplètes. Les quantités récupérées d’une autre source doivent avoir une base de portions cohérente.
+Les deux premières commandes exploitent la copie privée de la source de données **5d63f744-aa67-822c-8ab1-8761427eeca5** déjà récupérée avec le connecteur Notion. Le JSON a une liste `pages` dont chaque objet contient `id`, `title`, `content` Markdown et, si disponibles, `url`, `cover`, `rating` et `truncated`. Pour interroger directement l’API, configurer `NOTION_TOKEN` dans l’environnement du script et omettre le chemin. Le script pagine la collection et les blocs enfants. Il ne modifie jamais la source. Les erreurs par page sont inscrites dans le rapport. Lorsqu’une nouvelle fiche est incomplète, l’import vérifie les correspondances déjà établies, puis la page officielle identifiable par son lien ou ses illustrations. Le carnet reste autonome après cette opération.
 
-L’interface Paramètres permet aussi la prévisualisation d’une archive Markdown/CSV et l’import de ses sous-pages. Les fichiers importés sont bornés en nombre et en taille. Les photos référencées dans l’archive sont converties en WebP dans le volume média. Pour les URL de recettes, la lecture vérifie les adresses réseau, chaque redirection, les règles robots, la taille et le délai. Les données JSON-LD Recipe passent par un formulaire de correction. Une page indisponible donne accès à la saisie manuelle. Les textes et photos tiers conservent leur provenance et leurs droits.
+L’interface Paramètres permet aussi la prévisualisation d’une archive Markdown/CSV et l’import de ses sous-pages. Les fichiers importés sont bornés en nombre et en taille. Les photos référencées dans l’archive sont converties en WebP dans le volume média. Pour les URL de recettes, la lecture vérifie les adresses réseau, chaque redirection, les règles robots, la taille et le délai. Les données JSON-LD Recipe passent par un formulaire de correction. Le formulaire indique quand une source incomplète empêche l’ajout. La saisie personnelle reste disponible dans Recettes. Les textes et photos tiers conservent leur provenance et leurs droits.
 
-## Sources externes vérifiées le 22 novembre 2026
+### Comparer la bibliothèque existante à HelloFresh
 
-L’essai `node --import tsx scripts/check-sources.ts` a lu un exemple public par éditeur. Les nombres ci-dessous décrivent le document structuré de ces exemples. Les unités d’origine et les données manquantes restent à vérifier lors de l’import.
+Le rapprochement du 22 novembre couvre 149 fiches. Pour renouveler cette comparaison à partir d’un export Notion, exécuter les commandes depuis le projet local.
+
+```sh
+python3 scripts/find-hellofresh.py data/private/import/notion.json
+node --import tsx scripts/reconcile-hellofresh.ts
+./scripts/backup-local.sh
+node --import tsx scripts/reconcile-hellofresh.ts --apply
+```
+
+Le premier script conserve les sources publiques consultées et les preuves de correspondance dans `data/private/reconciliation/`. Les URL retrouvées manuellement peuvent être indiquées par titre dans `candidats.json` dans ce dossier. La simulation montre les changements prévus. L’application de la réparation conserve les originaux Notion, les versions antérieures et les modifications personnelles. Elle actualise les préparations à venir encore intactes lorsqu’elles contiennent une fiche incomplète.
+
+## Premiers essais des sources externes, le 22 novembre 2026
+
+L’essai `node --import tsx scripts/check-sources.ts` a lu un exemple public par éditeur. Les nombres ci-dessous décrivent les documents JSON-LD du premier essai. L’extracteur HelloFresh utilise désormais le tableau des quantités par portion et les étapes illustrées de l’éditeur. Les unités d’origine et les données manquantes restent à vérifier lors de l’import.
 
 | Source | Ingrédients | Instructions extraites | Portions |
 |---|---:|---:|---:|

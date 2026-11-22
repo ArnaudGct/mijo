@@ -20,6 +20,7 @@ export const photo = z
   .default('');
 export const ingredient = z.object({
   name: label,
+  sourceId: z.string().max(100).optional(),
   raw: text.default(''),
   quantity: qty.nullable(),
   unit: z.string().trim().max(70),
@@ -169,7 +170,7 @@ export function problems(r: Recipe) {
     !r.base ? 'Portions de référence inconnues' : '',
     !r.ingredients.length ? 'Ingrédients manquants' : '',
     !r.steps.length ? 'Étapes manquantes' : '',
-    r.ingredients.some((i) => i.quantity === null || !i.unit)
+    r.ingredients.some((i) => (i.quantity === null && i.unit !== 'selon le goût') || !i.unit)
       ? 'Quantités ou unités à vérifier'
       : '',
   ].filter(Boolean);

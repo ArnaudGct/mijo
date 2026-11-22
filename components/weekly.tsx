@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { Plus, ChefHat, ArrowUp, ArrowDown, Timer, Check } from 'lucide-react';
+import { Plus, ArrowUp, ArrowDown, Timer, Check } from 'lucide-react';
 import { monday, addDays, labelDate, inWeek } from '@/lib/dates';
 import { duration, type State, type Prep } from '@/lib/model';
 import { sessionTasks, storageAlert, suggest, commonMeasures } from '@/lib/planner';
@@ -56,7 +56,7 @@ function PrepForm({ ui, p }: { ui: UI; p: Prep }) {
         </Field>
         <Field label="Session de batch cooking">
           <select name="session" defaultValue={p.session ?? ''}>
-            <option value="">Cuisine classique</option>
+            <option value="">Planning des repas</option>
             {ui.s.sessions.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.name} · {labelDate(s.day)}
@@ -187,9 +187,13 @@ function MealForm({
   );
 }
 function BatchForm({ ui, group }: { ui: UI; group?: State['sessions'][number] }) {
+  const [count, setCount] = useState(
+    group ? ui.s.preps.filter((p) => p.session === group.id).length : 0,
+  );
   return (
     <Dialog title={group ? 'Modifier la session' : 'Nouvelle session de cuisine'} close={ui.close}>
       <Form
+        disabled={!count}
         onSave={async (f) => {
           const key = group?.id ?? crypto.randomUUID();
           if (
@@ -212,12 +216,13 @@ function BatchForm({ ui, group }: { ui: UI; group?: State['sessions'][number] })
         </Field>
         <h3>Préparations à regrouper</h3>
         {ui.s.preps
-          .filter((p) => p.session === group?.id || (!p.session && inWeek(p.day, ui.w)))
+          .filter((p) => p.session === group?.id || (!p.session && !p.done && inWeek(p.day, ui.w)))
           .map((p) => (
             <label key={p.id}>
               <input
                 type="checkbox"
                 name="prep"
+                onChange={(e) => setCount(count + (e.target.checked ? 1 : -1))}
                 value={p.id}
                 defaultChecked={!!group && p.session === group.id}
               />{' '}
@@ -228,38 +233,78 @@ function BatchForm({ ui, group }: { ui: UI; group?: State['sessions'][number] })
     </Dialog>
   );
 }
+function DinnerIdeas({ ui }: { ui: UI }) {
+  const [ideas] = useState(() => suggest(ui.s, ui.w));
+  const targetReached = ui.s.preps.filter((p) => inWeek(p.day, ui.w)).length >= ui.s.prefs.target;
+  return (
+    <Dialog title="Dîners proposés" close={ui.close}>
+      {ideas.length ? (
+        <div className="idea-list">
+          {ideas.map((idea) => {
+            const r = ui.s.recipes.find((r) => r.id === idea.id)!;
+            return (
+              <button
+                className="picker-choice"
+                key={idea.id}
+                onClick={() => ui.open(<PlanForm ui={ui} day={idea.day} id={idea.id} />)}
+              >
+                <Photo src={r.data.image} />
+                <span>
+                  <small>
+                    {labelDate(idea.day, { weekday: 'long', day: 'numeric', month: 'long' })}
+                  </small>
+                  <strong>{r.data.title}</strong>
+                  <small>{idea.why}</small>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      ) : (
+        <p role="status">
+          {targetReached
+            ? 'Votre objectif de préparations est atteint pour cette semaine.'
+            : 'Aucun dîner disponible avec ces préférences. Vous pouvez choisir un plat et son créneau dans le planning.'}
+        </p>
+      )}
+    </Dialog>
+  );
+}
 export function Planner({ ui }: { ui: UI }) {
-  const [batch, setBatch] = useState(false),
-    [ideas, setIdeas] = useState<ReturnType<typeof suggest> | null>(null);
+  const [batch, setBatch] = useState(false);
   const { s, w } = ui;
   const preps = s.preps.filter((p) => inWeek(p.day, w));
   return (
     <>
       <header className="page-heading">
-        <div>
-          <span className="eyebrow">Calendrier des repas</span>
-          <h1>Ma semaine</h1>
-        </div>
+        <h1>Ma semaine</h1>
         <WeekNav ui={ui} />
       </header>
       <div className="toolbar wrap">
         <div className="tabs">
           <button className={!batch ? 'selected' : ''} onClick={() => setBatch(false)}>
-            Cuisine classique
+            Planning des repas
           </button>
           <button className={batch ? 'selected' : ''} onClick={() => setBatch(true)}>
             Batch cooking
           </button>
         </div>
-        <button className="primary" onClick={() => ui.open(<PlanForm ui={ui} />)}>
-          <Plus size={16} /> Planifier
-        </button>
+        <div className="actions">
+          <button onClick={() => ui.open(<DinnerIdeas ui={ui} />)}>Proposer des dîners</button>
+          <button className="primary" onClick={() => ui.open(<PlanForm ui={ui} />)}>
+            <Plus size={16} /> Planifier
+          </button>
+        </div>
       </div>
       {batch && (
         <section className="panel">
           <div className="split">
             <h2>Sessions de cuisine</h2>
-            <button onClick={() => ui.open(<BatchForm ui={ui} />)}>+ Session</button>
+            {preps.some((p) => !p.session && !p.done) && (
+              <button onClick={() => ui.open(<BatchForm ui={ui} />)}>
+                Regrouper des préparations
+              </button>
+            )}
           </div>
           {s.sessions
             .filter((g) => inWeek(g.day, w))
@@ -268,10 +313,14 @@ export function Planner({ ui }: { ui: UI }) {
                 <button onClick={() => ui.open(<BatchForm group={g} ui={ui} />)}>
                   {g.name} · {labelDate(g.day)}
                 </button>
-                <a href={'/cuisiner?week=' + w + '&session=' + g.id}>Cuisiner →</a>
+                <Link href={'/cuisiner?week=' + w + '&session=' + g.id}>Cuisiner →</Link>
               </div>
             ))}
-          <small>Réunissez les préparations de plusieurs repas à une date commune.</small>
+          <p>
+            {preps.length
+              ? 'Regroupez les plats à cuisiner le même jour. Les déjeuners et dîners gardent leurs dates.'
+              : 'Planifiez d’abord les plats de la semaine. Vous pourrez ensuite les préparer ensemble.'}
+          </p>
         </section>
       )}
       <div className="calendar">
@@ -325,7 +374,6 @@ export function Planner({ ui }: { ui: UI }) {
       </div>
       <div className="section-heading">
         <h2>Préparations de la semaine</h2>
-        <button onClick={() => setIdeas(suggest(s, w))}>Suggestions</button>
       </div>
       {preps.map((p) => {
         const used = s.meals
@@ -336,39 +384,25 @@ export function Planner({ ui }: { ui: UI }) {
             <div>
               <strong>{p.snapshot.title}</strong>
               <small>
-                {labelDate(p.day)} · {p.servings} prévues · {p.done ? p.servings : 0} préparées ·{' '}
-                {used} consommées · {p.done ? p.servings - used : 0} restantes
+                {labelDate(p.day)} ·{' '}
+                {p.done
+                  ? p.servings - used + ' portions restantes'
+                  : p.servings + ' portions à préparer'}
               </small>
             </div>
-            <button onClick={() => ui.open(<PrepForm ui={ui} p={p} />)}>Ajuster</button>
+            <div className="actions">
+              <Link className="button" href={'/cuisiner?week=' + w + '&session=' + p.id}>
+                Cuisiner
+              </Link>
+              <button onClick={() => ui.open(<PrepForm ui={ui} p={p} />)}>Ajuster</button>
+            </div>
           </div>
         );
       })}
       {!preps.length && (
         <Empty title="Aucune préparation planifiée">
-          <Link href="/recettes">Choisir dans le carnet →</Link>
+          <Link href={'/recettes?week=' + w}>Choisir dans le carnet →</Link>
         </Empty>
-      )}
-      {ideas && (
-        <div className="panel">
-          <h3>Propositions modifiables</h3>
-          {!ideas.length && (
-            <p>
-              Aucun créneau libre avec une recette adaptée et des portions de référence connues.
-            </p>
-          )}
-          {ideas.map((v) => (
-            <div className="row" key={v.id}>
-              <div>
-                {labelDate(v.day)} · {s.recipes.find((r) => r.id === v.id)?.data.title}
-                <small>{v.why}</small>
-              </div>
-              <button onClick={() => ui.open(<PlanForm ui={ui} day={v.day} id={v.id} />)}>
-                Choisir
-              </button>
-            </div>
-          ))}
-        </div>
       )}
       <button
         className="more"
@@ -472,7 +506,9 @@ export function Cooking({ ui, initialSession }: { ui: UI; initialSession: string
   }, [awake]);
   const preps = ui.s.preps.filter((p) => inWeek(p.day, ui.w)),
     groups = ui.s.sessions.filter((g) => inWeek(g.day, ui.w));
-  const key = selected || groups[0]?.id || preps[0]?.id;
+  const key = [...preps, ...groups].some((x) => x.id === selected)
+    ? selected
+    : groups[0]?.id || preps.find((p) => !p.done)?.id || preps[0]?.id;
   const group = groups.find((g) => g.id === key),
     chosen = group ? preps.filter((p) => p.session === key) : preps.filter((p) => p.id === key);
   const tasks = group
@@ -490,63 +526,74 @@ export function Cooking({ ui, initialSession }: { ui: UI; initialSession: string
   return (
     <>
       <header className="page-heading">
-        <div>
-          <span className="eyebrow">Préparation guidée</span>
-          <h1>En cuisine</h1>
-        </div>
+        <h1>En cuisine</h1>
         <WeekNav ui={ui} />
       </header>
       {!preps.length && !groups.length ? (
         <Empty title="Aucune préparation cette semaine">
-          <a href={'/semaine?week=' + ui.w}>Planifier un repas →</a>
+          <Link href={'/semaine?week=' + ui.w}>Planifier un repas →</Link>
         </Empty>
       ) : (
         <>
-          <div className="toolbar">
-            <Field label="Préparation ou session">
-              <select value={key} onChange={(e) => setSelected(e.target.value)}>
-                {groups.map((g) => (
-                  <option key={g.id} value={g.id}>
-                    Session · {g.name}
-                  </option>
-                ))}
-                {preps.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.snapshot.title} · {labelDate(p.day)}
-                  </option>
-                ))}
-              </select>
-            </Field>
-          </div>
-          <div className="panel">
-            <div className="split">
+          {preps.length + groups.length > 1 && (
+            <div className="toolbar">
+              <Field label="Préparation ou session">
+                <select value={key} onChange={(e) => setSelected(e.target.value)}>
+                  {groups.map((g) => (
+                    <option key={g.id} value={g.id}>
+                      Session · {g.name}
+                    </option>
+                  ))}
+                  {preps.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.snapshot.title} · {labelDate(p.day)}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            </div>
+          )}
+          <div className="panel cook-sheet">
+            <div className="cook-title">
+              {!group && chosen[0]?.snapshot.image && <Photo src={chosen[0].snapshot.image} />}
               <h2>{group?.name ?? chosen[0]?.snapshot.title}</h2>
-              <ChefHat />
             </div>
             {chosen.map((p) => (
               <div key={p.id}>
                 <h3>
-                  {p.snapshot.title} · {p.servings} portions
+                  {group ? p.snapshot.title + ' · ' : 'Ingrédients pour '}
+                  {p.servings} portions
                 </h3>
-                <p>{p.snapshot.equipment.join(' · ') || 'Équipements à préciser'}</p>
                 {!p.snapshot.base && (
                   <p className="notice">
                     Confirmez les portions de référence pour adapter les quantités.
                   </p>
                 )}
-                <div className="tags">
+                <dl className="cooking-ingredients">
                   {p.snapshot.ingredients.map((i, k) => (
-                    <span key={k}>
-                      {i.name} ·{' '}
-                      {quantity(
-                        p.snapshot.base && i.quantity
-                          ? rounded((i.quantity * p.servings) / p.snapshot.base)
-                          : null,
-                      )}{' '}
-                      {i.unit}
-                    </span>
+                    <div key={k}>
+                      <dt>{i.name}</dt>
+                      <dd>
+                        {i.unit === 'selon le goût'
+                          ? 'Selon le goût'
+                          : [
+                              quantity(
+                                p.snapshot.base && i.quantity
+                                  ? rounded((i.quantity * p.servings) / p.snapshot.base)
+                                  : null,
+                              ),
+                              i.unit,
+                            ].join(' ')}
+                      </dd>
+                    </div>
                   ))}
-                </div>
+                </dl>
+                {p.snapshot.equipment.length > 0 && (
+                  <details className="equipment">
+                    <summary>Ustensiles</summary>
+                    <p>{p.snapshot.equipment.join(', ')}</p>
+                  </details>
+                )}
               </div>
             ))}
             {group && (
@@ -593,55 +640,74 @@ export function Cooking({ ui, initialSession }: { ui: UI; initialSession: string
               </>
             )}
           </div>
-          <div className="section-heading">
-            <h2>
-              Étapes · {tasks.filter((t) => t.p.ticks.includes(t.n)).length}/{tasks.length}
-            </h2>
-            <label>
-              <input type="checkbox" checked={awake} onChange={(e) => setAwake(e.target.checked)} />{' '}
-              Garder l’écran allumé
-            </label>
-          </div>
-          <TimerBox />
-          {tasks.map((t, i) => (
-            <div key={t.key} className={'task ' + (t.p.ticks.includes(t.n) ? 'done' : '')}>
-              <input
-                type="checkbox"
-                aria-label={'Terminer étape ' + (t.n + 1)}
-                checked={t.p.ticks.includes(t.n)}
-                onChange={(e) =>
-                  ui.run({ action: 'tick', id: t.p.id, index: t.n, checked: e.target.checked })
-                }
-              />
-              <div>
-                <small>
-                  {group ? t.p.snapshot.title + ' · ' : ''}Étape {t.n + 1}
-                </small>
-                <p>{t.step.text}</p>
-                {t.step.image && <Photo src={t.step.image} className="step-photo" />}
+          {tasks.length > 0 ? (
+            <>
+              <div className="section-heading">
+                <h2>
+                  Étapes · {tasks.filter((t) => t.p.ticks.includes(t.n)).length}/{tasks.length}
+                </h2>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={awake}
+                    onChange={(e) => setAwake(e.target.checked)}
+                  />{' '}
+                  Garder l’écran allumé
+                </label>
               </div>
-              {group && (
-                <div>
-                  <button
-                    className="icon"
-                    aria-label="Monter la tâche"
-                    disabled={!i || tasks[i - 1].p.id === t.p.id}
-                    onClick={() => move(i, i - 1)}
-                  >
-                    <ArrowUp size={16} />
-                  </button>
-                  <button
-                    className="icon"
-                    aria-label="Descendre la tâche"
-                    disabled={i === tasks.length - 1 || tasks[i + 1].p.id === t.p.id}
-                    onClick={() => move(i, i + 1)}
-                  >
-                    <ArrowDown size={16} />
-                  </button>
+              <TimerBox />
+              {tasks.map((t, i) => (
+                <div key={t.key} className={'task ' + (t.p.ticks.includes(t.n) ? 'done' : '')}>
+                  <input
+                    type="checkbox"
+                    aria-label={'Terminer étape ' + (t.n + 1)}
+                    checked={t.p.ticks.includes(t.n)}
+                    onChange={(e) =>
+                      ui.run({ action: 'tick', id: t.p.id, index: t.n, checked: e.target.checked })
+                    }
+                  />
+                  <div>
+                    <small>
+                      {group ? t.p.snapshot.title + ' · ' : ''}Étape {t.n + 1}
+                    </small>
+                    <p>
+                      {t.step.text.replace(
+                        /^Veillez à bien respecter les quantités indiquées à gauche pour préparer votre recette\s*!\s*/i,
+                        '',
+                      ) || t.step.text}
+                    </p>
+                    {t.step.image && <Photo src={t.step.image} className="step-photo" />}
+                  </div>
+                  {group && (
+                    <div>
+                      <button
+                        className="icon"
+                        aria-label="Monter la tâche"
+                        disabled={!i || tasks[i - 1].p.id === t.p.id}
+                        onClick={() => move(i, i - 1)}
+                      >
+                        <ArrowUp size={16} />
+                      </button>
+                      <button
+                        className="icon"
+                        aria-label="Descendre la tâche"
+                        disabled={i === tasks.length - 1 || tasks[i + 1].p.id === t.p.id}
+                        onClick={() => move(i, i + 1)}
+                      >
+                        <ArrowDown size={16} />
+                      </button>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          ))}
+              ))}
+            </>
+          ) : (
+            <Empty title="Aucune étape disponible">
+              {group && !chosen.length
+                ? 'Ajoutez une préparation à cette session dans Ma semaine.'
+                : 'Cette ancienne préparation ne contient pas d’instructions.'}
+            </Empty>
+          )}
           <div className="panel">
             <h2>Conditionnement et conservation</h2>
             <p>

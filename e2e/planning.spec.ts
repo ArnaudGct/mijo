@@ -11,7 +11,10 @@ test('parcours privé sur ordinateur et liste emportée sur mobile', async ({
   await page.getByLabel('Mot de passe').fill(process.env.TABLE_TEST_PASSWORD!);
   await page.getByRole('button', { name: 'Ouvrir mon carnet' }).click();
   await expect(page.getByRole('heading', { name: 'Mon tableau de bord' })).toBeVisible();
+  const sidebar = await page.locator('aside').elementHandle();
   await page.getByRole('navigation').getByText('Recettes', { exact: true }).click();
+  await expect(page).toHaveURL(/recettes/);
+  expect(await sidebar!.evaluate((el) => el === document.querySelector('aside'))).toBe(true);
   await page.getByRole('button', { name: 'Ajouter', exact: true }).click();
   const dialog = page.getByRole('dialog');
   await dialog.getByLabel('Titre', { exact: true }).fill('Tarte aux poireaux E2E');
@@ -29,8 +32,17 @@ test('parcours privé sur ordinateur et liste emportée sur mobile', async ({
   await expect(dialog).toHaveCount(0);
   await page.goto('/semaine?week=2026-11-23');
   await expect(page.getByRole('button', { name: /Tarte aux poireaux E2E/ })).toHaveCount(2);
+  await page.getByRole('button', { name: 'Proposer des dîners' }).click();
+  await expect(dialog.getByRole('heading', { name: 'Dîners proposés' })).toBeVisible();
+  await expect(dialog.getByRole('status')).toContainText('Aucun dîner');
+  await dialog.getByRole('button', { name: 'Fermer' }).click();
+  await page.getByRole('button', { name: 'Planifier', exact: true }).click();
+  await dialog.getByLabel('Rechercher un plat ou un ingrédient').fill('poireaux');
+  await dialog.getByRole('button', { name: /Tarte aux poireaux/ }).click();
+  await expect(dialog.getByRole('button', { name: 'Ajouter au planning' })).toBeEnabled();
+  await dialog.getByRole('button', { name: 'Fermer' }).click();
   await page.getByRole('button', { name: 'Batch cooking', exact: true }).click();
-  await page.getByRole('button', { name: '+ Session', exact: true }).click();
+  await page.getByRole('button', { name: 'Regrouper des préparations', exact: true }).click();
   await dialog.getByLabel(/Tarte aux poireaux E2E/).check();
   await dialog.getByRole('button', { name: 'Enregistrer' }).click();
   await expect(dialog).toHaveCount(0);
@@ -102,8 +114,16 @@ test('import corrigé, édition, archives, restauration et suppression sur tél�
           cuisine: '',
           batch: false,
           equipment: [],
-          ingredients: [],
-          steps: [],
+          ingredients: [
+            {
+              name: 'Poireau',
+              raw: '1 poireau',
+              quantity: 1,
+              unit: 'pièce',
+              category: 'Fruits et légumes',
+            },
+          ],
+          steps: [{ text: 'Cuire le poireau.', image: '' }],
           nutrition: '',
           notes: '',
           rating: 0,

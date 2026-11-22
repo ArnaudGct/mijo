@@ -58,7 +58,7 @@ export const input = z.discriminatedUnion('action', [
     id,
     day: date,
     name: z.string().min(1).max(300),
-    preps: z.array(id).max(100),
+    preps: z.array(id).min(1).max(100),
   }),
   z.object({
     action: z.literal('plan'),
@@ -123,6 +123,11 @@ export async function execute(tx: Tx, s: State, c: z.output<typeof input>) {
   switch (c.action) {
     case 'recipe': {
       const r = c.id ? findRecipe(c.id) : undefined;
+      if (!r && c.data.url && !c.sourceKey?.startsWith('copy:'))
+        requireThat(
+          c.data.base && c.data.ingredients.length && c.data.steps.length,
+          'La source doit fournir les portions, les ingrédients et les étapes.',
+        );
       const key =
         r?.sourceKey ?? c.sourceKey ?? (c.data.url ? 'url:' + sourceUrl(c.data.url) : null);
       if (!r && key)
@@ -163,6 +168,10 @@ export async function execute(tx: Tx, s: State, c: z.output<typeof input>) {
           r.archived,
         );
       requireThat(!r.archived, 'Recette archivée.');
+      requireThat(
+        r.data.ingredients.length && r.data.steps.length,
+        'Cette recette a besoin de ses ingrédients et de ses étapes avant la planification.',
+      );
       const p = planned(r, c.day, c.servings);
       const meals = defaultMeals(p, c.leftovers, c.slot);
       meals.forEach(free);

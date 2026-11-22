@@ -213,3 +213,44 @@ test('pesée commune sans fusion des étapes et répartition par recette', async
   assert.equal(c[0].parts.length, 2);
   assert.equal(sessionTasks(s, id).length, 2);
 });
+
+test('HelloFresh relie les identifiants au bon rendement et garde une étape par consigne illustrée', () => {
+  const recipeId = '0123456789abcdef01234567';
+  const url = 'https://www.hellofresh.fr/recipes/poelee-' + recipeId;
+  const provider = {
+    recipeId,
+    websiteUrl: url,
+    name: 'Poêlée',
+    languageCode: 'fr-FR',
+    ingredients: [
+      { id: 'a', name: 'Champignons' },
+      { id: 's', name: 'Poivre et sel' },
+    ],
+    yields: [
+      { yields: 1, ingredients: [{ id: 'a', amount: 65, unit: 'g' }] },
+      {
+        yields: 2,
+        ingredients: [
+          { id: 's', amount: 0, unit: 'selon le goût' },
+          { id: 'a', amount: 125, unit: 'g' },
+        ],
+      },
+    ],
+    steps: [{ index: 1, instructionsHTML: '<ul><li>Émincer.</li><li>Faire revenir.</li></ul>' }],
+  };
+  const html =
+    '<script id="__NEXT_DATA__">' +
+    JSON.stringify({ props: { pageProps: { ssrPayload: { recipe: provider } } } }) +
+    '</script>';
+  const recipe = extract(html, url);
+  assert.equal(recipe.base, 2);
+  assert.deepEqual(
+    recipe.ingredients.map((i) => [i.name, i.sourceId, i.quantity, i.unit]),
+    [
+      ['Poivre et sel', 'hellofresh:s', null, 'selon le goût'],
+      ['Champignons', 'hellofresh:a', 125, 'g'],
+    ],
+  );
+  assert.deepEqual(recipe.steps, [{ text: 'Émincer.\nFaire revenir.', image: '' }]);
+  assert.throws(() => extract('<title>Fiche indisponible</title>', url));
+});

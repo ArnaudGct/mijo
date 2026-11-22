@@ -4,10 +4,9 @@ import { parseNotion, type Page } from '../lib/notion';
 import { archivePages } from '../lib/archive';
 import { importBatch } from '../lib/import-db';
 import { db } from '../lib/db';
-import { problems } from '../lib/model';
 import { setTimeout as delay } from 'node:timers/promises';
 import { storePhoto } from '../lib/media';
-import { previewUrl, notionPhotoBytes } from '../lib/web-import';
+import { notionPhotoBytes } from '../lib/web-import';
 if (existsSync('.env')) process.loadEnvFile('.env');
 const arg = process.argv.slice(2),
   path = arg.find((x) => !x.startsWith('--')),
@@ -116,19 +115,6 @@ try {
   const rows = path?.endsWith('.zip')
     ? await archivePages(await readFile(path), arg.includes('--apply'))
     : ((input?.pages ?? (await api())).map(parseNotion) as ReturnType<typeof parseNotion>[]);
-  for (const r of rows) {
-    if (r.issues.length && r.data.url && arg.includes('--enrich')) {
-      const v = await previewUrl(r.data.url);
-      if (!v.warning) {
-        if (!r.data.ingredients.length && !r.data.base) {
-          r.data.ingredients = v.data.ingredients;
-          r.data.base = v.data.base;
-        }
-        if (!r.data.steps.length) r.data.steps = v.data.steps;
-        r.issues = problems(r.data);
-      }
-    }
-  }
   const apply = arg.includes('--apply');
   const stats = await importBatch(rows, apply);
   await mkdir('data/private/import', { recursive: true });

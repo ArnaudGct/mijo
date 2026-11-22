@@ -35,6 +35,7 @@ export function suggest(s: State, w: string) {
       !r.archived &&
       r.data.base &&
       r.data.ingredients.length &&
+      r.data.steps.length &&
       (!s.prefs.diet || clean(r.data.diet).includes(clean(s.prefs.diet))),
   );
   for (let i = 0; i < 7; i++) {
@@ -86,11 +87,14 @@ export function suggest(s: State, w: string) {
           score,
           why:
             [
-              r.data.favorite ? 'favori' : '',
-              shared ? shared + ' ingrédient(s) commun(s)' : '',
               d ? d + ' min' : '',
+              r.data.favorite
+                ? 'Dans vos favoris'
+                : shared
+                  ? shared + (shared === 1 ? ' ingrédient en commun' : ' ingrédients en commun')
+                  : '',
               heavy ? 'capacité dépassée' : '',
-              !bag.complete ? 'prix incomplets' : '',
+              s.prefs.budget !== null && !bag.complete ? 'budget à confirmer' : '',
             ]
               .filter(Boolean)
               .join(' · ') || 'Variété de la semaine',
