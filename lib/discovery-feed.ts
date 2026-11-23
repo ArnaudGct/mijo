@@ -2,6 +2,7 @@ import { load } from 'cheerio';
 import { duration, type Recipe } from './model';
 import { getPage, extract } from './web-import';
 import { discoveryTitle, type Discovery } from './recipe-sources';
+import { discoveryCourse } from './discovery-course';
 
 const indexes = [
   {
@@ -45,9 +46,12 @@ export async function sampleSources(perSite: number, day: number) {
             const recipe = extract(page.html, page.url);
             if (!recipe.base || !recipe.ingredients.length || !recipe.steps.length || !recipe.image)
               continue;
+            const course = discoveryCourse(recipe.title, recipe.tags);
+            if (!course) continue;
             recipes.push({
               recipe,
               card: {
+                course,
                 title: discoveryTitle(recipe.title),
                 url: recipe.url,
                 image: recipe.image,
@@ -85,7 +89,7 @@ export async function discoveryFeed() {
       });
     await pending;
   }
-  return cached.map((r) => r.card);
+  return cached.map((r) => r.card).filter((card) => card.course === 'main');
 }
 export function cachedDiscovery(url: string) {
   return cached.find((row) => row.card.url === url)?.recipe;

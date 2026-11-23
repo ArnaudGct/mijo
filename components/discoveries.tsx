@@ -5,6 +5,7 @@ import { duration, type Recipe } from '@/lib/model';
 import { discoveryTitle, type Discovery } from '@/lib/recipe-sources';
 
 import { defaults, type DiscoveryFilters } from '@/lib/discovery-taste';
+import { courses, courseLabels } from '@/lib/discovery-course';
 import { useDiscoveries } from './use-discovery';
 import { EyeOff } from 'lucide-react';
 export function DiscoveryPreview({ ui, item }: { ui: UI; item: Discovery }) {
@@ -117,6 +118,18 @@ export function DiscoveryShelf({ ui }: { ui: UI }) {
   const feed = useDiscoveries(ui, filters);
   return (
     <>
+      <div className="tabs discovery-courses" role="group" aria-label="Type de recette">
+        {courses.map((course) => (
+          <button
+            key={course}
+            aria-pressed={filters.course === course}
+            className={filters.course === course ? 'selected' : ''}
+            onClick={() => setFilters((old) => ({ ...old, course }))}
+          >
+            {courseLabels[course]}
+          </button>
+        ))}
+      </div>
       <div className="discovery-filters">
         <label>
           Recette ou ingrédient

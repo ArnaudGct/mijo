@@ -2340,6 +2340,10 @@ html {
     margin-left: 0;
   }
 }
+.discovery-courses {
+  width: fit-content;
+  margin-bottom: 16px;
+}
 .discovery-filters {
   display: flex;
   gap: 12px;

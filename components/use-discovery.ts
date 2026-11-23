@@ -72,11 +72,13 @@ export function useDiscoveries(ui: UI, filters: DiscoveryFilters = defaults) {
   const loading = !error && (!current || (offset !== 0 && current.next === offset));
   const base = useMemo(() => {
     const terms = searchWords(filters.query);
-    return initial.filter(
-      (c) =>
-        (!filters.publisher || filters.publisher === c.publisher) &&
-        (!filters.minutes || (c.minutes !== null && c.minutes <= filters.minutes)) &&
-        terms.every((t) => searchWords(c.title).includes(t)),
+    return initial.flatMap((c) =>
+      c.course === filters.course &&
+      (!filters.publisher || filters.publisher === c.publisher) &&
+      (!filters.minutes || (c.minutes !== null && c.minutes <= filters.minutes)) &&
+      terms.every((t) => searchWords(c.title).includes(t))
+        ? [{ ...c, course: filters.course }]
+        : [],
     );
   }, [filters]);
   const cards = useMemo(() => {
@@ -90,7 +92,7 @@ export function useDiscoveries(ui: UI, filters: DiscoveryFilters = defaults) {
     for (const c of [...(current?.cards ?? []), ...(!current || error ? base : [])]) {
       const url = sourceUrl(c.url),
         title = fold(discoveryTitle(c.title));
-      if (urls.has(url) || titles.has(title)) continue;
+      if (c.course !== filters.course || urls.has(url) || titles.has(title)) continue;
       result.push(c);
       urls.add(url);
       titles.add(title);
@@ -102,7 +104,15 @@ export function useDiscoveries(ui: UI, filters: DiscoveryFilters = defaults) {
             a.title.localeCompare(b.title, 'fr'),
         )
       : result;
-  }, [ui.s.recipes, ui.s.prefs.dismissedDiscoveries, current, error, base, filters.order]);
+  }, [
+    ui.s.recipes,
+    ui.s.prefs.dismissedDiscoveries,
+    current,
+    error,
+    base,
+    filters.order,
+    filters.course,
+  ]);
   function more() {
     if (!loading && current?.next != null)
       setCursor({ key: signature, offset: current.next, attempt: 0 });

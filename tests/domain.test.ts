@@ -15,8 +15,44 @@ import { marketBasket, shipping } from '../lib/market';
 import { needs, basket } from '../lib/shopping';
 import { parseNotion } from '../lib/notion';
 import { publicAddress, publicUrl, extract } from '../lib/web-import';
+import { discoveryCourse } from '../lib/discovery-course';
+import { discoveryQuery } from '../lib/discovery-search';
 const day = '2026-11-16',
   id = () => crypto.randomUUID();
+
+test('les suggestions privilégient les plats et classent les intitulés ambigus avec la rubrique de la fiche', () => {
+  assert.equal(
+    discoveryQuery.parse({
+      query: '',
+      publisher: '',
+      minutes: 0,
+      order: 'explore',
+      taste: [],
+      offset: 0,
+    }).course,
+    'main',
+  );
+  assert.equal(discoveryCourse('Hachis parmentier', []), 'main');
+  assert.equal(discoveryCourse('Tarte aux pommes de terre'), 'main');
+  assert.equal(discoveryCourse('Sauté de porc au caramel'), 'main');
+  assert.equal(discoveryCourse('Riz au lait à la vanille', ['Riz']), 'dessert');
+  assert.equal(discoveryCourse('Biscuits au chocolat', ['Plat principal']), 'dessert');
+  assert.equal(discoveryCourse('Tarte aux pommes'), 'dessert');
+  assert.equal(discoveryCourse('Crêpes au caramel au beurre salé'), 'dessert');
+  assert.equal(discoveryCourse('Club sandwich aux rillettes de poulet', ['Sandwich']), 'main');
+  assert.equal(discoveryCourse('Tiramisu au saumon', ['Entrée']), 'starter');
+  assert.equal(discoveryCourse('Quiche au chèvre', ['Entrée']), 'starter');
+  assert.equal(discoveryCourse('Champignons farcis', ['Tapas']), 'starter');
+  assert.equal(discoveryCourse('Gratin dauphinois', ['Accompagnement légumes']), null);
+  assert.equal(discoveryCourse('Sauce pour poulet rôti'), null);
+  assert.equal(discoveryCourse('La spécialité de Camille'), null);
+  const html =
+    '<nav class="breadcrumb"><a>Accueil</a><a>Desserts</a></nav>' +
+    '<script type="application/ld+json">{"@type":"Recipe","name":"Douceur du jour","recipeCategory":"Crêpes"}</script>';
+  const fiche = extract(html, 'https://www.cuisineaz.com/recettes/douceur.aspx');
+  assert.deepEqual(fiche.tags, ['Desserts', 'Crêpes']);
+  assert.equal(discoveryCourse(fiche.title, fiche.tags), 'dessert');
+});
 function recipeRow(title: string, raw: string): RecipeRow {
   return {
     id: id(),

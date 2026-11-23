@@ -1,3 +1,5 @@
+import type { Course } from './discovery-course';
+
 export const importSites = [
   {
     name: 'HelloFresh France',
@@ -14,6 +16,7 @@ export const importSites = [
 ];
 
 export type Discovery = {
+  course: Course;
   title: string;
   url: string;
   image: string;

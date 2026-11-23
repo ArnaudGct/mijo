@@ -302,7 +302,7 @@ function Home({ ui }: { ui: UI }) {
       </header>
       <section
         className="hero"
-        aria-label="Recettes à découvrir"
+        aria-label="Plats à découvrir"
         aria-roledescription="carrousel"
         onMouseEnter={() => setInteracting(true)}
         onMouseLeave={() => setInteracting(false)}
@@ -412,7 +412,7 @@ function Home({ ui }: { ui: UI }) {
         <MealCalendar key={w} ui={ui} compact />
       </section>
       <div className="section-heading">
-        <h2>Suggestions de recettes</h2>
+        <h2>Idées de plats</h2>
         <Link className="text-link" href={'/recettes?week=' + w + '&onglet=suggestions'}>
           Tout voir <ArrowRight size={16} />
         </Link>

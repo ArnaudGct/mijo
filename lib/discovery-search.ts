@@ -4,6 +4,7 @@ import { today } from './dates';
 import { duration, type Recipe } from './model';
 import { extract, getPage } from './web-import';
 import { searchWords } from './discovery-taste';
+import { courses, discoveryCourse, type Course } from './discovery-course';
 import { discoveryTitle, type Discovery } from './recipe-sources';
 
 const publishers = [
@@ -13,7 +14,7 @@ const publishers = [
     index: '/recettes-plats/',
     shard: null,
     recipe: /^\/(.+)-r\d+\.htm$/,
-    listing: true,
+    listings: ['/recettes-entrees/', '/recettes-desserts/'],
   },
   {
     name: 'Marmiton',
@@ -38,6 +39,7 @@ const publishers = [
   },
 ];
 export const discoveryQuery = z.object({
+  course: z.enum(courses).default('main'),
   query: z.string().trim().max(100),
   publisher: z.enum(['', 'Marmiton', 'CuisineAZ', 'Jow', '750g']),
   minutes: z.number().int().min(0).max(300),
@@ -46,7 +48,7 @@ export const discoveryQuery = z.object({
   offset: z.number().int().nonnegative().max(300000),
   day: z.iso.date().default(today),
 });
-type Candidate = { url: string; publisher: string; tokens: string[] };
+type Candidate = { url: string; publisher: string; tokens: string[]; hint: Course | null };
 function locations(xml: string) {
   return Array.from(
     xml.matchAll(/<loc>\s*(?:<!\[CDATA\[)?(https:\/\/[^<>\s\]]+)(?:\]\]>)?\s*<\/loc>/gi),
@@ -73,12 +75,12 @@ async function loadCatalogs() {
               (link) =>
                 link.startsWith(site.origin + '/') && site.shard!.test(new URL(link).pathname),
             )
-          : [root];
+          : [root, ...(site.listings ?? []).map((path) => site.origin + path)];
         if (!pages.length) throw Error('Index vide');
         const rows: Candidate[] = [];
         for (const page of pages) {
           const xml = page === root ? index.html : (await getPage(page, 16_000_000)).html;
-          const $ = site.listing ? load(xml) : null;
+          const $ = site.listings ? load(xml) : null;
           const links = $
             ? $('a[href]')
                 .toArray()
@@ -87,7 +89,13 @@ async function loadCatalogs() {
           for (const url of links) {
             if (!url.startsWith(site.origin + '/')) continue;
             const slug = url.slice(site.origin.length).match(site.recipe)?.[1];
-            if (slug) rows.push({ url, publisher: site.name, tokens: searchWords(slug) });
+            if (slug)
+              rows.push({
+                url,
+                publisher: site.name,
+                tokens: searchWords(slug),
+                hint: discoveryCourse(slug),
+              });
           }
         }
         if (!rows.length) throw Error('Aucune recette publiée');
@@ -133,8 +141,10 @@ async function fetchCard(c: Candidate) {
     details.set(c.url, entry);
   }
   const r = entry.recipe;
-  return r
+  const course = r && discoveryCourse(r.title, r.tags);
+  return r && course
     ? {
+        course,
         url: r.url,
         title: discoveryTitle(r.title),
         minutes: duration(r),
@@ -158,13 +168,18 @@ export async function discoverPage(q: z.output<typeof discoveryQuery>) {
       const noise = hash(q.day + '|' + c.url);
       const fit =
         q.order === 'explore' ? 0 : c.tokens.reduce((n, t) => n + (profile.get(t) ?? 0), 0);
-      return { c, score: noise + Math.min(fit, 3) * 0.7, noise };
+      const priority = c.hint === q.course ? 2 : c.hint === null ? 1 : 0;
+      return { c, score: noise + Math.min(fit, 3) * 0.7, noise, priority };
     });
-  ranked.sort((a, b) => b.score - a.score || a.c.url.localeCompare(b.c.url));
+  ranked.sort(
+    (a, b) => b.priority - a.priority || b.score - a.score || a.c.url.localeCompare(b.c.url),
+  );
   // Every fifth place explores a different dish. The ordering stays stable across page requests.
   const outside =
     q.order === 'affinity'
-      ? ranked.filter((r) => r.noise < 0.2).sort((a, b) => a.noise - b.noise)
+      ? ranked
+          .filter((r) => r.noise < 0.2)
+          .sort((a, b) => b.priority - a.priority || a.noise - b.noise)
       : [];
   const regular = outside.length ? ranked.filter((r) => r.noise >= 0.2) : ranked;
   const ordered: Candidate[] = [];
@@ -182,7 +197,10 @@ export async function discoverPage(q: z.output<typeof discoveryQuery>) {
     cursor += group.length;
     const found = await Promise.all(group.map(fetchCard));
     for (const card of found)
-      if (card && (!q.minutes || (card.minutes !== null && card.minutes <= q.minutes)))
+      if (
+        card?.course === q.course &&
+        (!q.minutes || (card.minutes !== null && card.minutes <= q.minutes))
+      )
         cards.push(card);
   }
   return { cards, next: cursor < ordered.length ? cursor : null, total: ranked.length };

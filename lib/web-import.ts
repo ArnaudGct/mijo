@@ -188,6 +188,15 @@ export function extract(html: string, url: string) {
   }
   const o = found ?? {},
     n = obj(o.nutrition);
+  // Some publishers store the course in the breadcrumb and only a dish family in recipeCategory.
+  const course = $('[itemtype$="BreadcrumbList"] [itemprop="name"], [class*="readcrumb"] a')
+    .toArray()
+    .map((el) => $(el).text().trim())
+    .find((label) =>
+      /^(entrées?|plats?(?: principaux| principal)?|desserts?|apéritifs?|accompagnements?|boissons?)$/i.test(
+        label,
+      ),
+    );
   const servings = String(list(o.recipeYield)[0] ?? '')
     .trim()
     .match(/^(?:pour\s+)?(\d{1,2})(?:\s*(?:personnes?|portions?|servings?))?$/i);
@@ -207,7 +216,10 @@ export function extract(html: string, url: string) {
     prep: minutes(o.prepTime),
     cook: minutes(o.cookTime),
     total: minutes(o.totalTime),
-    tags: list(o.recipeCategory).map(String).slice(0, 40),
+    tags: [...new Set([...(course ? [course] : []), ...list(o.recipeCategory).map(String)])].slice(
+      0,
+      40,
+    ),
     cuisine: list(o.recipeCuisine).join(', '),
     ingredients: list(o.recipeIngredient).map(plain).filter(Boolean).map(parseLine),
     steps: steps(o.recipeInstructions, url),

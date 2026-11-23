@@ -1,4 +1,5 @@
 import { fold } from './grocery-names';
+import type { Course } from './discovery-course';
 import type { State } from './model';
 const common = new Set(
   'avec pour dans une les des aux son ses sur chez style sauce recette facile rapide maison facon frais fraiche petit petite poudre tranche gousse piece selon gout huile olive poivre beurre sachet cuisine blanc blanche noir verte rouges soupe cuillere bouillon eau sel sucre morceaux accompagnement melange fait rape minutes plat nouvelle vegetarien viande poisson'.split(
@@ -36,12 +37,14 @@ export function tastes(s: State) {
     .map(([term]) => term);
 }
 export type DiscoveryFilters = {
+  course: Course;
   query: string;
   publisher: string;
   minutes: number;
   order: 'affinity' | 'explore' | 'quick';
 };
 export const defaults: DiscoveryFilters = {
+  course: 'main',
   query: '',
   publisher: '',
   minutes: 0,
