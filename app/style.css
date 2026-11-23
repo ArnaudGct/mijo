@@ -2340,3 +2340,40 @@ html {
     margin-left: 0;
   }
 }
+.discovery-filters {
+  display: flex;
+  gap: 12px;
+  align-items: end;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.discovery-filters label {
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+}
+.discovery-filters label:first-child {
+  flex: 1;
+  min-width: 190px;
+}
+.discovery-more,
+.discovery-skip {
+  margin-block: 12px;
+}
+.confirm-meals p {
+  padding-block: 8px;
+  border-bottom: 1px solid var(--line);
+}
+@media (max-width: 650px) {
+  .discovery-filters {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .discovery-filters label:first-child {
+    min-width: 0;
+    grid-column: 1/-1;
+  }
+  .discovery-filters select {
+    width: 100%;
+  }
+}

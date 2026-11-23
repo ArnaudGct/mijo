@@ -21,6 +21,7 @@ import {
   categories,
   type Recipe,
   type RecipeRow,
+  type State,
 } from '@/lib/model';
 import { sourceUrl } from '@/lib/source-url';
 import { clean, amount } from '@/lib/ingredients';
@@ -89,27 +90,23 @@ export function RecipeCard({ row, ui }: { row: RecipeRow; ui: UI }) {
     </article>
   );
 }
-export function PlanForm({
+export function RecipePicker({
   ui,
-  id,
-  day,
-  slot = 'soir',
+  selected,
+  setSelected,
+  current,
 }: {
   ui: UI;
-  id?: string;
-  day?: string;
-  slot?: 'soir' | 'midi';
+  selected: string;
+  setSelected: (id: string) => void;
+  current?: RecipeRow;
 }) {
   const active = ui.s.recipes
-    .filter((r) => !r.archived && r.data.ingredients.length && r.data.steps.length)
+    .filter(
+      (r) =>
+        r.id === current?.id || (!r.archived && r.data.ingredients.length && r.data.steps.length),
+    )
     .sort((a, b) => a.data.title.localeCompare(b.data.title));
-  const [planDay, setPlanDay] = useState(day ?? (inWeek(today(), ui.w) ? today() : ui.w));
-  const [planSlot, setPlanSlot] = useState(slot);
-  const occupied = ui.s.meals.find((m) => m.day === planDay && m.slot === planSlot);
-  const nextLunch = ui.s.meals.find(
-    (m) => m.day === addDays(planDay || ui.w, 1) && m.slot === 'midi',
-  );
-  const [selected, setSelected] = useState(id ?? '');
   const [query, setQuery] = useState(''),
     [limit, setLimit] = useState(12);
   const fold = (v: string) => clean(v).normalize('NFD').replace(/\p{M}/gu, '');
@@ -120,158 +117,225 @@ export function PlanForm({
   );
   const row = active.find((r) => r.id === selected);
   return (
-    <Dialog title="Planifier une préparation" close={ui.close}>
-      <Form
-        button="Ajouter au planning"
-        disabled={!row || occupied?.consumed}
-        onSave={async (f) => {
-          if (
-            await ui.run(
-              {
-                action: 'plan',
-                id: str(f, 'recipe'),
-                day: str(f, 'day'),
-                servings: Number(f.get('servings')),
-                leftovers: f.has('leftovers'),
-                replaceMeal: f.has('replace') ? occupied?.id : undefined,
-                confirmedBase: num(f, 'confirmedBase') ?? undefined,
-                slot: str(f, 'slot') as typeof slot,
-              },
-              'Repas planifié pour le ' + labelDate(str(f, 'day')),
-            )
-          ) {
-            ui.setW(monday(str(f, 'day')));
-            ui.close();
-          }
-        }}
-      >
-        <input name="recipe" type="hidden" value={selected} />
-        {row ? (
-          <div className="picker-selected">
-            <Photo src={row.data.image} />
-            <div>
-              <strong>{row.data.title}</strong>
-              {duration(row.data) !== null && <small>{duration(row.data)} min</small>}
-            </div>
-            <button type="button" onClick={() => setSelected('')}>
-              Changer
+    <>
+      <input name="recipe" type="hidden" value={selected} />
+      {row ? (
+        <div className="picker-selected">
+          <Photo src={row.data.image} />
+          <div>
+            <strong>{row.data.title}</strong>
+            {duration(row.data) !== null && <small>{duration(row.data)} min</small>}
+          </div>
+          <button type="button" onClick={() => setSelected('')}>
+            Changer
+          </button>
+        </div>
+      ) : (
+        <section className="picker" aria-label="Choix de la recette">
+          <Field label="Rechercher un plat ou un ingrédient">
+            <input
+              autoFocus
+              type="search"
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setLimit(12);
+              }}
+            />
+          </Field>
+          <div className="picker-results">
+            {choices.slice(0, limit).map((r) => (
+              <button
+                type="button"
+                className="picker-choice"
+                key={r.id}
+                onClick={() => setSelected(r.id)}
+              >
+                <Photo src={r.data.image} />
+                <span>
+                  <strong>{r.data.title}</strong>
+                  {duration(r.data) !== null && <small>{duration(r.data)} min</small>}
+                </span>
+              </button>
+            ))}
+            {choices.length > limit && (
+              <button type="button" onClick={() => setLimit(limit + 12)}>
+                Afficher davantage
+              </button>
+            )}
+          </div>
+          {!choices.length && (
+            <p role="status">
+              {active.length
+                ? 'Aucun plat ne correspond à la recherche.'
+                : 'Ajoutez une recette avec ses ingrédients et ses étapes pour planifier un repas.'}
+            </p>
+          )}
+        </section>
+      )}
+    </>
+  );
+}
+export function PlanForm({
+  ui,
+  id,
+  day,
+  slot = 'soir',
+  editing,
+  alternative,
+}: {
+  ui: UI;
+  id?: string;
+  day?: string;
+  slot?: 'soir' | 'midi';
+  editing?: State['meals'][number];
+  alternative?: React.ReactNode;
+}) {
+  const [planDay, setPlanDay] = useState(day ?? (inWeek(today(), ui.w) ? today() : ui.w));
+  const [planSlot, setPlanSlot] = useState(slot);
+  const occupied = ui.s.meals.find((m) => m.day === planDay && m.slot === planSlot);
+  const nextLunch = ui.s.meals.find(
+    (m) => m.day === addDays(planDay || ui.w, 1) && m.slot === 'midi',
+  );
+  const [selected, setSelected] = useState(id ?? '');
+  const row = ui.s.recipes.find((r) => r.id === selected);
+  const [servings, setServings] = useState(String(ui.s.prefs.portions));
+  const [pending, setPending] = useState<Extract<
+    import('@/lib/commands').Command,
+    { action: 'plan' }
+  > | null>(null);
+  const duo = planSlot === 'soir' && Number(servings) > 1;
+  const conflicts = [occupied, duo ? nextLunch : undefined].filter((m) => !!m);
+  const locked = conflicts.some((m) => m.consumed);
+  async function save(cmd: NonNullable<typeof pending>) {
+    if (await ui.run(cmd, 'Repas planifiés.')) {
+      ui.setW(monday(cmd.day));
+      ui.close();
+    } else setPending(null);
+  }
+  return (
+    <Dialog
+      title={
+        pending
+          ? 'Remplacer les repas prévus ?'
+          : editing
+            ? 'Modifier le repas'
+            : 'Planifier une préparation'
+      }
+      close={() => (pending ? setPending(null) : ui.close())}
+    >
+      {pending && (
+        <div className="confirm-meals">
+          {conflicts.map((m) => (
+            <p key={m.id}>
+              <strong>
+                {labelDate(m.day)} · {m.slot === 'midi' ? 'Déjeuner' : 'Dîner'}
+              </strong>
+              <br />
+              {ui.s.preps.find((p) => p.id === m.prepId)?.snapshot.title ??
+                'Repas à l’extérieur'} → {row?.data.title}
+            </p>
+          ))}
+          <div className="actions">
+            <button autoFocus onClick={() => setPending(null)}>
+              Annuler
+            </button>
+            <button className="primary" onClick={() => save(pending)}>
+              Oui, remplacer
             </button>
           </div>
-        ) : (
-          <section className="picker" aria-label="Choix de la recette">
-            <Field label="Rechercher un plat ou un ingrédient">
+        </div>
+      )}
+      <div hidden={!!pending}>
+        {editing && (
+          <p>
+            {labelDate(editing.day)} · {editing.slot === 'soir' ? 'Dîner' : 'Déjeuner'} ·{' '}
+            {ui.s.preps.find((p) => p.id === editing.prepId)?.snapshot.title ??
+              'Repas à l’extérieur'}
+          </p>
+        )}
+        <Form
+          button="Ajouter au planning"
+          disabled={!row || locked}
+          onSave={async (f) => {
+            const cmd: NonNullable<typeof pending> = {
+              action: 'plan',
+              id: selected,
+              day: planDay,
+              slot: planSlot,
+              servings: Number(servings),
+              leftovers: duo,
+              replaceMeal: occupied?.id,
+              previewRevision: conflicts.length ? ui.s.revision : undefined,
+              replaceLunch: duo ? nextLunch?.id : undefined,
+              confirmedBase: num(f, 'confirmedBase') ?? undefined,
+            };
+            if (conflicts.length) setPending(cmd);
+            else await save(cmd);
+          }}
+        >
+          <RecipePicker ui={ui} selected={selected} setSelected={setSelected} />
+          {row && row.data.base === null && (
+            <div className="notice">
+              <Field label="Portions correspondant aux quantités de la fiche">
+                <input
+                  key={selected}
+                  name="confirmedBase"
+                  type="number"
+                  min="1"
+                  max="100"
+                  placeholder="À confirmer si connues"
+                />
+              </Field>
+              <small>
+                Cette valeur sert à calculer les courses. Sans elle, les quantités restent à
+                préciser.
+              </small>
+            </div>
+          )}
+          <div className="columns">
+            <Field label="Jour">
               <input
-                autoFocus
-                type="search"
-                value={query}
-                onChange={(e) => {
-                  setQuery(e.target.value);
-                  setLimit(12);
-                }}
+                name="day"
+                type="date"
+                required
+                disabled={!!editing}
+                value={planDay}
+                onChange={(e) => setPlanDay(e.target.value)}
               />
             </Field>
-            <div className="picker-results">
-              {choices.slice(0, limit).map((r) => (
-                <button
-                  type="button"
-                  className="picker-choice"
-                  key={r.id}
-                  onClick={() => setSelected(r.id)}
-                >
-                  <Photo src={r.data.image} />
-                  <span>
-                    <strong>{r.data.title}</strong>
-                    {duration(r.data) !== null && <small>{duration(r.data)} min</small>}
-                  </span>
-                </button>
-              ))}
-              {choices.length > limit && (
-                <button type="button" onClick={() => setLimit(limit + 12)}>
-                  Afficher davantage
-                </button>
-              )}
-            </div>
-            {!choices.length && (
-              <p role="status">
-                {active.length
-                  ? 'Aucun plat ne correspond à la recherche.'
-                  : 'Ajoutez une recette avec ses ingrédients et ses étapes pour planifier un repas.'}
-              </p>
-            )}
-          </section>
-        )}
-        {row && row.data.base === null && (
-          <div className="notice">
-            <Field label="Portions correspondant aux quantités de la fiche">
+            <Field label="Repas">
+              <select
+                name="slot"
+                disabled={!!editing}
+                value={planSlot}
+                onChange={(e) => setPlanSlot(e.target.value as typeof slot)}
+              >
+                <option value="soir">Dîner</option>
+                <option value="midi">Déjeuner</option>
+              </select>
+            </Field>
+            <Field label="Portions à préparer">
               <input
-                key={selected}
-                name="confirmedBase"
+                name="servings"
                 type="number"
                 min="1"
                 max="100"
-                placeholder="À confirmer si connues"
+                value={servings}
+                onChange={(e) => setServings(e.target.value)}
+                required
               />
             </Field>
-            <small>
-              Cette valeur sert à calculer les courses. Sans elle, les quantités restent à préciser.
-            </small>
           </div>
-        )}
-        <div className="columns">
-          <Field label="Jour">
-            <input
-              name="day"
-              type="date"
-              required
-              value={planDay}
-              onChange={(e) => setPlanDay(e.target.value)}
-            />
-          </Field>
-          <Field label="Repas">
-            <select
-              name="slot"
-              value={planSlot}
-              onChange={(e) => setPlanSlot(e.target.value as typeof slot)}
-            >
-              <option value="soir">Dîner</option>
-              <option value="midi">Déjeuner</option>
-            </select>
-          </Field>
-          <Field label="Portions à préparer">
-            <input
-              name="servings"
-              type="number"
-              min="1"
-              max="100"
-              defaultValue={ui.s.prefs.portions}
-              required
-            />
-          </Field>
-        </div>
-        {occupied && (
-          <label key={occupied.id}>
-            {occupied.consumed ? (
-              'Ce repas a déjà été consommé.'
-            ) : (
-              <>
-                <input type="checkbox" name="replace" required /> Remplacer{' '}
-                {ui.s.preps.find((p) => p.id === occupied.prepId)?.snapshot.title ??
-                  'le repas extérieur'}{' '}
-                sur ce créneau
-              </>
-            )}
-          </label>
-        )}
-        {planSlot === 'soir' &&
-          (nextLunch ? (
-            <small>Le déjeuner suivant est déjà prévu.</small>
-          ) : (
-            <label>
-              <input name="leftovers" type="checkbox" defaultChecked={ui.s.prefs.leftovers} />{' '}
-              Réserver une portion pour le déjeuner suivant
-            </label>
-          ))}
-      </Form>
+          {duo && planDay && (
+            <small>
+              Une portion au dîner et une au déjeuner du {labelDate(addDays(planDay, 1))}.
+            </small>
+          )}
+          {locked && <p>Ce créneau contient un repas déjà consommé.</p>}
+        </Form>
+        {alternative}
+      </div>
     </Dialog>
   );
 }

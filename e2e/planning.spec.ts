@@ -45,7 +45,9 @@ test('parcours privé sur ordinateur et liste emportée sur mobile', async ({
     'Tarte aux poireaux',
   );
   await page.getByRole('button', { name: 'Planifier ma semaine' }).click();
-  await dialog.getByRole('button', { name: 'Appliquer au planning' }).click();
+  // The two existing portions were deliberately moved to two dinners.
+  await expect(dialog.getByText('Aucun changement à proposer pour cette semaine.')).toBeVisible();
+  await dialog.getByRole('button', { name: 'Fermer' }).click();
   await expect(dialog).toHaveCount(0);
   await page.getByRole('button', { name: 'Planifier', exact: true }).click();
   await dialog.getByLabel('Rechercher un plat ou un ingrédient').fill('poireaux');

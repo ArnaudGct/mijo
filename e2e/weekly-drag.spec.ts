@@ -139,4 +139,49 @@ test('dépôt de lundi à mardi sur une case vide et sur un repas, à la souris 
   await expect(
     page.locator('.weekly-prep').filter({ hasText: title }).locator('img'),
   ).toBeVisible();
+
+  await seed({
+    action: 'meal',
+    data: {
+      id: crypto.randomUUID(),
+      prepId: null,
+      day: week,
+      slot: 'soir',
+      servings: 1,
+      consumed: false,
+      frozen: false,
+    },
+  });
+  const dish = 'Ragoût du carnet à tester';
+  await seed({
+    action: 'recipe',
+    data: {
+      ...blankRecipe(),
+      title: dish,
+      base: 2,
+      ingredients: [parseLine('Carottes | 2 | pièce')],
+      steps: [{ text: 'Cuire.', image: '' }],
+    },
+  });
+  await page.reload();
+  const mondayDinner = page.locator('[data-mealslot="' + week + 'soir"]');
+  await mondayDinner.locator('.scheduled').click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByRole('checkbox')).toHaveCount(0);
+  await dialog.getByLabel('Rechercher un plat ou un ingrédient').fill(dish);
+  await dialog.getByRole('button', { name: dish }).click();
+  await dialog.getByRole('button', { name: 'Ajouter au planning' }).click();
+  await expect(dialog.locator('.confirm-meals p')).toHaveCount(2);
+  await dialog.getByRole('button', { name: 'Annuler', exact: true }).click();
+  await expect(mondayDinner.locator('.scheduled')).toContainText('Repas à l’extérieur');
+  await dialog.getByRole('button', { name: 'Ajouter au planning' }).click();
+  await dialog.getByRole('button', { name: 'Oui, remplacer' }).click();
+  await expect(dialog).toHaveCount(0);
+  await page.reload();
+  await expect(mondayDinner.locator('.scheduled')).toContainText(dish);
+  await expect(lunch.locator('.scheduled')).toContainText(dish);
+  const stored = await (await page.request.get('/api/state')).json();
+  const prep = stored.preps.find((p: { snapshot: { title: string } }) => p.snapshot.title === dish);
+  expect(prep.servings).toBe(2);
+  expect(stored.meals.filter((m: { prepId: string }) => m.prepId === prep.id)).toHaveLength(2);
 });

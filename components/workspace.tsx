@@ -24,7 +24,8 @@ import { type State, date } from '@/lib/model';
 import { today, monday, labelDate, inWeek, money } from '@/lib/dates';
 import { marketBasket } from '@/lib/market';
 import { Feedback, Brand, WeekNav, Photo, Field, Form, str, api, type UI } from './common';
-import { DiscoveryCard, DiscoveryPreview, useDiscoveries } from './discoveries';
+import { DiscoveryCard, DiscoveryPreview, MoreDiscoveries } from './discoveries';
+import { useDiscoveries } from './use-discovery';
 import { Catalog, RecipeEditor } from './recipes';
 import { MealCalendar, Planner } from './weekly';
 import { Cooking } from './cooking';
@@ -249,8 +250,11 @@ export function Workspace({ initial, children }: { initial: State; children: Rea
 }
 function Home({ ui }: { ui: UI }) {
   const { s, w } = ui;
-  const discoveries = useDiscoveries(ui);
-  const slides = discoveries.slice(0, 10);
+  const feed = useDiscoveries(ui);
+  const discoveries = feed.cards;
+  const [shown, setShown] = useState(3);
+  const slides = discoveries.slice(0, Math.min(10, Math.max(1, discoveries.length - 3)));
+  const shelfStart = slides.length;
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   useEffect(() => {
@@ -414,13 +418,34 @@ function Home({ ui }: { ui: UI }) {
         </Link>
       </div>
       <div className="cards">
-        {(discoveries.length > 10 ? discoveries.slice(10, 13) : discoveries.slice(0, 3)).map(
-          (item) => (
-            <DiscoveryCard key={item.url} ui={ui} item={item} />
-          ),
-        )}
+        {discoveries.slice(shelfStart, shelfStart + shown).map((item) => (
+          <DiscoveryCard key={item.url} ui={ui} item={item} />
+        ))}
       </div>
-      {!discoveries.length && <p>Toutes ces suggestions sont déjà dans ton carnet.</p>}
+      {discoveries.length > shelfStart + shown ? (
+        <button
+          className="more"
+          onClick={() => {
+            setShown((n) => n + 9);
+            if (feed.hasMore && discoveries.length - shelfStart - shown < 9) feed.more();
+          }}
+        >
+          Afficher plus de recettes
+        </button>
+      ) : (
+        <MoreDiscoveries
+          feed={{
+            ...feed,
+            more: () => {
+              setShown((n) => n + 9);
+              feed.more();
+            },
+          }}
+        />
+      )}
+      {!discoveries.length && !feed.loading && !feed.error && (
+        <p>Aucune autre suggestion pour le moment.</p>
+      )}
     </>
   );
 }

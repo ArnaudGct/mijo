@@ -1,3 +1,4 @@
+import { weekPlan } from '../lib/week-plan';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { blankRecipe, snapshot, type RecipeRow } from '../lib/model';
@@ -364,4 +365,37 @@ test('ordre des préparations par première apparition, déjeuner avant dîner, 
   a.automatic = true;
   b.automatic = false;
   assert.ok(optimizedRecipes(s, day, day).every((x) => x.prep.id !== b.id));
+});
+
+test('une portion manuelle du lundi devient un duo, annoncé puis enregistré une seule fois', () => {
+  const s = fixture(),
+    w = day;
+  const p = planned(s.recipes[0], w, 1);
+  s.prefs.portions = 2;
+  s.prefs.target = 1;
+  s.preps = [p];
+  s.meals = defaultMeals(p, false);
+  const result = weekPlan(s, w, w, true, false);
+  assert.deepEqual(
+    result.rows.map((r) => [r.meal.day, r.meal.slot, r.added]),
+    [
+      [w, 'soir', false],
+      ['2026-11-17', 'midi', true],
+    ],
+  );
+  assert.equal(result.preps[0].servings, 2);
+  assert.equal(p.servings, 1);
+  const again = weekPlan(
+    { ...s, preps: result.preps, meals: [...s.meals, ...result.meals] },
+    w,
+    w,
+    true,
+    false,
+  );
+  assert.equal(again.meals.length, 0);
+  assert.equal(again.preps.length, 0);
+  assert.equal(
+    weekPlan({ ...s, preps: [{ ...p, done: true }] }, w, w, true, false).meals.length,
+    0,
+  );
 });

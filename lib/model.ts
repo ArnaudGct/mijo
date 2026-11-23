@@ -68,6 +68,7 @@ export const settings = z.object({
   breakfast: breakfastSettings.optional(),
   customAisles: z.array(aisleName).default([]),
   generatedWeeks: z.array(date).default([]),
+  dismissedDiscoveries: z.array(z.string().max(3000)).default([]),
   portions: portions.default(2),
   target: z.number().int().min(1).max(14).default(7),
   budget: z.number().int().nonnegative().nullable().default(null),

@@ -4,7 +4,9 @@ import { parseLine } from '../lib/ingredients';
 import seed from '../lib/discovery-seed.json' with { type: 'json' };
 
 test('les sources vérifiées, la découverte et l’ajout explicite au carnet', async ({ page }) => {
-  await page.route('**/api/discoveries', (r) => r.fulfill({ json: [] }));
+  await page.route('**/api/discoveries/search', (r) =>
+    r.fulfill({ json: { cards: seed.slice(0, 15), next: null, total: 15 } }),
+  );
   await page.goto('/recettes?week=2020-01-06');
   await page.getByLabel('Mot de passe').fill(process.env.TABLE_TEST_PASSWORD!);
   await page.getByRole('button', { name: 'Ouvrir mon carnet' }).click();
@@ -60,4 +62,35 @@ test('les sources vérifiées, la découverte et l’ajout explicite au carnet',
       ).ok(),
     ).toBeTruthy();
   }
+});
+
+test('la suite interroge le catalogue, les filtres repartent de zéro et une suggestion écartée reste masquée', async ({
+  page,
+}) => {
+  const offsets: number[] = [];
+  await page.route('**/api/discoveries/search', (route) => {
+    const q = route.request().postDataJSON();
+    offsets.push(q.offset);
+    const cards = q.query
+      ? seed.filter((c) => c.title === 'Croziflette')
+      : seed.slice(q.offset, q.offset + 3);
+    return route.fulfill({
+      json: { cards, next: q.query ? null : q.offset + 3, total: seed.length },
+    });
+  });
+  await page.goto('/recettes?onglet=suggestions&week=2020-01-06');
+  await page.getByLabel('Mot de passe').fill(process.env.TABLE_TEST_PASSWORD!);
+  await page.getByRole('button', { name: 'Ouvrir mon carnet' }).click();
+  const cards = page.locator('.discovery-cards article');
+  await expect(cards).toHaveCount(3);
+  await page.getByRole('button', { name: 'Afficher plus de recettes' }).click();
+  await expect(cards).toHaveCount(6);
+  await page.getByLabel('Recette ou ingrédient').fill('Croziflette');
+  await expect(cards).toHaveCount(1);
+  expect(offsets).toContain(3);
+  await cards.getByRole('button', { name: 'Écarter Croziflette' }).click();
+  await expect(cards).toHaveCount(0);
+  await page.reload();
+  await expect(cards).toHaveCount(2);
+  await expect(cards.filter({ hasText: 'Croziflette' })).toHaveCount(0);
 });

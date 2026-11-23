@@ -20,12 +20,14 @@ import {
   type UI,
 } from './common';
 import { Breakfast } from './breakfast';
-import { PlanForm } from './recipes';
+import { PlanForm, RecipePicker } from './recipes';
 function PrepForm({ ui, p }: { ui: UI; p: Prep }) {
   const slots = ui.s.meals.filter((m) => m.prepId === p.id);
+  const [selected, setSelected] = useState(p.recipeId);
   return (
     <Dialog title="Ajuster la préparation" close={ui.close}>
       <Form
+        disabled={!selected}
         onSave={async (f) => {
           if (
             await ui.run({
@@ -41,17 +43,12 @@ function PrepForm({ ui, p }: { ui: UI; p: Prep }) {
             ui.close();
         }}
       >
-        <Field label="Recette">
-          <select name="recipe" defaultValue={p.recipeId}>
-            {ui.s.recipes
-              .filter((r) => !r.archived || r.id === p.recipeId)
-              .map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.data.title}
-                </option>
-              ))}
-          </select>
-        </Field>
+        <RecipePicker
+          ui={ui}
+          selected={selected}
+          setSelected={setSelected}
+          current={ui.s.recipes.find((r) => r.id === p.recipeId)}
+        />
         <Field label="Portions préparées">
           <input
             name="servings"
@@ -101,7 +98,29 @@ function PrepForm({ ui, p }: { ui: UI; p: Prep }) {
     </Dialog>
   );
 }
-export function MealForm({
+export function MealForm(props: {
+  ui: UI;
+  day: string;
+  slot: 'soir' | 'midi';
+  meal?: State['meals'][number];
+}) {
+  const { ui, meal } = props;
+  if (!meal || meal.consumed) return <PortionForm {...props} />;
+  return (
+    <PlanForm
+      ui={ui}
+      day={meal.day}
+      slot={meal.slot}
+      editing={meal}
+      alternative={
+        <button className="more" onClick={() => ui.open(<PortionForm {...props} />)}>
+          Ajuster la portion ou le créneau
+        </button>
+      }
+    />
+  );
+}
+function PortionForm({
   ui,
   day,
   slot,
@@ -125,15 +144,15 @@ export function MealForm({
                 slot: str(f, 'slot') as typeof slot,
                 prepId: str(f, 'prep') || null,
                 servings: num(f, 'n')!,
-                frozen: f.has('frozen'),
-                consumed: f.has('consumed'),
+                frozen: meal?.frozen ?? false,
+                consumed: meal?.consumed ?? false,
               },
             })
           )
             ui.close();
         }}
       >
-        <Field label="Préparation">
+        <Field label="Portion disponible">
           <select name="prep" defaultValue={meal?.prepId ?? ''}>
             <option value="">Repas à l’extérieur</option>
             {ui.s.preps
@@ -171,13 +190,6 @@ export function MealForm({
             />
           </Field>
         </div>
-        <label>
-          <input type="checkbox" name="frozen" defaultChecked={meal?.frozen} /> Congélation prévue
-          dès la préparation
-        </label>
-        <label>
-          <input type="checkbox" name="consumed" defaultChecked={meal?.consumed} /> Repas consommé
-        </label>
       </Form>
       {meal && (
         <button

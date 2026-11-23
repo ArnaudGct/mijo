@@ -1,6 +1,8 @@
 import https from 'node:https';
 import dns from 'node:dns/promises';
 import { isIP } from 'node:net';
+import { promisify } from 'node:util';
+import { gunzip } from 'node:zlib';
 import ipaddr from 'ipaddr.js';
 import robotsParser from 'robots-parser';
 import { load } from 'cheerio';
@@ -8,6 +10,7 @@ import { recipe, blankRecipe } from './model';
 import { fromHelloFreshPage } from './hellofresh';
 import { parseLine } from './ingredients';
 const agent = 'TableDeSaison/1.0';
+const decompress = promisify(gunzip);
 class DestinationError extends Error {}
 export function publicAddress(ip: string) {
   try {
@@ -100,7 +103,7 @@ export async function notionPhotoBytes(raw: string) {
   if (response.code !== 200) throw Error('Photo Notion indisponible.');
   return response.body;
 }
-export async function getPage(raw: string) {
+export async function getPage(raw: string, maxBytes = 3000000) {
   let u = publicUrl(raw);
   const until = Date.now() + 15000;
   for (let n = 0; n <= 3; n++) {
@@ -116,13 +119,17 @@ export async function getPage(raw: string) {
         ) === false)
     )
       throw Error('Lecture automatisée non autorisée par le site.');
-    const res = await request(u, until, 3000000);
+    const res = await request(u, until, maxBytes);
     if (res.code >= 300 && res.code < 400 && res.location) {
       u = publicUrl(new URL(res.location, u).href);
       continue;
     }
     if (res.code !== 200) throw Error('Accès au site refusé ou indisponible (' + res.code + ').');
-    return { html: res.body.toString('utf8'), url: u.href };
+    const body =
+      res.body[0] === 0x1f && res.body[1] === 0x8b
+        ? await decompress(res.body, { maxOutputLength: maxBytes })
+        : res.body;
+    return { html: body.toString('utf8'), url: u.href };
   }
   throw Error('Trop de redirections.');
 }

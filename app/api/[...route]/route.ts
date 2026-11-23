@@ -7,6 +7,7 @@ import { db, state } from '@/lib/db';
 import { authenticated, login, logout } from '@/lib/auth';
 import { mutate, ensureWeek, UserError } from '@/lib/commands';
 import { backup, restore } from '@/lib/backup';
+import { discoverPage, discoveryQuery, searchPreview } from '@/lib/discovery-search';
 import { cachedDiscovery, discoveryFeed } from '@/lib/discovery-feed';
 import { previewUrl } from '@/lib/web-import';
 import { localObservations } from '@/lib/open-prices';
@@ -108,6 +109,17 @@ export async function POST(req: Request, ctx: Ctx) {
       await logout();
       return json({ ok: true });
     }
+    if (path === 'discoveries/search') {
+      const q = discoveryQuery.parse(await body(6000));
+      try {
+        return json(await discoverPage(q));
+      } catch {
+        return json(
+          { error: 'La recherche est momentanément indisponible. Réessayez dans un instant.' },
+          503,
+        );
+      }
+    }
     if (path === 'week') return json(await ensureWeek(z.iso.date().parse((await body(500)).week)));
     if (path === 'checks') return json(await syncChecks(await body()));
     if (path === 'command') {
@@ -122,7 +134,7 @@ export async function POST(req: Request, ctx: Ctx) {
       const v = await body(4000);
       try {
         const url = z.string().max(3000).parse(v.url);
-        const data = cachedDiscovery(url);
+        const data = searchPreview(url) ?? cachedDiscovery(url);
         return json(data ? { data, warning: '', original: url } : await previewUrl(url));
       } catch {
         return json({ error: 'Adresse HTTPS publique requise.' }, 400);

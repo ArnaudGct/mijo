@@ -570,7 +570,7 @@ export function Preferences({ ui }: { ui: UI }) {
                 hello: cents(f, 'hello')!,
                 diet: str(f, 'diet'),
                 maxTime: num(f, 'maxTime'),
-                leftovers: f.has('leftovers'),
+                leftovers: true,
               },
             });
           }}
@@ -604,10 +604,6 @@ export function Preferences({ ui }: { ui: UI }) {
               </select>
             </Field>
           </div>
-          <label>
-            <input name="leftovers" type="checkbox" defaultChecked={p.leftovers} /> Réserver une
-            portion pour le déjeuner suivant
-          </label>
           <small>Fuseau Europe/Paris · Devise EUR</small>
         </Form>
       </div>

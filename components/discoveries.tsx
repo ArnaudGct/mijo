@@ -1,64 +1,12 @@
 'use client';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Dialog, Empty, Photo, api, type UI } from './common';
 import { duration, type Recipe } from '@/lib/model';
-import { fold } from '@/lib/grocery-names';
-import { sourceUrl } from '@/lib/source-url';
 import { discoveryTitle, type Discovery } from '@/lib/recipe-sources';
-import initial from '@/lib/discovery-seed.json';
 
-let recent: { until: number; request: Promise<Discovery[]> } | undefined;
-function liveDiscoveries() {
-  if (!recent || recent.until < Date.now()) {
-    const request = fetch('/api/discoveries', { cache: 'no-store' })
-      .then(async (res) => {
-        if (!res.ok) throw Error('Flux indisponible');
-        return (await res.json()) as Discovery[];
-      })
-      .catch(() => {
-        recent = undefined;
-        return [];
-      });
-    recent = { until: Date.now() + 3600000, request };
-  }
-  return recent.request;
-}
-export function useDiscoveries({ s, w }: UI) {
-  const [live, setLive] = useState<Discovery[]>([]);
-  useEffect(() => {
-    let active = true;
-    liveDiscoveries().then((rows) => {
-      if (active) setLive(rows);
-    });
-    return () => {
-      active = false;
-    };
-  }, []);
-  return useMemo(() => {
-    const urls = new Set(s.recipes.map((r) => sourceUrl(r.data.url)));
-    const titles = new Set(s.recipes.map((r) => fold(discoveryTitle(r.data.title))));
-    const sites = new Map<string, Discovery[]>();
-    for (const item of [...live, ...initial]) {
-      const url = sourceUrl(item.url),
-        title = fold(item.title);
-      if (urls.has(url) || titles.has(title)) continue;
-      urls.add(url);
-      titles.add(title);
-      const group = sites.get(item.publisher) ?? [];
-      group.push(item);
-      sites.set(item.publisher, group);
-    }
-    const week = Math.floor(Date.parse(w) / 604800000);
-    const groups = [...sites.values()].map((group) => {
-      const start = week % group.length;
-      return [...group.slice(start), ...group.slice(0, start)];
-    });
-    const cards: Discovery[] = [];
-    for (let i = 0; groups.some((g) => g.length > i); i++)
-      for (const group of groups) if (group[i]) cards.push(group[i]);
-    return cards;
-  }, [live, s.recipes, w]);
-}
+import { defaults, type DiscoveryFilters } from '@/lib/discovery-taste';
+import { useDiscoveries } from './use-discovery';
+import { EyeOff } from 'lucide-react';
 export function DiscoveryPreview({ ui, item }: { ui: UI; item: Discovery }) {
   const [recipe, setRecipe] = useState<Recipe | null>(null),
     [error, setError] = useState(''),
@@ -96,6 +44,15 @@ export function DiscoveryPreview({ ui, item }: { ui: UI; item: Discovery }) {
           </span>
         )}
       </div>
+      <button
+        className="discovery-skip"
+        onClick={async () => {
+          if (await ui.run({ action: 'dismissDiscovery', url: item.url }, 'Suggestion écartée.'))
+            ui.close();
+        }}
+      >
+        Écarter cette suggestion
+      </button>
       {recipe ? (
         <>
           <button
@@ -147,25 +104,97 @@ export function DiscoveryPreview({ ui, item }: { ui: UI; item: Discovery }) {
   );
 }
 export function DiscoveryShelf({ ui }: { ui: UI }) {
-  const cards = useDiscoveries(ui);
-  const [limit, setLimit] = useState(12);
+  const [filters, setFilters] = useState<DiscoveryFilters>(defaults),
+    [query, setQuery] = useState('');
+  useEffect(() => {
+    const t = setTimeout(
+      () =>
+        setFilters((old) => (old.query === query.trim() ? old : { ...old, query: query.trim() })),
+      350,
+    );
+    return () => clearTimeout(t);
+  }, [query]);
+  const feed = useDiscoveries(ui, filters);
   return (
     <>
-      {cards.length === 0 && <Empty title="Toutes ces suggestions sont déjà dans ton carnet" />}
+      <div className="discovery-filters">
+        <label>
+          Recette ou ingrédient
+          <input
+            type="search"
+            value={query}
+            maxLength={100}
+            placeholder="Poulet, risotto…"
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </label>
+        <label>
+          Durée
+          <select
+            value={filters.minutes}
+            onChange={(e) => setFilters({ ...filters, minutes: Number(e.target.value) })}
+          >
+            <option value={0}>Toutes les durées</option>
+            {[20, 30, 45, 60].map((n) => (
+              <option key={n} value={n}>
+                {n} min maximum
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Source
+          <select
+            value={filters.publisher}
+            onChange={(e) => setFilters({ ...filters, publisher: e.target.value })}
+          >
+            <option value="">Toutes les sources</option>
+            {['Marmiton', 'CuisineAZ', 'Jow', '750g'].map((name) => (
+              <option key={name}>{name}</option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Sélection
+          <select
+            value={filters.order}
+            onChange={(e) =>
+              setFilters({ ...filters, order: e.target.value as DiscoveryFilters['order'] })
+            }
+          >
+            <option value="affinity">Pour moi</option>
+            <option value="explore">Explorer</option>
+            <option value="quick">Durée des résultats</option>
+          </select>
+        </label>
+      </div>
       <div className="cards discovery-cards">
-        {cards.slice(0, limit).map((item) => (
-          <DiscoveryCard key={item.url} ui={ui} item={item} />
+        {feed.cards.map((item) => (
+          <DiscoveryCard key={item.url} item={item} ui={ui} />
         ))}
       </div>
-      {cards.length > limit && (
-        <button className="more" onClick={() => setLimit((n) => n + 12)}>
-          Afficher davantage
-        </button>
+      {!feed.cards.length && !feed.loading && !feed.error && (
+        <Empty title="Aucune recette dans cette sélection" />
       )}
+      <MoreDiscoveries feed={feed} />
     </>
   );
 }
-
+export function MoreDiscoveries({ feed }: { feed: ReturnType<typeof useDiscoveries> }) {
+  if (feed.error)
+    return (
+      <div className="discovery-more" role="status">
+        Les sources sont momentanément indisponibles.{' '}
+        <button onClick={feed.retry}>Réessayer</button>
+      </div>
+    );
+  if (!feed.hasMore) return null;
+  return (
+    <button className="more" disabled={feed.loading} onClick={feed.more}>
+      {feed.loading ? 'Recherche de recettes…' : 'Afficher plus de recettes'}
+    </button>
+  );
+}
 export function DiscoveryCard({ ui, item }: { ui: UI; item: Discovery }) {
   return (
     <article className="recipe-card">
@@ -175,6 +204,14 @@ export function DiscoveryCard({ ui, item }: { ui: UI; item: Discovery }) {
         onClick={() => ui.open(<DiscoveryPreview ui={ui} item={item} />)}
       >
         <Photo src={item.image} />
+      </button>
+      <button
+        className="heart"
+        aria-label={'Écarter ' + item.title}
+        title="Écarter cette suggestion"
+        onClick={() => ui.run({ action: 'dismissDiscovery', url: item.url }, 'Suggestion écartée.')}
+      >
+        <EyeOff size={17} />
       </button>
       <div className="card-copy">
         <div className="card-meta">
