@@ -140,13 +140,14 @@ export function Workspace({ initial, children }: { initial: State; children: Rea
     },
     close: () => setDialog(null),
     notify: setNotice,
-    run: async (cmd, msg = 'Enregistré') => {
+    run: async (cmd, msg = 'Enregistré', onCheckout) => {
       if (lock.current) return false;
       lock.current = true;
       setBusy(true);
       try {
         const result = await api('command', { revision: latest.current.revision, command: cmd });
         await reload();
+        if (result.checkout) onCheckout?.(result.checkout);
         setNotice(
           result.addedMeals === undefined
             ? msg

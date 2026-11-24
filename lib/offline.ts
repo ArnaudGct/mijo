@@ -34,6 +34,7 @@ export async function syncChecks(input: unknown) {
         category: r.category,
         manual: false,
         checked: e.checked,
+        scanBaseline: r.scanned,
         bag: saved?.bag ?? null,
       };
       await put(tx, 'items', row);

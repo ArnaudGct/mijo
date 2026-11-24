@@ -19,6 +19,7 @@ export const tables = [
   'stock',
   'prices',
   'items',
+  'lots',
 ] as const;
 export type Table = (typeof tables)[number];
 export async function readState(tx: Tx, lock = false): Promise<State> {

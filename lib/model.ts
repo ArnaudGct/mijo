@@ -140,7 +140,24 @@ export const offer = z.object({
   estimated: z.boolean(),
   barcode: z.string().max(50),
 });
+export const purchaseLot = z.object({
+  id,
+  week: date,
+  barcode: z
+    .string()
+    .regex(/^(?:\d{8}|\d{12,14})$/)
+    .or(z.literal('')),
+  product: label,
+  name: label,
+  quantity: qty,
+  unit: z.string().trim().min(1).max(70),
+  expires: date.nullable(),
+  dateKind: z.enum(['DLC', 'DDM']),
+  used: z.record(id, qty).optional(),
+});
+export type PurchaseLot = z.infer<typeof purchaseLot>;
 export const item = z.object({
+  scanBaseline: z.number().nonnegative().optional(),
   id,
   week: date,
   key: z.string().max(600),
@@ -168,6 +185,7 @@ export const snapshot = z.object({
   stock: z.array(inventory),
   prices: z.array(offer),
   items: z.array(item),
+  lots: z.array(purchaseLot).default([]),
   prefs: settings,
 });
 export type Recipe = z.infer<typeof recipe>;

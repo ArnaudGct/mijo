@@ -5,6 +5,7 @@ import {
   settings,
   session,
   inventory,
+  purchaseLot,
   offer,
   item,
   meal,
@@ -17,6 +18,7 @@ import {
 import { planned, defaultMeals, uid } from './planner';
 import { addDays, inWeek, monday, today } from './dates';
 import { sourceUrl } from './source-url';
+import { cookedLots, expiryPlan, type CheckoutReport } from './expiry-plan';
 import { weekPlan } from './week-plan';
 import { clean } from './ingredients';
 import { morningRoutine, pantryReading } from './breakfast-model';
@@ -108,6 +110,9 @@ export const input = z.discriminatedUnion('action', [
     action: z.literal('breakfastStock'),
     readings: z.array(pantryReading).min(1).max(120),
   }),
+  z.object({ action: z.literal('purchaseLot'), data: purchaseLot.omit({ used: true }) }),
+  z.object({ action: z.literal('removeLot'), id }),
+  z.object({ action: z.literal('finishShopping'), week: date }),
   z.object({ action: z.literal('stock'), data: inventory }),
   z.object({ action: z.literal('price'), data: offer }),
   z.object({ action: z.literal('item'), data: item }),
@@ -498,6 +503,32 @@ export async function execute(tx: Tx, s: State, c: z.output<typeof input>) {
       await tx`update preferences set data=${tx.json({ ...s.prefs, breakfast: cfg })} where id=1`;
       break;
     }
+    case 'purchaseLot': {
+      const old = s.lots.find((l) => l.id === c.data.id);
+      requireThat(
+        !old || old.week === c.data.week,
+        'Cet emballage appartient à une autre semaine.',
+      );
+      requireThat(
+        !old || !Object.keys(old.used ?? {}).length,
+        'Cet emballage a déjà servi en cuisine.',
+      );
+      requireThat(
+        monday(c.data.week) === c.data.week && c.data.week >= monday(today()),
+        'Choisissez une semaine présente ou future.',
+      );
+      await put(tx, 'lots', c.data);
+      break;
+    }
+    case 'removeLot': {
+      const old = s.lots.find((l) => l.id === c.id);
+      requireThat(
+        old && !Object.keys(old.used ?? {}).length && old.week >= monday(today()),
+        'Cet emballage ne peut plus être retiré.',
+      );
+      await del('lots', c.id);
+      break;
+    }
     case 'stock':
       await put(tx, 'stock', c.data);
       break;
@@ -537,6 +568,7 @@ export async function execute(tx: Tx, s: State, c: z.output<typeof input>) {
         c.done || !s.meals.some((m) => m.prepId === p.id && m.consumed),
         'Des portions ont déjà été consommées.',
       );
+      for (const lot of cookedLots(s, p, c.done, today())) await put(tx, 'lots', lot);
       await put(tx, 'preps', {
         ...p,
         done: c.done,
@@ -607,10 +639,23 @@ export async function mutate(revision: number, cmd: unknown) {
       }
     }
     const mealCount = s.meals.length;
-    const id = await execute(tx, s, c);
+    let id: string | void = undefined;
+    let checkout: CheckoutReport | undefined;
+    if (c.action === 'finishShopping') {
+      requireThat(
+        monday(c.week) === c.week && c.week >= monday(today()),
+        'Cette semaine est passée.',
+      );
+      const plan = expiryPlan(s, c.week, today());
+      for (const m of plan.meals) await tx`delete from meals where id=${m.id}`;
+      for (const p of plan.preps) await put(tx, 'preps', p);
+      for (const m of plan.meals) await put(tx, 'meals', m);
+      checkout = plan.report;
+    } else id = await execute(tx, s, c);
     await tx`update preferences set revision=revision+1 where id=1`;
     return {
-      id,
+      id: id ?? undefined,
+      checkout,
       revision: revision + 1,
       addedMeals: c.action === 'fillWeek' && !c.optimize ? s.meals.length - mealCount : undefined,
     };

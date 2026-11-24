@@ -10,6 +10,8 @@ import { backup, restore } from '@/lib/backup';
 import { discoverPage, discoveryQuery, searchPreview } from '@/lib/discovery-search';
 import { cachedDiscovery, discoveryFeed } from '@/lib/discovery-feed';
 import { previewUrl } from '@/lib/web-import';
+import { readProductCode } from '@/lib/product-scan';
+import { lookupProduct } from '@/lib/product-lookup';
 import { localObservations } from '@/lib/open-prices';
 import { syncChecks } from '@/lib/offline';
 import { archivePages } from '@/lib/archive';
@@ -125,6 +127,20 @@ export async function POST(req: Request, ctx: Ctx) {
     if (path === 'command') {
       const v = await body(800000);
       return json(await mutate(z.number().int().parse(v.revision), v.command));
+    }
+    if (path === 'product') {
+      const code = readProductCode(
+        z
+          .string()
+          .max(80)
+          .parse((await body(500)).barcode),
+      );
+      if (!code) throw new UserError('Code produit invalide.');
+      try {
+        return json({ product: await lookupProduct(code.barcode) });
+      } catch {
+        return json({ error: 'Catalogue indisponible. Choisissez un article de la liste.' }, 503);
+      }
     }
     if (path === 'observations') {
       const v = await body(1000);

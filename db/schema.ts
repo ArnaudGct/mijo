@@ -7,7 +7,7 @@ export interface PreferencesRow {
 export interface EntityRow<
   K extends keyof Pick<
     State,
-    'recipes' | 'preps' | 'meals' | 'sessions' | 'stock' | 'prices' | 'items'
+    'recipes' | 'preps' | 'meals' | 'sessions' | 'stock' | 'prices' | 'items' | 'lots'
   >,
 > {
   data: State[K][number];

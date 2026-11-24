@@ -11,6 +11,7 @@ import {
 import { useSearchParams } from 'next/navigation';
 import { X, Leaf, Sprout, CalendarDays, ChevronLeft, ChevronRight, BookOpen } from 'lucide-react';
 import type { State } from '@/lib/model';
+import type { CheckoutReport } from '@/lib/expiry-plan';
 import type { Command } from '@/lib/commands';
 import { addDays, labelDate, monday } from '@/lib/dates';
 export const Feedback = createContext('');
@@ -18,7 +19,11 @@ export type UI = {
   s: State;
   w: string;
   setW: (v: string) => void;
-  run: (c: Command, msg?: string) => Promise<boolean>;
+  run: (
+    c: Command,
+    msg?: string,
+    onCheckout?: (report: CheckoutReport) => void,
+  ) => Promise<boolean>;
   reload: () => Promise<void>;
   notify: (msg: string) => void;
   open: (v: ReactNode) => void;

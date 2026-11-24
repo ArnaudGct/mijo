@@ -225,6 +225,48 @@ test('transactions PostgreSQL, parcours complet, restauration et rejouabilité',
         'webp',
       );
     });
+    await t.test(
+      'emballages, réordonnancement atomique et rejeu sur des créneaux occupés',
+      async () => {
+        const week = addDays(day, 140);
+        const late = addDays(week, 4);
+        const rice = (
+          await write({
+            action: 'recipe',
+            data: { ...r, title: 'Riz nature', ingredients: [parseLine('Riz | 150 | g')] },
+          })
+        ).id!;
+        await write({ action: 'plan', id: rice, day: week, servings: 2, leftovers: true });
+        await write({ action: 'plan', id: rid, day: late, servings: 2, leftovers: true });
+        const lot = {
+          id: uid(),
+          week,
+          barcode: '',
+          product: 'Chou frais',
+          name: 'Chou',
+          quantity: 150,
+          unit: 'g',
+          expires: week,
+          dateKind: 'DLC' as const,
+        };
+        await write({ action: 'purchaseLot', data: lot });
+        await write({ action: 'purchaseLot', data: lot });
+        assert.equal((await state()).lots.length, 1);
+        assert.equal(needs(await state(), week).rows.find((x) => x.name === 'Chou')?.checked, true);
+        const before = (await state()).meals.map((m) => m.id).sort();
+        const { checkout } = await write({ action: 'finishShopping', week });
+        assert.ok(checkout?.moves.some((m) => m.from === late && m.to === week));
+        const after = await state();
+        const p = after.preps.find((p) => p.day === week && p.recipeId === rid)!;
+        assert.ok(
+          after.meals.some(
+            (m) => m.prepId === p.id && m.day === addDays(week, 1) && m.slot === 'midi',
+          ),
+        );
+        assert.deepEqual(after.meals.map((m) => m.id).sort(), before);
+        assert.deepEqual((await write({ action: 'finishShopping', week })).checkout?.moves, []);
+      },
+    );
     await t.test('restauration JSON sur une base vide de test avec versions et liens', async () => {
       const a = await backup();
       await assert.rejects(restore(a));
@@ -239,6 +281,7 @@ test('transactions PostgreSQL, parcours complet, restauration et rejouabilité',
           'items',
           'stock',
           'prices',
+          'lots',
           'week_history',
         ])
           await tx`delete from ${tx(tab)}`;
@@ -250,6 +293,7 @@ test('transactions PostgreSQL, parcours complet, restauration et rejouabilité',
       assert.deepEqual(b.state.meals, a.state.meals);
       assert.deepEqual(b.state.prefs.customAisles, a.state.prefs.customAisles);
       assert.deepEqual(b.state.items, a.state.items);
+      assert.deepEqual(b.state.lots, a.state.lots);
       assert.deepEqual(b.state.preps, a.state.preps);
       assert.equal(b.versions.length, a.versions.length);
     });

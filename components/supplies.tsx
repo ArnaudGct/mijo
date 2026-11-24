@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { ShoppingScan } from './shopping-scan';
 import { useState } from 'react';
 import { Plus, Download, WifiOff } from 'lucide-react';
 import { marketBasket, marketDate, priceSource, shipping } from '@/lib/market';
@@ -278,6 +279,7 @@ export function Shopping({ ui }: { ui: UI }) {
       <PageTabs options={shoppingTabs} active={tab} />
       {tab === 'liste' && (
         <>
+          <ShoppingScan key={w} ui={ui} />
           <section className="basket-summary" aria-label="Estimation du panier">
             <div>
               <h2>{partial ? 'Sous-total estimé' : 'Panier estimé'}</h2>
@@ -398,6 +400,16 @@ export function Shopping({ ui }: { ui: UI }) {
                     <div>
                       <strong>{l.name}</strong>
                       <small>{describe(l)}</small>
+                      {l.parts
+                        .filter((p) => p.scanned > 0)
+                        .map((p) => (
+                          <small key={p.key}>
+                            Scanné · {quantity(p.scanned)} {p.unit || 'pièce'}
+                            {!p.unknown && p.scanned < p.buy
+                              ? ' · Reste à acheter ' + quantity(p.buy - p.scanned) + ' ' + p.unit
+                              : ''}
+                          </small>
+                        ))}
                       {l.parts.some((p) => p.stock > 0) && <small>Stock déduit du placard</small>}
                       {l.breakfast?.product.reserve && (
                         <Link className="pantry-link" href={breakfastHref}>

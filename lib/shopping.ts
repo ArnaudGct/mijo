@@ -14,6 +14,7 @@ export type Need = {
   recipes: string[];
   stock: number;
   buy: number;
+  scanned: number;
   checked: boolean;
   inPantry: boolean;
   bag: string;
@@ -59,6 +60,7 @@ export function needs(s: State, week: string, asOf = today()) {
       recipes: [],
       stock: 0,
       buy: 0,
+      scanned: 0,
       checked: false,
       inPantry: false,
       bag: ['Produits frais', 'Viandes et poissons', 'Surgelés'].includes(i.category)
@@ -121,6 +123,23 @@ export function needs(s: State, week: string, asOf = today()) {
       ? 0
       : rounded(Math.max(0, row.quantity - row.stock - (cookedBefore.get(row.key) ?? 0)));
     row.checked = saved?.checked ?? (stored.length > 0 && stored.every((i) => i.checked));
+    row.scanned = rounded(
+      s.lots
+        .filter(
+          (lot) =>
+            lot.week === week &&
+            fold(groceryName(lot.name)) === fold(row.name) &&
+            lot.unit === (row.unit || 'pièce'),
+        )
+        .reduce((sum, lot) => sum + lot.quantity, 0),
+    );
+    if (
+      !row.unknown &&
+      row.buy > 0 &&
+      row.scanned >= row.buy &&
+      saved?.scanBaseline !== row.scanned
+    )
+      row.checked = true;
     row.bag = saved?.bag ?? row.bag;
   }
   return { rows: [...rows.values()], breakfast, incomplete: [...new Set(incomplete)] };
