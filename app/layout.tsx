@@ -11,7 +11,12 @@ export const metadata: Metadata = {
   manifest: '/manifest.webmanifest',
   icons: { icon: '/icon.png?v=mijo', apple: '/icon.png?v=mijo' },
 };
-export const viewport: Viewport = { width: 'device-width', initialScale: 1, themeColor: '#354c38' };
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  themeColor: '#354c38',
+};
 export default async function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr">

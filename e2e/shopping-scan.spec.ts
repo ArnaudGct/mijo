@@ -39,6 +39,13 @@ test('caméra mobile, deux emballages, prix daté et déplacement du dîner avec
   await page.getByLabel('Mot de passe', { exact: true }).fill(process.env.TABLE_TEST_PASSWORD!);
   await page.getByRole('button', { name: 'Ouvrir mon carnet' }).click();
   await expect(page.getByRole('heading', { name: 'Mes courses' })).toBeVisible();
+  const nav = page.getByRole('navigation', { name: 'Navigation principale' });
+  const viewport = await page.context().newCDPSession(page);
+  await viewport.send('Emulation.setSafeAreaInsetsOverride', { insets: { bottom: 34 } });
+  await expect(nav).toHaveCSS('padding-bottom', '44px');
+  await viewport.send('Emulation.setSafeAreaInsetsOverride', { insets: { bottom: 0 } });
+  await expect(nav).toHaveCSS('padding-bottom', '26px');
+  await viewport.detach();
   const origin = new URL(page.url()).origin;
   await page.request.post('/api/week', { data: { week }, headers: { Origin: origin } });
   const state = async (): Promise<State> => (await page.request.get('/api/state')).json();
@@ -79,9 +86,39 @@ test('caméra mobile, deux emballages, prix daté et déplacement du dîner avec
   await expect(dialog.getByText('Filets de poulet fermier', { exact: true })).toBeVisible();
   await expect(dialog.getByText(/Prix relevé.*Magasin test/)).toBeVisible();
   await expect(dialog.getByLabel('Quantité de cet emballage')).toHaveValue('400');
+  await expect(dialog.getByLabel('Mention sur l’emballage')).toHaveValue('');
+  await expect(dialog.getByText('Choisir une date', { exact: true })).toBeVisible();
+  for (const width of [320, 390, 430]) {
+    await page.setViewportSize({ width, height: 844 });
+    const layout = await dialog.evaluate((el) => {
+      const rect = (selector: string) => el.querySelector(selector)!.getBoundingClientRect();
+      const product = rect('.scan-product');
+      const fields = [...el.querySelectorAll('.editor .field')].map((f) =>
+        f.getBoundingClientRect(),
+      );
+      const inputs = [...el.querySelectorAll('.editor input, .editor select')];
+      return {
+        gaps: fields.map((f, i) => Math.round(f.top - (i ? fields[i - 1] : product).bottom)),
+        heights: inputs.map((input) => input.getBoundingClientRect().height),
+        widths: [...inputs, el.querySelector('button[type=submit]')!].map((control) =>
+          Math.round(control.getBoundingClientRect().width - product.width),
+        ),
+        overflow: el.scrollWidth > el.clientWidth,
+      };
+    });
+    expect(layout.overflow).toBe(false);
+    expect(layout.gaps).toEqual([16, 16, 16, 16]);
+    expect(layout.heights).toEqual([48, 48, 48, 48]);
+    expect(layout.widths).toEqual([0, 0, 0, 0, 0]);
+  }
+  await page.setViewportSize({ width: 390, height: 844 });
   await dialog.getByLabel('Date de l’emballage').fill(week);
   await dialog.getByRole('button', { name: 'Ajouter cet emballage' }).click();
   await expect(page.getByText(/Reste à acheter 200 g/)).toBeVisible();
+  expect((await state()).lots.find((lot) => lot.week === week)).toMatchObject({
+    expires: week,
+    dateKind: null,
+  });
   await expect(check).not.toBeChecked();
   const copy = page.getByRole('button', { name: 'Copier ce qu’il reste à acheter' });
   await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);

@@ -52,7 +52,11 @@ function pack(q: number, d: number): PurchaseLot {
 }
 test('EAN et dates GS1 par lot, sans confondre numéro de lot et date', () => {
   const code = '03017620422003';
-  assert.equal(readProductCode(code.slice(1))?.expires, null);
+  assert.deepEqual(readProductCode(code.slice(1)), {
+    barcode: code.slice(1),
+    dateKind: null,
+    expires: null,
+  });
   for (const raw of [
     'https://id.gs1.org/01/' + code + '/10/A?17=261129',
     ']d201' + code + '10A\x1d17261129',

@@ -153,7 +153,7 @@ export const purchaseLot = z.object({
   quantity: qty,
   unit: z.string().trim().min(1).max(70),
   expires: date.nullable(),
-  dateKind: z.enum(['DLC', 'DDM']),
+  dateKind: z.enum(['DLC', 'DDM']).nullable(),
   used: z.record(id, qty).optional(),
 });
 export type PurchaseLot = z.infer<typeof purchaseLot>;

@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ScanBarcode, CalendarCheck, Pencil } from 'lucide-react';
+import { ScanBarcode, CalendarCheck, CalendarDays, Pencil } from 'lucide-react';
 import { Dialog, Field, Form, api, quantity, type UI } from './common';
 import { type PurchaseLot } from '@/lib/model';
 import { type CheckoutReport } from '@/lib/expiry-plan';
@@ -110,7 +110,7 @@ function Capture({ found }: { found: (code: ScannedCode) => void }) {
         </button>
       </form>
       {error && <p role="status">{error}</p>}
-      <button onClick={() => found({ barcode: '', expires: null, dateKind: 'DLC' })}>
+      <button onClick={() => found({ barcode: '', expires: null, dateKind: null })}>
         Choisir un article sans code
       </button>
     </>
@@ -157,6 +157,12 @@ type EditorProps = {
   existing?: PurchaseLot;
   onSave: () => void;
 };
+
+function packageDate(kind: PurchaseLot['dateKind'], date: string) {
+  const text = labelDate(date);
+  return kind ? kind + ' ' + text : text;
+}
+
 function LotEditor({ ui, code, rows, existing, onSave }: EditorProps) {
   const [id] = useState(() => existing?.id ?? crypto.randomUUID());
   const known = ui.s.lots.find((l) => code.barcode && l.barcode === code.barcode);
@@ -314,10 +320,21 @@ function LotEditor({ ui, code, rows, existing, onSave }: EditorProps) {
         )}
         <div className="scan-dates">
           <Field label="Date de l’emballage">
-            <input type="date" value={expires} onChange={(e) => setExpires(e.target.value)} />
+            <span className="scan-date-control">
+              <input type="date" value={expires} onChange={(e) => setExpires(e.target.value)} />
+              {!expires && (
+                <span className="scan-date-hint" aria-hidden="true">
+                  Choisir une date <CalendarDays size={18} />
+                </span>
+              )}
+            </span>
           </Field>
           <Field label="Mention sur l’emballage">
-            <select value={kind} onChange={(e) => setKind(e.target.value as typeof kind)}>
+            <select
+              value={kind ?? ''}
+              onChange={(e) => setKind((e.target.value || null) as typeof kind)}
+            >
+              <option value="">Non définie</option>
               <option value="DLC">À consommer jusqu’au</option>
               <option value="DDM">De préférence avant</option>
             </select>
@@ -405,7 +422,7 @@ export function ShoppingScan({ ui }: { ui: UI }) {
                 <strong>{l.product}</strong>
                 <small>
                   {l.name} · {quantity(l.quantity)} {l.unit} ·{' '}
-                  {l.expires ? l.dateKind + ' ' + labelDate(l.expires) : 'Sans date'}
+                  {l.expires ? packageDate(l.dateKind, l.expires) : 'Sans date'}
                 </small>
               </div>
               {active && !Object.keys(l.used ?? {}).length && (
@@ -437,7 +454,7 @@ export function ShoppingScan({ ui }: { ui: UI }) {
               <p>Quantités non couvertes par les repas avant la date indiquée</p>
               {report.reminders.map((r, i) => (
                 <small key={i}>
-                  {r.product} · {quantity(r.quantity)} {r.unit} · {r.kind} {labelDate(r.date)}
+                  {r.product} · {quantity(r.quantity)} {r.unit} · {packageDate(r.kind, r.date)}
                 </small>
               ))}
             </>

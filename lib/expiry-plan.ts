@@ -86,7 +86,7 @@ export type CheckoutReport = {
     quantity: number;
     unit: string;
     date: string;
-    kind: 'DLC' | 'DDM';
+    kind: PurchaseLot['dateKind'];
   }[];
 };
 export function expiryPlan(s: State, week: string, asOf: string) {

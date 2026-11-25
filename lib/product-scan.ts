@@ -1,7 +1,7 @@
 import { date, type PurchaseLot } from './model';
 import { fold, groceryName } from './grocery-names';
 
-export type ScannedCode = { barcode: string; expires: string | null; dateKind: 'DLC' | 'DDM' };
+export type ScannedCode = Pick<PurchaseLot, 'barcode' | 'expires' | 'dateKind'>;
 export type ProductInfo = { name: string; quantity: number | null; unit: string };
 const gtin = /^(?:\d{8}|\d{12,14})$/;
 function validCode(code: string) {
@@ -52,8 +52,8 @@ export function readProductCode(value: string): ScannedCode | null {
     code = fields.get('01') ?? '';
   }
   if (!validCode(code)) return null;
-  const dateKind = fields.has('17') ? 'DLC' : fields.has('15') ? 'DDM' : 'DLC';
-  const label = fields.get(dateKind === 'DLC' ? '17' : '15');
+  const dateKind = fields.has('17') ? 'DLC' : fields.has('15') ? 'DDM' : null;
+  const label = fields.get('17') ?? fields.get('15');
   let expires: string | null = null;
   if (label && /^\d{6}$/.test(label)) {
     const candidate = '20' + label.slice(0, 2) + '-' + label.slice(2, 4) + '-' + label.slice(4);

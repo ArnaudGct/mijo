@@ -187,6 +187,7 @@ label {
   display: grid;
   grid-template-columns: 228px minmax(0, 1fr);
   min-height: 100vh;
+  padding-inline: env(safe-area-inset-left, 0px) env(safe-area-inset-right, 0px);
 }
 .app-shell > aside {
   position: sticky;
@@ -721,7 +722,7 @@ label {
   gap: 4px;
   align-items: stretch;
 }
-.field > span {
+.field > span:first-child {
   font-size: 12px;
   font-weight: 650;
   color: #52604e;
@@ -1070,6 +1071,7 @@ html {
 @media (max-width: 760px) {
   html {
     scrollbar-gutter: auto;
+    --nav-safe-bottom: max(16px, env(safe-area-inset-bottom, 0px));
   }
   .app-shell {
     display: block;
@@ -1079,7 +1081,7 @@ html {
     height: auto;
     border: 0;
     background: var(--paper);
-    padding: 16px 16px 0;
+    padding: calc(16px + env(safe-area-inset-top, 0px)) 16px 0;
   }
   .brand {
     font-size: 24px;
@@ -1090,7 +1092,8 @@ html {
     bottom: 0;
     inset-inline: 0;
     margin: 0;
-    padding: 4px 2px max(6px, env(safe-area-inset-bottom));
+    padding: 6px max(2px, env(safe-area-inset-right, 0px)) calc(10px + var(--nav-safe-bottom))
+      max(2px, env(safe-area-inset-left, 0px));
     background: #f7f8f0f7;
     border-top: 1px solid var(--line);
     flex-direction: row;
@@ -1108,8 +1111,8 @@ html {
   }
   .side-end {
     position: absolute;
-    right: 13px;
-    top: 17px;
+    right: calc(13px + env(safe-area-inset-right, 0px));
+    top: calc(17px + env(safe-area-inset-top, 0px));
     margin: 0;
     padding: 0;
     border: 0;
@@ -1118,7 +1121,7 @@ html {
     display: none;
   }
   .workspace {
-    padding: 0 16px 100px;
+    padding: 0 16px calc(100px + var(--nav-safe-bottom));
   }
   .topline {
     min-height: 38px;
@@ -1296,7 +1299,7 @@ html {
     min-width: 55%;
   }
   .toast {
-    bottom: 78px;
+    bottom: calc(78px + var(--nav-safe-bottom));
     font-size: 13px;
   }
   .login {
@@ -2453,6 +2456,68 @@ html {
 .scan-result a {
   display: inline-block;
   margin-top: 0.55rem;
+}
+
+.scan-shopping .dialog-body {
+  --scan-gap: 16px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--scan-gap);
+}
+.scan-shopping .dialog-body > * {
+  margin-block: 0;
+}
+.scan-shopping .editor {
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--scan-gap);
+}
+.scan-date-control {
+  position: relative;
+  display: grid;
+  min-width: 0;
+}
+.scan-date-hint {
+  position: absolute;
+  inset: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-inline: 11px;
+  border-radius: 7px;
+  color: var(--muted);
+  background: white;
+  pointer-events: none;
+}
+.scan-date-control:focus-within .scan-date-hint {
+  visibility: hidden;
+}
+@media (max-width: 760px) {
+  .scan-shopping .scan-code,
+  .scan-shopping .scan-measure,
+  .scan-shopping .scan-dates {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--scan-gap);
+  }
+  .scan-shopping .dialog-body :is(input, select) {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    height: 48px;
+    font-size: 16px;
+  }
+  .scan-date-hint {
+    font-size: 16px;
+  }
+  .scan-shopping .dialog-body button:not(.icon) {
+    width: 100%;
+    min-height: 48px;
+  }
+  .scan-shopping .dialog-body .icon {
+    min-width: 44px;
+    min-height: 44px;
+  }
 }
 
 .recipe-price,
