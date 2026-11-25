@@ -29,7 +29,7 @@ export async function syncChecks(input: unknown) {
         id: saved?.id ?? crypto.randomUUID(),
         week: e.week,
         key: r.key,
-        name: r.name,
+        name: r.sourceName,
         quantity: saved?.quantity ?? null,
         unit: r.unit,
         category: r.category,
@@ -41,7 +41,8 @@ export async function syncChecks(input: unknown) {
       await put(tx, 'items', row);
       s.items = s.items.filter((i) => i.id !== row.id).concat(row);
     }
-    if (edits.length) await tx`update preferences set revision=revision+1 where account_id=${accountId()} and id=1`;
+    if (edits.length)
+      await tx`update preferences set revision=revision+1 where account_id=${accountId()} and id=1`;
     return { synced: edits.length };
   });
 }

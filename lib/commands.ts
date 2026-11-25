@@ -16,7 +16,15 @@ import {
   type State,
   type Recipe,
 } from './model';
-import { planned, defaultMeals, batchMeals, uid, type PlanVariation } from './planner';
+import {
+  planned,
+  defaultMeals,
+  batchMeals,
+  planDiets,
+  planStrategies,
+  uid,
+  type PlanVariation,
+} from './planner';
 import { addDays, inWeek, monday, today } from './dates';
 import { sourceUrl } from './source-url';
 import { cookedLots, expiryPlan, type CheckoutReport } from './expiry-plan';
@@ -25,6 +33,7 @@ import { clean } from './ingredients';
 import { morningRoutine, pantryReading } from './breakfast-model';
 import { shoppingAisles } from './aisles';
 import { fold, groceryName } from './grocery-names';
+import { needs } from './shopping';
 export class UserError extends Error {
   constructor(
     message: string,
@@ -98,7 +107,14 @@ export const input = z.discriminatedUnion('action', [
     action: z.literal('fillWeek'),
     week: date,
     optimize: z.boolean().optional(),
-    variation: z.object({ seed: id, avoid: z.array(id).max(32) }).optional(),
+    variation: z
+      .object({
+        seed: id,
+        avoid: z.array(id).max(32),
+        diet: z.enum(planDiets).optional(),
+        strategy: z.enum(planStrategies).optional(),
+      })
+      .optional(),
     previewRevision: z.number().int().optional(),
   }),
   z.object({ action: z.literal('clearWeek'), week: date, previewRevision: z.number().int() }),
@@ -120,7 +136,28 @@ export const input = z.discriminatedUnion('action', [
   z.object({ action: z.literal('finishShopping'), week: date }),
   z.object({ action: z.literal('stock'), data: inventory }),
   z.object({ action: z.literal('price'), data: offer }),
-  z.object({ action: z.literal('item'), data: item }),
+  z.object({ action: z.literal('item'), data: item.omit({ listEdit: true }) }),
+  z.object({
+    action: z.literal('shoppingLine'),
+    week: date,
+    source: item.shape.name,
+    edit: z
+      .object({
+        name: item.shape.name,
+        category: item.shape.category,
+        measures: z
+          .array(
+            z.object({
+              key: item.shape.key,
+              quantity: item.shape.quantity,
+              unit: item.shape.unit.trim(),
+            }),
+          )
+          .min(1)
+          .max(300),
+      })
+      .nullable(),
+  }),
   z.object({
     action: z.literal('remove'),
     table: z.enum(['stock', 'items', 'prices', 'sessions']),
@@ -154,6 +191,12 @@ export async function execute(tx: Tx, s: State, c: z.output<typeof input>) {
   const del = async (t: Table, id: string) => {
     await tx`delete from ${tx(t)} where account_id=${accountId()} and id=${id}`;
   };
+  async function shoppingCategory(value: string, remember: boolean) {
+    const known = shoppingAisles(s.prefs.customAisles).find((name) => fold(name) === fold(value));
+    if (remember && !known)
+      await tx`update preferences set data=${tx.json({ ...s.prefs, customAisles: [...s.prefs.customAisles, value] })} where account_id=${accountId()} and id=1`;
+    return known ?? value;
+  }
   const free = (m: State['meals'][number]) =>
     requireThat(
       !s.meals.some((x) => x.id !== m.id && x.day === m.day && x.slot === m.slot),
@@ -608,14 +651,101 @@ export async function execute(tx: Tx, s: State, c: z.output<typeof input>) {
       break;
     case 'item': {
       const existing = s.items.find((x) => x.week === c.data.week && x.key === c.data.key);
-      const known = shoppingAisles(s.prefs.customAisles).find(
-        (name) => fold(name) === fold(c.data.category),
+      const category = await shoppingCategory(c.data.category, c.data.manual);
+      const alias =
+        c.data.manual &&
+        s.items.find(
+          (i) =>
+            i.week === c.data.week &&
+            i.listEdit?.displayName &&
+            fold(i.listEdit.displayName) === fold(c.data.name),
+        );
+      await put(tx, 'items', {
+        ...c.data,
+        name: alias ? alias.name : c.data.name,
+        category,
+        id: existing?.id ?? c.data.id,
+      });
+      break;
+    }
+    case 'shoppingLine': {
+      const source = fold(c.source);
+      const all = needs(s, c.week).rows;
+      const rows = all.filter((r) => fold(r.sourceName) === source);
+      requireThat(rows.length, 'Cet article ne figure plus sur la liste.');
+      const related = s.items.filter(
+        (i) => i.week === c.week && fold(groceryName(i.name)) === source,
       );
-      const category = known ?? c.data.category;
-      if (c.data.manual && !known) {
-        await tx`update preferences set data=${tx.json({ ...s.prefs, customAisles: [...s.prefs.customAisles, category] })} where account_id=${accountId()} and id=1`;
+      const marker = related.find((i) => i.listEdit);
+      const base = {
+        week: c.week,
+        name: rows[0].sourceName,
+        checked: false,
+        bag: null,
+        unit: '',
+        quantity: null,
+        category: rows[0].category,
+      };
+      const metadata = { ...base, id: marker?.id ?? uid(), key: 'liste:' + source, manual: false };
+      const edit = c.edit;
+      if (!edit) {
+        for (const i of related) if (!i.listEdit) await del('items', i.id);
+        if (rows.some((r) => !r.manual) || marker?.listEdit?.hideGenerated)
+          await put(tx, 'items', { ...metadata, listEdit: { hideGenerated: true } });
+        else if (marker) await del('items', marker.id);
+        break;
       }
-      await put(tx, 'items', { ...c.data, category, id: existing?.id ?? c.data.id });
+      const measures = new Map(edit.measures.map((m) => [m.key, m]));
+      requireThat(
+        !all.some(
+          (r) =>
+            fold(r.sourceName) !== source &&
+            (fold(r.name) === fold(edit.name) ||
+              fold(r.sourceName) === fold(groceryName(edit.name))),
+        ),
+        'Un autre article porte déjà ce nom dans la liste.',
+      );
+      requireThat(
+        measures.size === rows.length && rows.every((r) => measures.has(r.key)),
+        'Les quantités ont changé. Rouvrez cet article.',
+      );
+      const category = await shoppingCategory(edit.category, true);
+      const changed = rows.some((r) => {
+        const m = measures.get(r.key)!;
+        return m.unit !== r.unit || m.quantity !== (r.unknown ? null : r.quantity);
+      });
+      if (changed) {
+        for (const i of related) if (i.manual) await del('items', i.id);
+        for (const r of rows) {
+          const m = measures.get(r.key)!;
+          requireThat(m.unit || m.quantity === null, 'Précisez une unité pour cette quantité.');
+          const amounts = [m.quantity];
+          // An unknown total can still contain a known contribution from another recipe.
+          if (r.unknown && r.quantity > 0 && m.quantity === null && r.unit === m.unit)
+            amounts.push(r.quantity);
+          for (const quantity of amounts) {
+            const id = uid();
+            await put(tx, 'items', {
+              ...base,
+              id,
+              key: 'manuel:' + id,
+              manual: true,
+              checked: r.checked,
+              quantity,
+              unit: m.unit,
+              category,
+            });
+          }
+        }
+      }
+      await put(tx, 'items', {
+        ...metadata,
+        listEdit: {
+          hideGenerated: changed || !!marker?.listEdit?.hideGenerated,
+          displayName: edit.name,
+          aisle: category,
+        },
+      });
       break;
     }
     case 'remove':
@@ -725,7 +855,8 @@ export async function mutate(revision: number, cmd: unknown) {
         'Cette semaine est passée.',
       );
       const plan = expiryPlan(s, c.week, today());
-      for (const m of plan.meals) await tx`delete from meals where account_id=${accountId()} and id=${m.id}`;
+      for (const m of plan.meals)
+        await tx`delete from meals where account_id=${accountId()} and id=${m.id}`;
       for (const p of plan.preps) await put(tx, 'preps', p);
       for (const m of plan.meals) await put(tx, 'meals', m);
       checkout = plan.report;

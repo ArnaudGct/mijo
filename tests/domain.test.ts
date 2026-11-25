@@ -490,3 +490,45 @@ test('une portion manuelle du lundi devient un duo, annoncé puis enregistré un
     0,
   );
 });
+
+test('les critères de planification combinent régime, coût et tirage reproductible', () => {
+  const s = fixture();
+  s.preps = [];
+  s.meals = [];
+  s.prefs.target = 1;
+  const rice = recipeRow('Riz pilaf', 'Riz | 80 | g');
+  const expensive = recipeRow('Grande poêlée', 'Champignons | 2500 | g');
+  const unknown = recipeRow('Spécialité', 'Produit sans prix | 1 | pièce');
+  const chicken = recipeRow('Poulet rôti', 'Filet de poulet | 250 | g');
+  for (const r of [rice, expensive, unknown, chicken]) r.data.diet = 'Végétarien';
+  s.recipes = [chicken, unknown, expensive, rice];
+  const criteria = { seed: id(), avoid: [], diet: 'vegetarian', strategy: 'economy' } as const;
+  const options = { ...criteria, avoid: [] };
+  assert.equal(suggest(s, day, day, options)[0].id, rice.id);
+  s.prefs.target = 3;
+  const flex = suggest(s, day, day, { ...options, diet: 'flexitarian', strategy: 'random' });
+  assert.equal(flex.filter((r) => r.id === chicken.id).length, 1);
+  assert.deepEqual(
+    flex,
+    suggest(s, day, day, { ...options, diet: 'flexitarian', strategy: 'random' }),
+  );
+  assert.ok(suggest(s, day, day, options).every((r) => r.id !== chicken.id));
+  s.recipes = [rice];
+  s.prefs.target = 7;
+  const seven = weekPlan(s, day, day, true, true, options);
+  assert.equal(seven.meals.filter((m) => m.slot === 'soir').length, 7);
+  s.recipes = [chicken];
+  assert.equal(suggest(s, day, day, options).length, 0);
+});
+
+test('le mode ingrédients en commun privilégie le produit frais déjà prévu', () => {
+  const s = fixture();
+  const shared = recipeRow('Poêlée du mardi', 'Champignons | 220 | g');
+  const other = recipeRow('Carottes rôties', 'Carotte | 100 | g');
+  s.recipes = [shared, other];
+  s.preps = s.preps.slice(0, 1);
+  s.meals = defaultMeals(s.preps[0], true);
+  s.prefs.target = 2;
+  const result = suggest(s, day, day, { seed: id(), avoid: [], strategy: 'shared' });
+  assert.equal(result[0].id, shared.id);
+});

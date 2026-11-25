@@ -37,7 +37,6 @@ const nav = [
   { p: 'semaine', n: 'Ma semaine', i: CalendarDays },
   { p: 'courses', n: 'Courses', i: ShoppingBasket },
   { p: 'cuisiner', n: 'Cuisiner', i: ChefHat },
-  { p: 'parametres', n: 'Paramètres', i: Settings },
 ];
 export function Workspace({
   account,
@@ -137,14 +136,13 @@ export function Workspace({
     },
     close: () => setDialog(null),
     notify: setNotice,
-    run: async (cmd, msg = 'Enregistré', onCheckout) => {
+    run: async (cmd, msg = 'Enregistré') => {
       if (lock.current) return false;
       lock.current = true;
       setBusy(true);
       try {
         const result = await api('command', { revision: latest.current.revision, command: cmd });
         await reload();
-        if (result.checkout) onCheckout?.(result.checkout);
         setNotice(
           result.addedMeals === undefined
             ? msg
@@ -168,7 +166,7 @@ export function Workspace({
     },
   };
   const weekLink = (p: string) => '/' + p + '?week=' + w;
-  const current = nav.find((n) => n.p === view);
+  const current = view === 'parametres' ? { n: 'Paramètres' } : nav.find((n) => n.p === view);
   if (!current) return children;
   return (
     <div className="app-shell" data-notebook={account.id} inert={!interactive}>
@@ -195,6 +193,15 @@ export function Workspace({
             <b title={account.email}>{account.email}</b>
             <small>Carnet personnel</small>
           </div>
+          <Link
+            className="icon"
+            href={weekLink('parametres')}
+            aria-label="Paramètres"
+            title="Paramètres"
+            aria-current={view === 'parametres' ? 'page' : undefined}
+          >
+            <Settings size={18} />
+          </Link>
           <button
             className="icon"
             aria-label="Se déconnecter"

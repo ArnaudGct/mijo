@@ -1,10 +1,8 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
-import { ScanBarcode, CalendarCheck, CalendarDays, Pencil } from 'lucide-react';
+import { ScanBarcode, CalendarDays, Pencil } from 'lucide-react';
 import { Dialog, Field, Form, api, quantity, type UI } from './common';
 import { type PurchaseLot } from '@/lib/model';
-import { type CheckoutReport } from '@/lib/expiry-plan';
 import { labelDate, money, monday, today } from '@/lib/dates';
 import { needs, type Need } from '@/lib/shopping';
 import { groceryName } from '@/lib/grocery-names';
@@ -16,11 +14,13 @@ import {
   type ScannedCode,
 } from '@/lib/product-scan';
 
-function Camera({ detected }: { detected: (text: string) => boolean }) {
+function Camera({ detected, previous }: { detected: (text: string) => boolean; previous: string }) {
   const video = useRef<HTMLVideoElement>(null);
   const [error, setError] = useState('');
   useEffect(() => {
     let closed = false;
+    let blocked = previous;
+    let clearSince = 0;
     let controls: { stop(): void } | undefined;
     let stream: MediaStream | undefined;
     async function start() {
@@ -43,7 +43,16 @@ function Camera({ detected }: { detected: (text: string) => boolean }) {
           stream,
           video.current,
           (result, _, reader) => {
-            if (!closed && result && detected(result.getText())) reader.stop();
+            if (closed) return;
+            if (!result) {
+              clearSince ||= performance.now();
+              if (performance.now() - clearSince >= 450) blocked = '';
+              return;
+            }
+            clearSince = 0;
+            const raw = result.getText();
+            if (blocked && readProductCode(raw)?.barcode === blocked) return;
+            if (detected(raw)) reader.stop();
           },
         );
         if (closed) controls.stop();
@@ -63,7 +72,7 @@ function Camera({ detected }: { detected: (text: string) => boolean }) {
       controls?.stop();
       stream?.getTracks().forEach((t) => t.stop());
     };
-  }, [detected]);
+  }, [detected, previous]);
   return error ? (
     <p role="status">{error}</p>
   ) : (
@@ -75,7 +84,7 @@ function Camera({ detected }: { detected: (text: string) => boolean }) {
   );
 }
 
-function Capture({ found }: { found: (code: ScannedCode) => void }) {
+function Capture({ found, previous }: { found: (code: ScannedCode) => void; previous: string }) {
   const [raw, setRaw] = useState('');
   const [error, setError] = useState('');
   const callback = useRef(found);
@@ -88,7 +97,7 @@ function Capture({ found }: { found: (code: ScannedCode) => void }) {
   });
   return (
     <>
-      <Camera detected={detect} />
+      <Camera detected={detect} previous={previous} />
       <form
         className="scan-code"
         onSubmit={(e) => {
@@ -110,6 +119,7 @@ function Capture({ found }: { found: (code: ScannedCode) => void }) {
         </button>
       </form>
       {error && <p role="status">{error}</p>}
+      {previous && <button onClick={() => detect(previous)}>Reprendre le même produit</button>}
       <button onClick={() => found({ barcode: '', expires: null, dateKind: null })}>
         Choisir un article sans code
       </button>
@@ -156,6 +166,7 @@ type EditorProps = {
   rows: Need[];
   existing?: PurchaseLot;
   onSave: () => void;
+  onBack?: () => void;
 };
 
 function packageDate(kind: PurchaseLot['dateKind'], date: string) {
@@ -163,12 +174,12 @@ function packageDate(kind: PurchaseLot['dateKind'], date: string) {
   return kind ? kind + ' ' + text : text;
 }
 
-function LotEditor({ ui, code, rows, existing, onSave }: EditorProps) {
+function LotEditor({ ui, code, rows, existing, onSave, onBack }: EditorProps) {
   const [id] = useState(() => existing?.id ?? crypto.randomUUID());
   const known = ui.s.lots.find((l) => code.barcode && l.barcode === code.barcode);
   const initial = existing ?? known;
   const initialLine = existing
-    ? rows.find((r) => r.name === existing.name && (r.unit || 'pièce') === existing.unit)
+    ? rows.find((r) => r.sourceName === existing.name && (r.unit || 'pièce') === existing.unit)
     : suggestedLine(rows, code.barcode, initial?.product ?? '', ui.s.lots);
   const [selection, setSelection] = useState(initialLine?.key ?? (existing ? 'extra' : ''));
   const [name, setName] = useState(existing?.name ?? '');
@@ -182,6 +193,7 @@ function LotEditor({ ui, code, rows, existing, onSave }: EditorProps) {
   const [kind, setKind] = useState(code.dateKind);
   const [status, setStatus] = useState('');
   const [saveError, setSaveError] = useState('');
+  const [saving, setSaving] = useState(false);
   const edited = useRef(false);
   const [lookup] = useState(() => ({ rows, lots: ui.s.lots }));
   useEffect(() => {
@@ -239,7 +251,8 @@ function LotEditor({ ui, code, rows, existing, onSave }: EditorProps) {
         button={existing ? 'Enregistrer les modifications' : 'Ajouter cet emballage'}
         disabled={!selection}
         onSave={async () => {
-          const label = line?.name || name.trim();
+          setSaving(true);
+          const label = line?.sourceName || name.trim();
           const [q, u] = normalize(Number(amount.replace(',', '.')), targetUnit);
           if (
             await ui.run(
@@ -249,7 +262,7 @@ function LotEditor({ ui, code, rows, existing, onSave }: EditorProps) {
                   id,
                   week: ui.w,
                   barcode: code.barcode,
-                  product: product || label,
+                  product: product || line?.name || label,
                   name: groceryName(label),
                   quantity: q,
                   unit: u,
@@ -261,10 +274,12 @@ function LotEditor({ ui, code, rows, existing, onSave }: EditorProps) {
             )
           )
             onSave();
-          else
+          else {
+            setSaving(false);
             setSaveError(
               'Enregistrement non confirmé. Vérifiez la connexion, la quantité et la semaine avant de réessayer.',
             );
+          }
         }}
       >
         <Field label="Article de la liste">
@@ -347,6 +362,11 @@ function LotEditor({ ui, code, rows, existing, onSave }: EditorProps) {
         )}
         {saveError && <p role="alert">{saveError}</p>}
       </Form>
+      {onBack && (
+        <button disabled={saving} onClick={onBack}>
+          Retour au scan
+        </button>
+      )}
     </>
   );
 }
@@ -363,12 +383,29 @@ function ScanDialog({
   close: () => void;
 }) {
   const [code, setCode] = useState<ScannedCode | null>(existing ?? null);
+  const [previous, setPrevious] = useState('');
+  const [added, setAdded] = useState(false);
+  function resume(saved: boolean) {
+    setAdded(saved);
+    setPrevious(code?.barcode ?? '');
+    setCode(null);
+  }
   return (
     <Dialog title={existing ? 'Modifier l’emballage' : 'Scanner un produit'} close={close}>
       {code ? (
-        <LotEditor ui={ui} code={code} rows={rows} existing={existing} onSave={close} />
+        <LotEditor
+          ui={ui}
+          code={code}
+          rows={rows}
+          existing={existing}
+          onSave={existing ? close : () => resume(true)}
+          onBack={existing ? undefined : () => resume(false)}
+        />
       ) : (
-        <Capture found={setCode} />
+        <>
+          {added && <p role="status">Emballage ajouté. Scannez le produit suivant.</p>}
+          <Capture found={setCode} previous={previous} />
+        </>
       )}
       {existing && (
         <button
@@ -386,7 +423,6 @@ function ScanDialog({
 }
 export function ShoppingScan({ ui }: { ui: UI }) {
   const [editing, setEditing] = useState<PurchaseLot | 'new' | null>(null);
-  const [report, setReport] = useState<CheckoutReport | null>(null);
   const lots = ui.s.lots.filter((l) => l.week === ui.w);
   const active = ui.w >= monday(today());
   if (!active && !lots.length) return null;
@@ -394,22 +430,8 @@ export function ShoppingScan({ ui }: { ui: UI }) {
     <section className="scan-shopping" aria-label="Achats en magasin">
       {active && (
         <div className="actions">
-          <button
-            className="primary"
-            onClick={() => {
-              setReport(null);
-              setEditing('new');
-            }}
-          >
+          <button className="primary" onClick={() => setEditing('new')}>
             <ScanBarcode size={18} /> Scanner un produit
-          </button>
-          <button
-            disabled={!lots.length}
-            onClick={() =>
-              void ui.run({ action: 'finishShopping', week: ui.w }, 'Courses terminées.', setReport)
-            }
-          >
-            <CalendarCheck size={17} /> Terminer les courses
           </button>
         </div>
       )}
@@ -429,10 +451,7 @@ export function ShoppingScan({ ui }: { ui: UI }) {
                 <button
                   className="icon"
                   aria-label={'Modifier ' + l.product}
-                  onClick={() => {
-                    setReport(null);
-                    setEditing(l);
-                  }}
+                  onClick={() => setEditing(l)}
                 >
                   <Pencil size={16} />
                 </button>
@@ -440,27 +459,6 @@ export function ShoppingScan({ ui }: { ui: UI }) {
             </div>
           ))}
         </details>
-      )}
-      {report && (
-        <div className="scan-result" role="status">
-          <strong>{report.moves.length ? 'Planning réorganisé' : 'Planning conservé'}</strong>
-          {report.moves.map((m) => (
-            <small key={m.from}>
-              {m.title} · {labelDate(m.from)} → {labelDate(m.to)}
-            </small>
-          ))}
-          {report.reminders.length > 0 && (
-            <>
-              <p>Quantités non couvertes par les repas avant la date indiquée</p>
-              {report.reminders.map((r, i) => (
-                <small key={i}>
-                  {r.product} · {quantity(r.quantity)} {r.unit} · {packageDate(r.kind, r.date)}
-                </small>
-              ))}
-            </>
-          )}
-          <Link href={'/semaine?week=' + ui.w}>Voir ma semaine →</Link>
-        </div>
       )}
       {editing && (
         <ScanDialog

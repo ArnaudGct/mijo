@@ -158,6 +158,13 @@ export const purchaseLot = z.object({
 });
 export type PurchaseLot = z.infer<typeof purchaseLot>;
 export const item = z.object({
+  listEdit: z
+    .object({
+      hideGenerated: z.boolean(),
+      displayName: label.optional(),
+      aisle: aisleName.optional(),
+    })
+    .optional(),
   scanBaseline: z.number().nonnegative().optional(),
   id,
   week: date,

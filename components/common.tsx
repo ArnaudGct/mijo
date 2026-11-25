@@ -12,23 +12,22 @@ import {
 import { useSearchParams } from 'next/navigation';
 import { X, Leaf, Sprout, CalendarDays, ChevronLeft, ChevronRight, BookOpen } from 'lucide-react';
 import type { State } from '@/lib/model';
-import type { CheckoutReport } from '@/lib/expiry-plan';
 import type { Command } from '@/lib/commands';
 import { addDays, labelDate, monday } from '@/lib/dates';
 export const Feedback = createContext('');
 const subscribeToHydration = () => () => {};
 export const useInteractive = () =>
-  useSyncExternalStore(subscribeToHydration, () => true, () => false);
+  useSyncExternalStore(
+    subscribeToHydration,
+    () => true,
+    () => false,
+  );
 export type UI = {
   accountId: string;
   s: State;
   w: string;
   setW: (v: string) => void;
-  run: (
-    c: Command,
-    msg?: string,
-    onCheckout?: (report: CheckoutReport) => void,
-  ) => Promise<boolean>;
+  run: (c: Command, msg?: string) => Promise<boolean>;
   reload: () => Promise<void>;
   notify: (msg: string) => void;
   open: (v: ReactNode) => void;
@@ -48,10 +47,12 @@ export function Dialog({
   title,
   children,
   close,
+  className,
 }: {
   title: string;
   children: ReactNode;
   close: () => void;
+  className?: string;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const feedback = useContext(Feedback);
@@ -65,6 +66,7 @@ export function Dialog({
   return (
     <dialog
       ref={ref}
+      className={className}
       onCancel={(e) => {
         e.preventDefault();
         close();

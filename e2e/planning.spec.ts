@@ -19,7 +19,7 @@ test('parcours privé sur ordinateur et liste emportée sur mobile', async ({
   await page.getByRole('navigation').getByText('Recettes', { exact: true }).click();
   await expect(page).toHaveURL(/recettes/);
   expect(await sidebar!.evaluate((el) => el === document.querySelector('aside'))).toBe(true);
-  await page.getByRole('button', { name: 'Ajouter', exact: true }).click();
+  await page.getByRole('button', { name: 'Ajouter une recette', exact: true }).click();
   const dialog = page.getByRole('dialog');
   await dialog.getByLabel('Titre', { exact: true }).fill('Tarte aux poireaux E2E');
   await dialog.getByRole('button', { name: '+ Ingrédient', exact: true }).click();
@@ -45,7 +45,13 @@ test('parcours privé sur ordinateur et liste emportée sur mobile', async ({
   await expect(page.locator(`[data-mealslot="${tuesday}soir"] .scheduled`)).toContainText(
     'Tarte aux poireaux',
   );
-  await page.getByRole('button', { name: 'Planifier ma semaine' }).click();
+  await page.getByRole('button', { name: 'Planifier', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Planifier ma semaine' }).click();
+  await dialog.getByLabel('Priorité').selectOption('economy');
+  await expect(dialog.getByText(/Panier estimé de la semaine/)).toBeVisible();
+  await dialog.getByLabel('Alimentation').selectOption('vegetarian');
+  await expect(dialog.getByText(/Aucune recette végétarienne complète/)).toBeVisible();
+  await dialog.getByLabel('Alimentation').selectOption('preferences');
   // The two existing portions were deliberately moved to two dinners.
   await expect(dialog.getByText('Aucun changement à proposer pour cette semaine.')).toBeVisible();
   await dialog.getByRole('button', { name: 'Fermer' }).click();
@@ -123,98 +129,104 @@ test('parcours privé sur ordinateur et liste emportée sur mobile', async ({
   expect(errors).toEqual([]);
 });
 const testImport = test.extend({ serviceWorkers: 'block' });
-testImport('import corrigé, édition, archives, restauration et suppression sur téléphone', async ({
-  page,
-}) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/recettes');
-  await page.getByLabel('Adresse e-mail').fill('owner@mijo.test');
-  await page.getByLabel('Mot de passe', { exact: true }).fill(process.env.TABLE_TEST_PASSWORD!);
-  await page.getByRole('button', { name: 'Ouvrir mon carnet' }).click();
-  const dialog = page.getByRole('dialog');
-  await page.getByRole('button', { name: 'Importer une URL' }).click();
-  // L’extraction réseau réelle est contrôlée séparément par check-sources.ts.
-  await page.route('**/api/url', (route) =>
-    route.fulfill({
-      json: {
-        data: {
-          title: 'Soupe de vérification',
-          description: '',
-          image: '',
-          source: 'Fixture E2E',
-          url: 'https://example.org/test-soupe',
-          rights: 'Fixture',
-          base: 2,
-          prep: null,
-          cook: null,
-          total: null,
-          difficulty: '',
-          tags: [],
-          diet: '',
-          cuisine: '',
-          batch: false,
-          equipment: [],
-          ingredients: [
-            {
-              name: 'Poireau',
-              raw: '1 poireau',
-              quantity: 1,
-              unit: 'pièce',
-              category: 'Fruits et légumes',
-            },
-          ],
-          steps: [{ text: 'Cuire le poireau.', image: '' }],
-          nutrition: '',
-          notes: '',
-          rating: 0,
-          favorite: false,
-          verified: false,
+testImport(
+  'import corrigé, édition, archives, restauration et suppression sur téléphone',
+  async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/recettes');
+    await page.getByLabel('Adresse e-mail').fill('owner@mijo.test');
+    await page.getByLabel('Mot de passe', { exact: true }).fill(process.env.TABLE_TEST_PASSWORD!);
+    await page.getByRole('button', { name: 'Ouvrir mon carnet' }).click();
+    const dialog = page.getByRole('dialog');
+    await page.getByRole('button', { name: 'Ajouter une recette' }).click();
+    // L’extraction réseau réelle est contrôlée séparément par check-sources.ts.
+    await page.route('**/api/url', (route) =>
+      route.fulfill({
+        json: {
+          data: {
+            title: 'Soupe de vérification',
+            description: '',
+            image: '',
+            source: 'Fixture E2E',
+            url: 'https://example.org/test-soupe',
+            rights: 'Fixture',
+            base: 2,
+            prep: null,
+            cook: null,
+            total: null,
+            difficulty: '',
+            tags: [],
+            diet: '',
+            cuisine: '',
+            batch: false,
+            equipment: [],
+            ingredients: [
+              {
+                name: 'Poireau',
+                raw: '1 poireau',
+                quantity: 1,
+                unit: 'pièce',
+                category: 'Fruits et légumes',
+              },
+            ],
+            steps: [{ text: 'Cuire le poireau.', image: '' }],
+            nutrition: '',
+            notes: '',
+            rating: 0,
+            favorite: false,
+            verified: false,
+          },
+          warning: '',
         },
-        warning: '',
-      },
-    }),
-  );
-  await dialog.getByLabel('Adresse de la recette').fill('https://example.org/test-soupe');
-  await dialog.getByRole('button', { name: 'Prévisualiser la recette' }).click();
-  await expect(dialog.getByLabel('Titre', { exact: true })).toHaveValue('Soupe de vérification');
-  await dialog.getByLabel('Titre', { exact: true }).fill('Soupe corrigée E2E');
-  await dialog.getByRole('button', { name: 'Enregistrer' }).click();
-  await expect(dialog).toHaveCount(0);
-  await page.getByLabel('Rechercher une recette').fill('Soupe corrigée E2E');
-  await page.getByRole('button', { name: 'Ouvrir Soupe corrigée E2E' }).click();
-  await dialog.getByRole('button', { name: 'Modifier', exact: true }).click();
-  await dialog.getByLabel('Portions de référence').fill('3');
-  await dialog.getByRole('button', { name: 'Enregistrer' }).click();
-  await expect(dialog).toHaveCount(0);
-  await page.getByRole('button', { name: 'Ouvrir Soupe corrigée E2E' }).click();
-  await expect(dialog.locator('.recipe-price')).toContainText('3 portions');
-  await expect(dialog.getByLabel('Portions pour les ingrédients')).toHaveValue('3');
-  await dialog.getByRole('button', { name: 'Dupliquer' }).click();
-  await dialog.getByRole('button', { name: 'Enregistrer' }).click();
-  await expect(dialog).toHaveCount(0);
-  await page
-    .getByRole('button', { name: 'Ouvrir Soupe corrigée E2E (copie)', exact: true })
-    .click();
-  await dialog.getByRole('button', { name: 'Archiver', exact: true }).click();
-  await page.getByRole('button', { name: 'Archives', exact: true }).click();
-  await page
-    .getByRole('button', { name: 'Ouvrir Soupe corrigée E2E (copie)', exact: true })
-    .click();
-  await dialog.getByRole('button', { name: 'Restaurer', exact: true }).click();
-  await page.getByRole('button', { name: 'Toutes', exact: true }).click();
-  await page
-    .getByRole('button', { name: 'Ouvrir Soupe corrigée E2E (copie)', exact: true })
-    .click();
-  await dialog.getByRole('button', { name: 'Archiver', exact: true }).click();
-  await page.getByRole('button', { name: 'Archives', exact: true }).click();
-  await page
-    .getByRole('button', { name: 'Ouvrir Soupe corrigée E2E (copie)', exact: true })
-    .click();
-  page.once('dialog', (d) => d.accept());
-  await dialog.getByRole('button', { name: 'Supprimer définitivement' }).click();
-  await expect(dialog).toHaveCount(0);
-  await expect(page.getByText('Aucune recette dans cette sélection')).toBeVisible();
-});
+      }),
+    );
+    await dialog.getByLabel('Adresse de la recette').fill('https://example.org/test-soupe');
+    await dialog.getByRole('button', { name: 'Rechercher', exact: true }).click();
+    await expect(dialog.getByLabel('Titre', { exact: true })).toHaveValue('Soupe de vérification');
+    for (const width of [320, 390, 768, 1280]) {
+      await page.setViewportSize({ width, height: 844 });
+      expect(await dialog.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
+    }
+    await page.setViewportSize({ width: 390, height: 844 });
+    await dialog.getByLabel('Titre', { exact: true }).fill('Soupe corrigée E2E');
+    await dialog.getByRole('button', { name: 'Enregistrer' }).click();
+    await expect(dialog).toHaveCount(0);
+    await page.getByLabel('Rechercher une recette').fill('Soupe corrigée E2E');
+    await page.getByRole('button', { name: 'Ouvrir Soupe corrigée E2E' }).click();
+    await dialog.getByRole('button', { name: 'Modifier', exact: true }).click();
+    await dialog.getByLabel('Portions de référence').fill('3');
+    await dialog.getByRole('button', { name: 'Enregistrer' }).click();
+    await expect(dialog).toHaveCount(0);
+    await page.getByRole('button', { name: 'Ouvrir Soupe corrigée E2E' }).click();
+    await expect(dialog.locator('.recipe-price')).toContainText('3 portions');
+    await expect(dialog.getByLabel('Portions pour les ingrédients')).toHaveValue('3');
+    await dialog.getByRole('button', { name: 'Dupliquer' }).click();
+    await dialog.getByRole('button', { name: 'Enregistrer' }).click();
+    await expect(dialog).toHaveCount(0);
+    await page
+      .getByRole('button', { name: 'Ouvrir Soupe corrigée E2E (copie)', exact: true })
+      .click();
+    await dialog.getByRole('button', { name: 'Archiver', exact: true }).click();
+    await page.getByRole('button', { name: 'Archives', exact: true }).click();
+    await page
+      .getByRole('button', { name: 'Ouvrir Soupe corrigée E2E (copie)', exact: true })
+      .click();
+    await dialog.getByRole('button', { name: 'Restaurer', exact: true }).click();
+    await page.getByRole('button', { name: 'Toutes', exact: true }).click();
+    await page
+      .getByRole('button', { name: 'Ouvrir Soupe corrigée E2E (copie)', exact: true })
+      .click();
+    await dialog.getByRole('button', { name: 'Archiver', exact: true }).click();
+    await page.getByRole('button', { name: 'Archives', exact: true }).click();
+    await page
+      .getByRole('button', { name: 'Ouvrir Soupe corrigée E2E (copie)', exact: true })
+      .click();
+    page.once('dialog', (d) => d.accept());
+    await dialog.getByRole('button', { name: 'Supprimer définitivement' }).click();
+    await expect(dialog).toHaveCount(0);
+    await expect(page.getByText('Aucune recette dans cette sélection')).toBeVisible();
+  },
+);
 test('panier estimé, livraison et fusion des variantes sur mobile', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/courses?week=2030-01-07');
@@ -396,7 +408,17 @@ test('articles du quotidien, rayon personnalisé réutilisable, export et coches
   await expect(page.getByRole('status')).toContainText('synchronisées');
   await page.goto('/courses?week=' + shoppingWeek);
   await expect(office.getByRole('checkbox')).toBeChecked();
-  await office.getByRole('button', { name: /Retirer l’ajout/ }).click();
+  await office.getByRole('button', { name: 'Modifier · Recharge de stylo' }).click();
+  await dialog.getByLabel('Nom de l’article').fill('Cartouche bleue');
+  await dialog.getByLabel('Quantité totale').fill('3');
+  await dialog.getByLabel('Unité').fill('boîte');
+  await dialog.getByRole('button', { name: 'Enregistrer' }).click();
+  await expect(dialog).toHaveCount(0);
+  await page.reload();
+  await expect(office).toContainText('3 boîte');
+  await expect(office.getByRole('checkbox')).toBeChecked();
+  await office.getByRole('button', { name: 'Modifier · Cartouche bleue' }).click();
+  await dialog.getByRole('button', { name: 'Retirer de la liste' }).click();
   await expect(office).toHaveCount(0);
   await page.getByRole('button', { name: 'Semaine suivante' }).click();
   await add.click();

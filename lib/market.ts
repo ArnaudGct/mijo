@@ -178,7 +178,7 @@ export function marketBasket(s: State, w: string, asOf?: string) {
   const { rows, incomplete, breakfast } = needs(s, w, asOf);
   const groups = new Map<string, Need[]>();
   for (const r of rows) {
-    const key = fold(r.name);
+    const key = fold(r.sourceName);
     groups.set(key, [...(groups.get(key) ?? []), r]);
   }
   const lines = [...groups.values()]
@@ -254,7 +254,7 @@ export function marketBasket(s: State, w: string, asOf?: string) {
       return {
         name: first.name,
         category: first.category,
-        key: fold(first.name),
+        key: fold(first.sourceName),
         parts,
         buy,
         pantry,

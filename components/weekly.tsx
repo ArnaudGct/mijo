@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, type DragEvent, type PointerEvent } from '
 import { Plus, GripVertical, X } from 'lucide-react';
 import { monday, addDays, labelDate, inWeek } from '@/lib/dates';
 import { type State, type Prep } from '@/lib/model';
-import { AutoPlanButton, ClearWeekButton } from './auto-plan';
+import { ClearWeekButton } from './auto-plan';
 import { storageAlert, weekPreparations } from '@/lib/planner';
 import {
   Dialog,
@@ -265,20 +265,25 @@ export function Planner({ ui }: { ui: UI }) {
         <h1>Ma semaine</h1>
         <WeekNav ui={ui} />
       </header>
-      <div className="toolbar wrap">
+      <div className="section-tools">
         <PageTabs options={weekTabs} active={active} />
         {active !== 'petit-dejeuner' && (
-          <div className="actions">
-            {active === 'planning' && <AutoPlanButton ui={ui} />}
-            {active === 'planning' && <ClearWeekButton ui={ui} />}
+          <div className="week-actions">
             <button
               className="primary"
               onClick={() =>
-                ui.open(<PlanForm ui={ui} initialBatch={active === 'batch-cooking'} />)
+                ui.open(
+                  <PlanForm
+                    ui={ui}
+                    weeklyPlan={active === 'planning'}
+                    initialBatch={active === 'batch-cooking'}
+                  />,
+                )
               }
             >
               <Plus size={16} /> {active === 'batch-cooking' ? 'Préparer un plat' : 'Planifier'}
             </button>
+            {active === 'planning' && <ClearWeekButton ui={ui} />}
           </div>
         )}
       </div>
@@ -393,7 +398,7 @@ function MealPlanning({ ui, batch }: { ui: UI; batch: boolean }) {
         </Empty>
       )}
       <button
-        className="more"
+        className="more mobile-full"
         onClick={() =>
           ui.open(
             <Dialog title="Dupliquer cette semaine" close={ui.close}>

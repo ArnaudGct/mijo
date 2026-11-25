@@ -2,7 +2,8 @@ import { duration, type State, type Prep, type RecipeRow } from './model';
 import { fold, groceryName } from './grocery-names';
 import { sourceUrl } from './source-url';
 import { clean, normalize, rounded, shoppingCategory } from './ingredients';
-import { marketBasket } from './market';
+import { marketBasket, recipeCost } from './market';
+import { recipeDiet } from './recipe-diet';
 import { addDays, inWeek } from './dates';
 
 export const uid = () => crypto.randomUUID();
@@ -45,7 +46,17 @@ function variety(seed: string) {
 }
 type Recipe = RecipeRow['data'];
 type Occasion = { day: string; servings: number; recipeId?: string };
-export type PlanVariation = { seed: string; avoid: string[] };
+export const planStrategies = ['balanced', 'economy', 'shared', 'random'] as const;
+export const planDiets = ['preferences', 'mixed', 'flexitarian', 'vegetarian'] as const;
+export type PlanVariation = {
+  seed: string;
+  avoid: string[];
+  strategy?: (typeof planStrategies)[number];
+  diet?: (typeof planDiets)[number];
+};
+export function permitsMeal(recipe: Recipe, variation?: PlanVariation) {
+  return variation?.diet !== 'vegetarian' || recipeDiet(recipe) === 'Végétarien';
+}
 function groceries(recipe: Recipe) {
   const result = new Map<string, { name: string; weight: number }>();
   for (const i of recipe.ingredients) {
@@ -92,6 +103,7 @@ function recommend(
 ) {
   if (!slots.length) return [];
   const used = [...fixed];
+  const strategy = variation?.strategy ?? 'balanced';
   const proteins = new Map<number, number>();
   const previous = s.preps.filter((p) => p.day < w);
   const options = s.recipes
@@ -101,11 +113,16 @@ function recommend(
         r.data.base &&
         r.data.steps.length &&
         r.data.ingredients.length &&
-        (!s.prefs.diet || clean(r.data.diet).includes(clean(s.prefs.diet))),
+        permitsMeal(r.data, variation) &&
+        ((variation?.diet && variation.diet !== 'preferences') ||
+          !s.prefs.diet ||
+          clean(r.data.diet).includes(clean(s.prefs.diet))),
     )
     .map((r) => ({
       r,
       foods: groceries(r.data),
+      vegetarian: variation?.diet === 'flexitarian' && recipeDiet(r.data) === 'Végétarien',
+      cost: strategy === 'economy' ? recipeCost(r.data) : null,
       family: dishFamily(r.data),
       main: protein(r.data),
       url: sourceUrl(r.data.url),
@@ -138,9 +155,19 @@ function recommend(
     );
     // A small carnet can already contain repeated meals. Offer an alternative
     // to an existing slot even when every eligible recipe has been used.
-    const available = unused.length || !variation || !recipeId ? unused : options;
+    let available =
+      unused.length || !variation || (!recipeId && variation.diet !== 'vegetarian')
+        ? unused
+        : options;
+    if (variation?.diet === 'flexitarian') {
+      // Aim for two vegetarian preparations out of three, including fixed meals.
+      const veg = used.filter((p) => recipeDiet(p.snapshot) === 'Végétarien').length;
+      const preferVeg = veg < Math.round(((used.length + 1) * 2) / 3);
+      const preferred = available.filter((o) => o.vegetarian === preferVeg);
+      if (preferred.length) available = preferred;
+    }
     const candidates = available
-      .map(({ r, foods, family, main }) => {
+      .map(({ r, foods, family, main, cost }) => {
         const history = previous.filter((p) => p.recipeId === r.id);
         let overlap = 0,
           support = 0,
@@ -177,35 +204,91 @@ function recommend(
             Number(previousPreview.has(r.id)) * 2 +
             Number(previousMenu.has(r.id))
           : 0;
-        return { r, score, shared, repeat };
+        const priority =
+          strategy === 'shared'
+            ? counts.size
+              ? overlap
+              : support / Math.max(1, novelty)
+            : strategy === 'random'
+              ? variety(variation!.seed + day + r.id)
+              : 0;
+        const perPortion =
+          cost?.cents != null && cost.portions ? cost.cents / cost.portions : Infinity;
+        return {
+          r,
+          score,
+          shared,
+          repeat,
+          priority,
+          perPortion,
+          avoid: Number(previousPreview.has(r.id)),
+        };
       })
-      .sort((a, b) => a.repeat - b.repeat || b.score - a.score || a.r.id.localeCompare(b.r.id));
+      .sort(
+        (a, b) =>
+          a.avoid - b.avoid ||
+          b.priority - a.priority ||
+          a.repeat - b.repeat ||
+          b.score - a.score ||
+          a.r.id.localeCompare(b.r.id),
+      );
     if (!candidates.length) break;
     // Compare retail packs for promising recipes; stock and the existing basket are already accounted for.
     const basket = marketBasket({ ...s, preps: used }, w);
-    const finalists = (s.prefs.budget === null ? candidates.slice(0, 8) : candidates)
+    const finalists = (
+      s.prefs.budget === null && strategy !== 'economy' ? candidates.slice(0, 8) : candidates
+    )
       .map((c) => {
         const after = marketBasket({ ...s, preps: [...used, planned(c.r, day, servings)] }, w);
         const extra = Math.max(0, after.cash - basket.cash) / 100;
         const unknown = Math.max(0, after.missing - basket.missing);
         const over = s.prefs.budget === null ? 0 : Math.max(0, after.cash - s.prefs.budget) / 300;
-        return { ...c, rank: c.score - Math.min(8, extra * 0.6) - unknown * 2 - over };
+        return {
+          ...c,
+          unknown,
+          extra,
+          rank: c.score - Math.min(8, extra * 0.6) - unknown * 2 - over,
+        };
       })
-      .sort((a, b) => a.repeat - b.repeat || b.rank - a.rank || a.r.id.localeCompare(b.r.id));
+      .sort((a, b) => {
+        if (strategy === 'economy')
+          return (
+            a.unknown - b.unknown ||
+            a.avoid - b.avoid ||
+            a.extra - b.extra ||
+            a.perPortion - b.perPortion ||
+            a.repeat - b.repeat ||
+            b.rank - a.rank ||
+            a.r.id.localeCompare(b.r.id)
+          );
+        return (
+          (strategy !== 'balanced' ? a.avoid - b.avoid || b.priority - a.priority : 0) ||
+          a.repeat - b.repeat ||
+          b.rank - a.rank ||
+          a.r.id.localeCompare(b.r.id)
+        );
+      });
     const { r, shared } = finalists[0];
     results.push({
       id: r.id,
       day,
-      why: shared.length
-        ? 'En commun : ' +
-          shared
-            .sort((a, b) => b.weight - a.weight)
-            .slice(0, 3)
-            .map((x) => x.name)
-            .join(', ')
-        : r.data.favorite
-          ? 'Dans vos favoris'
-          : 'Variété de la semaine',
+      why:
+        strategy === 'economy'
+          ? finalists[0].unknown
+            ? 'Prix partiellement renseignés'
+            : 'Priorité au coût du panier'
+          : strategy === 'random'
+            ? 'Tirage aléatoire'
+            : shared.length
+              ? 'En commun : ' +
+                shared
+                  .sort((a, b) => b.weight - a.weight)
+                  .slice(0, 3)
+                  .map((x) => x.name)
+                  .join(', ')
+              : r.data.favorite
+                ? 'Dans vos favoris'
+                : 'Variété de la semaine',
     });
     used.push(planned(r, day, servings));
     include(r.data);

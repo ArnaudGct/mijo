@@ -7,8 +7,8 @@ import { recipeCost } from '@/lib/market';
 import { AutoPlanButton } from './auto-plan';
 import { difficulties, recipeDiet } from '@/lib/recipe-diet';
 import { importSites } from '@/lib/recipe-sources';
-import { useState } from 'react';
-import { Heart, Clock3, Plus, Link2, CalendarPlus, ArrowRight } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Heart, Clock3, Plus, CalendarPlus, ArrowRight } from 'lucide-react';
 import {
   blankRecipe,
   problems,
@@ -178,6 +178,7 @@ export function PlanForm({
   alternative,
   initialPortions,
   initialBatch,
+  weeklyPlan,
 }: {
   ui: UI;
   id?: string;
@@ -187,6 +188,7 @@ export function PlanForm({
   alternative?: React.ReactNode;
   initialPortions?: number;
   initialBatch?: boolean;
+  weeklyPlan?: boolean;
 }) {
   const [planDay, setPlanDay] = useState(day ?? (inWeek(today(), ui.w) ? today() : ui.w));
   const [planSlot, setPlanSlot] = useState(slot);
@@ -234,7 +236,9 @@ export function PlanForm({
           ? 'Remplacer les repas prévus ?'
           : editing
             ? 'Modifier le repas'
-            : 'Planifier une préparation'
+            : weeklyPlan
+              ? 'Planifier'
+              : 'Planifier une préparation'
       }
       close={() => (pending ? setPending(null) : ui.close())}
     >
@@ -261,6 +265,7 @@ export function PlanForm({
         </div>
       )}
       <div hidden={!!pending}>
+        {weeklyPlan && <AutoPlanButton ui={ui} />}
         {editing && (
           <p>
             {labelDate(editing.day)} · {editing.slot === 'soir' ? 'Dîner' : 'Déjeuner'} ·{' '}
@@ -466,18 +471,12 @@ export function Catalog({ ui }: { ui: UI }) {
     <>
       <header className="page-heading">
         <h1>Mon carnet de recettes</h1>
-        <div className="actions">
-          <AutoPlanButton ui={ui} />
-          <button onClick={() => ui.open(<UrlImport ui={ui} />)}>
-            <Link2 size={16} /> Importer une URL
-          </button>
-          <button className="primary" onClick={() => ui.open(<RecipeEditor ui={ui} />)}>
-            <Plus size={16} /> Ajouter
-          </button>
-        </div>
       </header>
-      <div className="catalog-sections">
+      <div className="section-tools">
         <PageTabs options={catalogTabs} active={section} />
+        <button className="primary" onClick={() => ui.open(<RecipeEditor ui={ui} />)}>
+          <Plus size={17} /> Ajouter une recette
+        </button>
       </div>
       {section === 'suggestions' ? (
         <DiscoveryShelf ui={ui} />
@@ -552,13 +551,21 @@ export function Catalog({ ui }: { ui: UI }) {
 }
 function UrlImport({ ui }: { ui: UI }) {
   const [error, setError] = useState('');
+  const mounted = useRef(false);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
   return (
-    <Dialog title="Importer une recette" close={ui.close}>
+    <section className="recipe-import" aria-label="Importer depuis une URL">
       <Form
-        button="Prévisualiser la recette"
+        button="Rechercher"
         onSave={async (f) => {
           try {
             const v = await api('url', { url: str(f, 'url') });
+            if (!mounted.current) return;
             const existing = ui.s.recipes.find(
               (r) => r.data.url && sourceUrl(r.data.url) === sourceUrl(v.data.url),
             );
@@ -576,6 +583,7 @@ function UrlImport({ ui }: { ui: UI }) {
             ui.open(
               <RecipeEditor
                 ui={ui}
+                key={v.data.url}
                 draft={v.data}
                 warning={
                   v.warning || 'Vérifiez les ingrédients et les portions avant de sauvegarder.'
@@ -588,7 +596,7 @@ function UrlImport({ ui }: { ui: UI }) {
         }}
       >
         <Field label="Adresse de la recette">
-          <input autoFocus name="url" type="url" placeholder="https://…" required />
+          <input name="url" type="url" placeholder="https://…" required />
         </Field>
         <details className="import-sites">
           <summary>Sites compatibles ({importSites.length} vérifiés)</summary>
@@ -608,7 +616,7 @@ function UrlImport({ ui }: { ui: UI }) {
         </details>
         {error && <p role="alert">{error}</p>}
       </Form>
-    </Dialog>
+    </section>
   );
 }
 function ScaledIngredients({ recipe, portions }: { recipe: Recipe; portions: number | null }) {
@@ -791,9 +799,11 @@ export function RecipeEditor({
     [error, setError] = useState('');
   return (
     <Dialog
-      title={row ? 'Modifier la recette' : draft ? 'Vérifier la recette' : 'Nouvelle recette'}
+      className="recipe-editor"
+      title={row ? 'Modifier la recette' : draft ? 'Vérifier la recette' : 'Ajouter une recette'}
       close={ui.close}
     >
+      {!row && !draft && <UrlImport ui={ui} />}
       {warning && <p className="notice">{warning}</p>}
       <Form
         onSave={async (f) => {
@@ -849,7 +859,7 @@ export function RecipeEditor({
         }}
       >
         <Field label="Titre">
-          <input name="title" defaultValue={r.title} required autoFocus maxLength={300} />
+          <input name="title" defaultValue={r.title} required maxLength={300} />
         </Field>
         <Field label="Description">
           <textarea name="description" defaultValue={r.description} />

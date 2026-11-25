@@ -1,5 +1,12 @@
 import { addDays, inWeek, monday } from './dates';
-import { optimizedRecipes, planned, suggest, uid, type PlanVariation } from './planner';
+import {
+  optimizedRecipes,
+  permitsMeal,
+  planned,
+  suggest,
+  uid,
+  type PlanVariation,
+} from './planner';
 import type { Prep, State } from './model';
 
 export function weekPlan(
@@ -62,7 +69,14 @@ export function weekPlan(
         continue;
       const dinner = at(addDays(day, -1), 'soir');
       const p = s.preps.find((p) => p.id === dinner?.prepId);
-      if (!p || p.batchPerMeal || p.day < addDays(day, -2) || p.day > day) continue;
+      if (
+        !p ||
+        !permitsMeal(p.snapshot, variation) ||
+        p.batchPerMeal ||
+        p.day < addDays(day, -2) ||
+        p.day > day
+      )
+        continue;
       const taken = allocated(p);
       if (taken >= p.servings) {
         if (
@@ -84,7 +98,13 @@ export function weekPlan(
         const day = addDays(week, i);
         if (day < from || at(day, 'midi')) continue;
         let p = s.preps
-          .filter((p) => p.day <= day && p.day >= addDays(day, -2) && allocated(p) < p.servings)
+          .filter(
+            (p) =>
+              permitsMeal(p.snapshot, variation) &&
+              p.day <= day &&
+              p.day >= addDays(day, -2) &&
+              allocated(p) < p.servings,
+          )
           .sort((a, b) => a.day.localeCompare(b.day) || a.recipeId.localeCompare(b.recipeId))[0];
         if (!p) {
           const idea = suggest(
@@ -118,5 +138,5 @@ export function weekPlan(
       added: meals.includes(m),
       why: reasons.get(m.prepId!),
     }));
-  return { preps: [...writes.values()], meals, rows };
+  return { preps: [...writes.values()], meals, rows, projected: s };
 }

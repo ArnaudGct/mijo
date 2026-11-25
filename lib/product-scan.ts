@@ -66,7 +66,7 @@ export function readProductCode(value: string): ScannedCode | null {
   };
 }
 
-export function suggestedLine<T extends { name: string; unit: string }>(
+export function suggestedLine<T extends { name: string; sourceName?: string; unit: string }>(
   rows: T[],
   code: string,
   product: string,
@@ -77,7 +77,9 @@ export function suggestedLine<T extends { name: string; unit: string }>(
   );
   const matches = rows.filter((r) =>
     previous.some(
-      (l) => fold(groceryName(l.name)) === fold(r.name) && l.unit === (r.unit || 'pièce'),
+      (l) =>
+        fold(groceryName(l.name)) === fold(r.sourceName ?? r.name) &&
+        l.unit === (r.unit || 'pièce'),
     ),
   );
   if (matches.length === 1) return matches[0];

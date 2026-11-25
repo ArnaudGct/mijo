@@ -4,9 +4,7 @@ import { blankRecipe, type State } from '../lib/model';
 import { parseLine } from '../lib/ingredients';
 import type { Command } from '../lib/commands';
 
-test('caméra mobile, deux emballages, prix daté et déplacement du dîner avec son déjeuner', async ({
-  page,
-}) => {
+test('caméra mobile, scan continu, abandon et achats partiels', async ({ page }) => {
   const week = addDays(monday(today()), 175);
   await page.addInitScript(() => {
     // Optical fixture for EAN-13 3017620422003; exercise the actual video decoder.
@@ -22,7 +20,10 @@ test('caméra mobile, deux emballages, prix daté et déplacement du dîner avec
           c.fillStyle = 'white';
           c.fillRect(0, 0, 640, 360);
           c.fillStyle = 'black';
-          [...bars].forEach((bit, i) => {
+          const pattern = document.documentElement.dataset.nextProduct
+            ? '10100011010100111010111101111010001001011001101010100001010000101000010111010010000101100110101'
+            : bars;
+          [...pattern].forEach((bit, i) => {
             if (bit === '1') c.fillRect(82 + 5 * i, 70, 5, 220);
           });
         };
@@ -82,38 +83,79 @@ test('caméra mobile, deux emballages, prix daté et déplacement du dîner avec
   const dialog = page.getByRole('dialog');
   const check = page.getByLabel('Acheté · Filet de poulet');
   const camera = page.getByRole('button', { name: 'Scanner un produit' });
+  await page.evaluate(() => {
+    delete document.documentElement.dataset.nextProduct;
+  });
   await camera.click();
   await expect(dialog.getByText('Filets de poulet fermier', { exact: true })).toBeVisible();
   await expect(dialog.getByText(/Prix relevé.*Magasin test/)).toBeVisible();
   await expect(dialog.getByLabel('Quantité de cet emballage')).toHaveValue('400');
   await expect(dialog.getByLabel('Mention sur l’emballage')).toHaveValue('');
   await expect(dialog.getByText('Choisir une date', { exact: true })).toBeVisible();
-  for (const width of [320, 390, 430]) {
+  // Exercise the content-box sizing seen with the native date field on iPhone.
+  const nativeSizing = await page.addStyleTag({
+    content: '.scan-date-control input[type=date] { box-sizing: content-box !important; }',
+  });
+  const dateField = dialog.getByLabel('Date de l’emballage');
+  for (const [width, value] of [
+    [320, ''],
+    [390, ''],
+    [390, week],
+    [430, week],
+  ] as const) {
     await page.setViewportSize({ width, height: 844 });
+    await dateField.fill(value);
     const layout = await dialog.evaluate((el) => {
       const rect = (selector: string) => el.querySelector(selector)!.getBoundingClientRect();
       const product = rect('.scan-product');
       const fields = [...el.querySelectorAll('.editor .field')].map((f) =>
         f.getBoundingClientRect(),
       );
-      const inputs = [...el.querySelectorAll('.editor input, .editor select')];
+      const controls = [...el.querySelectorAll('.editor input, .editor select')].map(
+        (input) => input.closest('.scan-date-control') ?? input,
+      );
+      const date = rect('input[type=date]');
+      const frame = rect('.scan-date-control');
+      const mention = rect('.scan-dates select');
       return {
         gaps: fields.map((f, i) => Math.round(f.top - (i ? fields[i - 1] : product).bottom)),
-        heights: inputs.map((input) => input.getBoundingClientRect().height),
-        widths: [...inputs, el.querySelector('button[type=submit]')!].map((control) =>
+        heights: controls.map((control) => control.getBoundingClientRect().height),
+        widths: [...controls, el.querySelector('button[type=submit]')!].map((control) =>
           Math.round(control.getBoundingClientRect().width - product.width),
         ),
+        dateContained:
+          date.left >= frame.left &&
+          date.right <= frame.right &&
+          date.top >= frame.top &&
+          date.bottom <= frame.bottom,
+        dateAligned: frame.left === mention.left && frame.right === mention.right,
         overflow: el.scrollWidth > el.clientWidth,
       };
     });
     expect(layout.overflow).toBe(false);
+    expect(layout.dateContained).toBe(true);
+    expect(layout.dateAligned).toBe(true);
     expect(layout.gaps).toEqual([16, 16, 16, 16]);
     expect(layout.heights).toEqual([48, 48, 48, 48]);
     expect(layout.widths).toEqual([0, 0, 0, 0, 0]);
   }
+  await nativeSizing.evaluate((style) => {
+    style.parentNode?.removeChild(style);
+  });
   await page.setViewportSize({ width: 390, height: 844 });
   await dialog.getByLabel('Date de l’emballage').fill(week);
   await dialog.getByRole('button', { name: 'Ajouter cet emballage' }).click();
+  await expect(dialog.getByText('Emballage ajouté. Scannez le produit suivant.')).toBeVisible();
+  await page.evaluate(() => {
+    document.documentElement.dataset.nextProduct = '1';
+  });
+  await expect(dialog.getByText(/4006381333931/)).toBeVisible();
+  await dialog.getByRole('button', { name: 'Retour au scan' }).click();
+  await dialog.getByRole('button', { name: 'Reprendre le même produit' }).click();
+  await expect(dialog.getByLabel('Article de la liste')).toBeVisible();
+  await dialog.getByRole('button', { name: 'Retour au scan' }).click();
+  await expect(dialog.getByLabel('Numéro du code-barres')).toBeVisible();
+  await dialog.getByRole('button', { name: 'Fermer' }).click();
   await expect(page.getByText(/Reste à acheter 200 g/)).toBeVisible();
   expect((await state()).lots.find((lot) => lot.week === week)).toMatchObject({
     expires: week,
@@ -138,11 +180,16 @@ test('caméra mobile, deux emballages, prix daté et déplacement du dîner avec
   await copy.click();
   await toast.getByRole('button', { name: 'Masquer le message' }).click();
   await expect(toast).toHaveCount(0);
+  await page.evaluate(() => {
+    delete document.documentElement.dataset.nextProduct;
+  });
   await camera.click();
   await expect(dialog.getByText('Filets de poulet fermier', { exact: true })).toBeVisible();
   await dialog.getByLabel('Quantité de cet emballage').fill('200');
   await dialog.getByLabel('Date de l’emballage').fill(addDays(week, 2));
   await dialog.getByRole('button', { name: 'Ajouter cet emballage' }).click();
+  await expect(dialog.getByLabel('Numéro du code-barres')).toBeVisible();
+  await dialog.getByRole('button', { name: 'Fermer' }).click();
   await expect(check).toBeChecked();
   if (await copy.isEnabled()) {
     await copy.click();
@@ -152,15 +199,13 @@ test('caméra mobile, deux emballages, prix daté et déplacement du dîner avec
   }
   await page.reload();
   await expect(page.getByText('Emballages scannés (2)')).toBeVisible();
-  await page.getByRole('button', { name: 'Terminer les courses' }).click();
-  await expect(page.getByText('Planning réorganisé')).toBeVisible();
-  await page.getByRole('link', { name: 'Voir ma semaine' }).click();
-  await expect(page.locator('[data-mealslot="' + week + 'soir"]')).toContainText(
-    'Poulet du marché',
-  );
-  await expect(page.locator('[data-mealslot="' + addDays(week, 1) + 'midi"]')).toContainText(
-    'Poulet du marché',
-  );
+  await expect(page.getByRole('button', { name: 'Terminer les courses' })).toHaveCount(0);
+  const navSettings = page.getByRole('link', { name: 'Paramètres' });
+  await expect(
+    page.getByRole('navigation', { name: 'Navigation principale' }).getByRole('link'),
+  ).toHaveCount(5);
+  await navSettings.click();
+  await expect(page.getByRole('heading', { name: 'Paramètres' })).toBeVisible();
 });
 
 test('une recette pour deux devient quatre repas avec une seule liste de courses', async ({
@@ -224,6 +269,29 @@ test('une recette pour deux devient quatre repas avec une seule liste de courses
   await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
   await page.getByRole('button', { name: 'Copier ce qu’il reste à acheter' }).click();
   expect(await page.evaluate(() => navigator.clipboard.readText())).toContain('Carotte · 500 g');
+  await page.getByRole('button', { name: 'Modifier · Carotte' }).click();
+  await dialog.getByLabel('Nom de l’article').fill('Carottes du marché');
+  await dialog.getByLabel('Quantité totale').fill('0.75');
+  await dialog.getByLabel('Unité').fill('kg');
+  await dialog.getByRole('button', { name: 'Enregistrer' }).click();
+  await expect(dialog).toHaveCount(0);
+  await page.reload();
+  const carrots = page.locator('.grocery').filter({ hasText: 'Carottes du marché' });
+  await expect(carrots).toContainText('750 g');
+  await carrots.getByRole('checkbox').click();
+  await expect(carrots.getByRole('checkbox')).toBeChecked();
+  await carrots.getByRole('button', { name: 'Modifier · Carottes du marché' }).click();
+  await dialog.getByRole('button', { name: 'Retirer de la liste' }).click();
+  await expect(dialog).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByRole('button', { name: /Modifier · Carotte/ })).toHaveCount(0);
+  expect(
+    (await state()).preps.find((p) => p.id === prep.id)?.snapshot.ingredients[0].quantity,
+  ).toBe(250);
+  await page.getByRole('button', { name: 'Ajouter un article' }).click();
+  await dialog.getByLabel('Nom de l’article').fill('Carotte');
+  await dialog.getByRole('button', { name: 'Enregistrer' }).click();
+  await expect(page.locator('.grocery').filter({ hasText: 'Carotte' })).toContainText('1 pièce');
   await page.goto('/semaine?week=' + week);
   await page.getByRole('button', { name: 'Vider la semaine' }).click();
   await dialog.getByRole('button', { name: 'Annuler' }).click();

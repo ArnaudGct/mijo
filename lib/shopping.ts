@@ -7,6 +7,7 @@ import { inWeek, addDays, today } from './dates';
 export type Need = {
   key: string;
   name: string;
+  sourceName: string;
   unit: string;
   quantity: number;
   unknown: boolean;
@@ -23,6 +24,10 @@ export type Need = {
 export function needs(s: State, week: string, asOf = today()) {
   s = s.past?.[week] ? { ...s, ...s.past[week] } : s;
   const rows = new Map<string, Need>();
+  const weekItems = s.items.filter((i) => i.week === week);
+  const edits = new Map(
+    weekItems.filter((i) => i.listEdit).map((i) => [fold(i.name), i.listEdit!]),
+  );
   const incomplete: string[] = [];
   const breakfast = breakfastPlan(s, week, asOf);
   const byFood = new Map(breakfast.map((p) => [p.key, p]));
@@ -40,6 +45,7 @@ export function needs(s: State, week: string, asOf = today()) {
       ? breakfastMeasure(product, i.name, i.quantity ?? 0, i.unit)
       : groceryMeasure(i.name, i.quantity ?? 0, i.unit);
     const name = groceryName(i.name);
+    if (!manualKey && edits.get(fold(name))?.hideGenerated) return;
     const key = clean(name) + '|' + unit;
     if (
       product?.countedOn &&
@@ -53,6 +59,7 @@ export function needs(s: State, week: string, asOf = today()) {
     const row = rows.get(key) ?? {
       key,
       name,
+      sourceName: name,
       unit,
       quantity: 0,
       unknown: false,
@@ -81,7 +88,7 @@ export function needs(s: State, week: string, asOf = today()) {
     for (const i of r.ingredients)
       include(i, r.base ? p.servings / r.base : null, r.title, undefined, p.day);
   }
-  for (const i of s.items.filter((i) => i.week === week && i.manual)) include(i, 1, '', i.key);
+  for (const i of weekItems.filter((i) => i.manual)) include(i, 1, '', i.key);
   for (const product of breakfast) {
     if (product.quantity > 0)
       include(
@@ -96,9 +103,9 @@ export function needs(s: State, week: string, asOf = today()) {
       );
   }
   for (const row of rows.values()) {
-    const stored = s.items.filter(
+    const stored = weekItems.filter(
       (i) =>
-        i.week === week &&
+        !i.listEdit &&
         fold(groceryName(i.name)) === fold(row.name) &&
         groceryMeasure(i.name, 0, i.unit)[1] === row.unit,
     );
@@ -141,6 +148,9 @@ export function needs(s: State, week: string, asOf = today()) {
     )
       row.checked = true;
     row.bag = saved?.bag ?? row.bag;
+    const edit = edits.get(fold(row.sourceName));
+    row.name = edit?.displayName ?? row.name;
+    row.category = edit?.aisle ?? row.category;
   }
   return { rows: [...rows.values()], breakfast, incomplete: [...new Set(incomplete)] };
 }

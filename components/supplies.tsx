@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { ShoppingScan } from './shopping-scan';
 import { useState } from 'react';
-import { Plus, Copy, Download, WifiOff } from 'lucide-react';
+import { Plus, Copy, Download, WifiOff, Pencil } from 'lucide-react';
 import {
   marketBasket,
   marketDate,
@@ -36,14 +36,18 @@ function download(name: string, txt: string) {
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 500);
 }
-function Article({ ui }: { ui: UI }) {
-  const [name, setName] = useState('');
-  const [choice, setChoice] = useState<string | null>(null);
+type ShoppingLine = ReturnType<typeof marketBasket>['lines'][number];
+
+function Article({ ui, line }: { ui: UI; line?: ShoppingLine }) {
+  const [name, setName] = useState(line?.name ?? '');
+  const [choice, setChoice] = useState<string | null>(line?.category ?? null);
+  const parts = line?.parts ?? [{ key: 'new', quantity: 1, unknown: false, unit: 'pièce' }];
   const manualItems = ui.s.items
     .filter((i) => i.manual)
     .sort((a, b) => b.week.localeCompare(a.week));
   const aisles = shoppingAisles([
     ...ui.s.prefs.customAisles,
+    ...(line ? [line.category] : []),
     ...manualItems.map((i) => i.category),
   ]);
   const aisle =
@@ -51,28 +55,49 @@ function Article({ ui }: { ui: UI }) {
     manualItems.find((i) => fold(groceryName(i.name)) === fold(groceryName(name)))?.category ??
     suggestAisle(name);
   return (
-    <Dialog title="Ajouter un article" close={ui.close}>
+    <Dialog title={line ? 'Modifier l’article' : 'Ajouter un article'} close={ui.close}>
       <Form
         onSave={async (f) => {
-          const id = crypto.randomUUID();
-          if (
-            await ui.run({
-              action: 'item',
-              data: {
-                id,
-                key: 'manuel:' + id,
-                week: ui.w,
-                name: str(f, 'name'),
-                quantity: num(f, 'quantity'),
-                unit: str(f, 'unit'),
-                category: choice === '' ? str(f, 'newAisle') : aisle,
-                manual: true,
-                checked: false,
-                bag: null,
-              },
-            })
-          )
-            ui.close();
+          const category = choice === '' ? str(f, 'newAisle') : aisle;
+          const measures = parts.map((part, i) => ({
+            key: part.key,
+            quantity: num(f, 'quantity' + i),
+            unit: str(f, 'unit' + i),
+          }));
+          if (line) {
+            if (
+              await ui.run(
+                {
+                  action: 'shoppingLine',
+                  week: ui.w,
+                  source: line.parts[0].sourceName,
+                  edit: { name: name.trim(), category, measures },
+                },
+                'Article modifié.',
+              )
+            )
+              ui.close();
+          } else {
+            const id = crypto.randomUUID();
+            if (
+              await ui.run({
+                action: 'item',
+                data: {
+                  id,
+                  key: 'manuel:' + id,
+                  week: ui.w,
+                  name: name.trim(),
+                  category,
+                  quantity: measures[0].quantity,
+                  unit: measures[0].unit,
+                  manual: true,
+                  checked: false,
+                  bag: null,
+                },
+              })
+            )
+              ui.close();
+          }
         }}
       >
         <Field label="Nom de l’article">
@@ -82,7 +107,7 @@ function Article({ ui }: { ui: UI }) {
             onChange={(e) => setName(e.target.value)}
             required
             maxLength={300}
-            autoFocus
+            autoFocus={!line}
           />
         </Field>
         <Field label="Rayon">
@@ -98,39 +123,71 @@ function Article({ ui }: { ui: UI }) {
             <input name="newAisle" required maxLength={70} />
           </Field>
         )}
-        <div className="columns">
-          <Field label="Quantité">
-            <input
-              name="quantity"
-              defaultValue="1"
-              type="number"
-              required
-              min="0.000001"
-              step="any"
-            />
-          </Field>
-          <Field label="Unité">
-            <input name="unit" list="article-unites" defaultValue="pièce" required maxLength={70} />
-            <datalist id="article-unites">
-              {[
-                'pièce',
-                'flacon',
-                'bidon',
-                'paquet',
-                'boîte',
-                'rouleau',
-                'bouteille',
-                'g',
-                'kg',
-                'ml',
-                'L',
-              ].map((v) => (
-                <option key={v} value={v} />
-              ))}
-            </datalist>
-          </Field>
-        </div>
+        {parts.map((part, i) => (
+          <div key={part.key} className="columns">
+            <Field label={line ? 'Quantité totale' : 'Quantité'}>
+              <input
+                name={'quantity' + i}
+                defaultValue={part.unknown ? '' : part.quantity}
+                placeholder={part.unknown ? 'À préciser' : undefined}
+                type="number"
+                inputMode="decimal"
+                required={!line}
+                min="0.000001"
+                max="10000000"
+                step="any"
+              />
+            </Field>
+            <Field label="Unité">
+              <input
+                name={'unit' + i}
+                list="article-unites"
+                defaultValue={part.unit}
+                required={!line || !!part.unit}
+                maxLength={70}
+              />
+            </Field>
+          </div>
+        ))}
+        <datalist id="article-unites">
+          {[
+            'pièce',
+            'flacon',
+            'bidon',
+            'paquet',
+            'boîte',
+            'rouleau',
+            'bouteille',
+            'g',
+            'kg',
+            'ml',
+            'L',
+          ].map((v) => (
+            <option key={v} value={v} />
+          ))}
+        </datalist>
       </Form>
+      {line && (
+        <button
+          className="danger"
+          onClick={async () => {
+            if (
+              await ui.run(
+                {
+                  action: 'shoppingLine',
+                  week: ui.w,
+                  source: line.parts[0].sourceName,
+                  edit: null,
+                },
+                'Article retiré de la liste.',
+              )
+            )
+              ui.close();
+          }}
+        >
+          Retirer de la liste
+        </button>
+      )}
     </Dialog>
   );
 }
@@ -436,7 +493,14 @@ export function Shopping({ ui }: { ui: UI }) {
                       onChange={(e) => void toggle(l, e.target.checked)}
                     />
                     <div>
-                      <strong>{l.name}</strong>
+                      <button
+                        className="grocery-open"
+                        aria-label={'Modifier · ' + l.name}
+                        onClick={() => ui.open(<Article ui={ui} line={l} />)}
+                      >
+                        <strong>{l.name}</strong>
+                        <Pencil size={14} aria-hidden="true" />
+                      </button>
                       <small>{describe(l)}</small>
                       {l.parts
                         .filter((p) => p.scanned > 0)
@@ -468,7 +532,7 @@ export function Shopping({ ui }: { ui: UI }) {
                                 {
                                   action: 'pantryWeek',
                                   week: w,
-                                  name: l.name,
+                                  name: l.parts[0].sourceName,
                                   available: !l.available,
                                 },
                                 l.available
@@ -480,19 +544,6 @@ export function Shopping({ ui }: { ui: UI }) {
                             {l.available ? 'Remettre sur la liste' : 'Déjà chez moi'}
                           </button>
                         )}
-                      {s.items
-                        .filter(
-                          (i) => i.manual && i.week === w && fold(groceryName(i.name)) === l.key,
-                        )
-                        .map((i) => (
-                          <button
-                            className="manual-remove"
-                            key={i.id}
-                            onClick={() => ui.run({ action: 'remove', table: 'items', id: i.id })}
-                          >
-                            Retirer l’ajout de {quantity(i.quantity)} {i.unit}
-                          </button>
-                        ))}
                     </div>
                     <span className="line-price">
                       {l.pantry || l.available

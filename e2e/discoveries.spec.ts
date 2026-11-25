@@ -64,7 +64,7 @@ test('les sources vérifiées, la découverte et l’ajout explicite au carnet',
   await page.getByLabel('Adresse e-mail').fill('owner@mijo.test');
   await page.getByLabel('Mot de passe', { exact: true }).fill(process.env.TABLE_TEST_PASSWORD!);
   await page.getByRole('button', { name: 'Ouvrir mon carnet' }).click();
-  await page.getByRole('button', { name: 'Importer une URL' }).click();
+  await page.getByRole('button', { name: 'Ajouter une recette' }).click();
   const dialog = page.getByRole('dialog');
   await dialog.getByText('Sites compatibles (6 vérifiés)').click();
   await expect(dialog.locator('.import-sites a')).toHaveCount(6);
@@ -95,10 +95,7 @@ test('les sources vérifiées, la découverte et l’ajout explicite au carnet',
   await expect(dialog.locator('.price-coverage')).toHaveCSS('display', 'block');
   const partialPrice = await dialog.locator('.recipe-price').innerText();
   expect(partialPrice).toMatch(/^≈.*\/portion\n1\/2 ingrédients chiffrés$/);
-  await expect(dialog.locator('.recipe-actions')).toHaveCSS(
-    'gap',
-    await page.locator('.page-heading .actions').evaluate((el) => getComputedStyle(el).gap),
-  );
+  await expect(dialog.locator('.recipe-actions')).toHaveCSS('gap', '8px');
   const inCarnet = async () =>
     (await (await page.request.get('/api/state')).json()).recipes.filter(
       (r: { data: { url: string } }) => r.data.url === card.url,
