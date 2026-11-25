@@ -1,3 +1,4 @@
+import { withAccount, originalNotebook } from '../lib/account-scope';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { parseNotion, type Page } from '../lib/notion';
@@ -109,7 +110,7 @@ async function api() {
   } while (cursor);
   return pages;
 }
-try {
+async function run() {
   const input = path && !path.endsWith('.zip') ? JSON.parse(await readFile(path, 'utf8')) : null;
   if (input?.errors) errors.push(...input.errors);
   const rows = path?.endsWith('.zip')
@@ -151,6 +152,9 @@ try {
     { mode: 0o600 },
   );
   console.log({ mode: apply ? 'Import' : 'Prévisualisation', ...stats, errors: errors.length });
+}
+try {
+  await withAccount(process.env.MIJO_ACCOUNT_ID || originalNotebook, run);
 } finally {
   await db().end();
 }

@@ -1,3 +1,4 @@
+import { accountId } from './account-scope';
 import type { PreferencesRow, EntityRow } from '../db/schema';
 import postgres from 'postgres';
 import { basis, settings, type State, type Recipe } from './model';
@@ -24,20 +25,23 @@ export const tables = [
 export type Table = (typeof tables)[number];
 export async function readState(tx: Tx, lock = false): Promise<State> {
   const [config] = await tx.unsafe<PreferencesRow[]>(
-    'select revision,data from preferences where id=1' + (lock ? ' for update' : ''),
+    'select revision,data from preferences where account_id=$1 and id=1' +
+      (lock ? ' for update' : ''),
+    [accountId()],
   );
   const past = Object.fromEntries(
-    (await tx`select week::text as week,data from week_history`).map((r) => [
-      r.week,
-      basis.parse(r.data),
-    ]),
+    (
+      await tx`select week::text as week,data from week_history where account_id=${accountId()}`
+    ).map((r) => [r.week, basis.parse(r.data)]),
   );
   const state = { past, revision: config.revision, prefs: settings.parse(config.data) } as State;
   for (const t of tables)
     Object.assign(state, {
-      [t]: (await tx<EntityRow<typeof t>[]>`select data from ${tx(t)} order by id`).map(
-        (r) => r.data,
-      ),
+      [t]: (
+        await tx<
+          EntityRow<typeof t>[]
+        >`select data from ${tx(t)} where account_id=${accountId()} order by id`
+      ).map((r) => r.data),
     });
   return state;
 }
@@ -45,8 +49,8 @@ export async function state() {
   return db().begin('isolation level repeatable read read only', (tx) => readState(tx));
 }
 export async function put(tx: Tx, t: Table, row: State[Table][number]) {
-  await tx`insert into ${tx(t)} (id,data) values(${row.id},${tx.json(JSON.parse(JSON.stringify(row)))}) on conflict(id) do update set data=excluded.data`;
+  await tx`insert into ${tx(t)} (account_id,id,data) values(${accountId()},${row.id},${tx.json(JSON.parse(JSON.stringify(row)))}) on conflict(account_id,id) do update set data=excluded.data`;
 }
 export async function saveVersion(tx: Tx, id: string, recipeId: string, data: Recipe) {
-  await tx`insert into recipe_versions(id,recipe_id,data) values(${id},${recipeId},${tx.json(data)}) on conflict(id) do nothing`;
+  await tx`insert into recipe_versions(account_id,id,recipe_id,data) values(${accountId()},${id},${recipeId},${tx.json(data)}) on conflict(account_id,id) do nothing`;
 }

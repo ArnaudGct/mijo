@@ -1,3 +1,4 @@
+import { originalNotebook, accountId } from './account-scope';
 import { db, readState } from './db';
 import { insertRecipe } from './commands';
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -11,10 +12,15 @@ import { parseNotion } from './notion';
 export async function importBatch(rows: ReturnType<typeof parseNotion>[], apply: boolean) {
   const ready = (r: Recipe) => !!(r.base && r.steps.length && r.ingredients.length);
   const catalogDir = 'data/private/reconciliation';
-  const catalog = existsSync(join(catalogDir, 'matches.json'))
-    ? await reviewedCatalog(catalogDir)
-    : null;
-  const existing = new Set((await db()`select source_key from recipes`).map((r) => r.source_key));
+  const catalog =
+    accountId() === originalNotebook && existsSync(join(catalogDir, 'matches.json'))
+      ? await reviewedCatalog(catalogDir)
+      : null;
+  const existing = new Set(
+    (await db()`select source_key from recipes where account_id=${accountId()}`).map(
+      (r) => r.source_key,
+    ),
+  );
   // Do network reads before acquiring the write lock. Re-check keys inside the transaction.
   for (const row of rows) {
     if (existing.has(row.sourceKey)) continue;
@@ -61,7 +67,8 @@ export async function importBatch(rows: ReturnType<typeof parseNotion>[], apply:
     if (apply && s.recipes.length && rows.some((r) => ready(r.data) && !known.has(r.sourceKey))) {
       const folder = join(mediaDir(), '.avant-import');
       await mkdir(folder, { recursive: true, mode: 0o700 });
-      const versions = await tx`select * from recipe_versions`;
+      const versions =
+        await tx`select id,recipe_id,data from recipe_versions where account_id=${accountId()}`;
       await writeFile(
         join(folder, 'revision-' + s.revision + '-' + crypto.randomUUID() + '.json'),
         JSON.stringify({ state: s, versions }),
@@ -86,7 +93,8 @@ export async function importBatch(rows: ReturnType<typeof parseNotion>[], apply:
       if (apply) await insertRecipe(tx, r.data, r.sourceKey, r.original);
       added++;
     }
-    if (apply && added) await tx`update preferences set revision=revision+1 where id=1`;
+    if (apply && added)
+      await tx`update preferences set revision=revision+1 where account_id=${accountId()} and id=1`;
     return {
       total: rows.length,
       added,

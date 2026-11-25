@@ -1,3 +1,4 @@
+import { withAccount, originalNotebook } from '../lib/account-scope';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
@@ -25,6 +26,9 @@ async function write(c: Command) {
   return mutate((await state()).revision, c);
 }
 test('transactions PostgreSQL, parcours complet, restauration et rejouabilité', async (t) => {
+  return withAccount(originalNotebook, () => runNotebookTests(t));
+});
+async function runNotebookTests(t: import('node:test').TestContext) {
   const r = {
     ...blankRecipe(),
     title: 'Recette de test',
@@ -268,37 +272,43 @@ test('transactions PostgreSQL, parcours complet, restauration et rejouabilité',
         assert.deepEqual((await write({ action: 'finishShopping', week })).checkout?.moves, []);
       },
     );
-    await t.test('restauration JSON sur une base vide de test avec versions et liens', async () => {
-      const a = await backup();
-      assert.equal(a.format, 'mijo/1');
-      await assert.rejects(restore(a), /base dédiée vide/);
-      const sql = db();
-      await sql.begin(async (tx) => {
-        for (const tab of [
-          'meals',
-          'preps',
-          'sessions',
-          'recipe_versions',
-          'recipes',
-          'items',
-          'stock',
-          'prices',
-          'lots',
-          'week_history',
-        ])
-          await tx`delete from ${tx(tab)}`;
-        await tx`update preferences set revision=0,data='{}'`;
-      });
-      await restore({ ...a, format: 'table-de-saison/1' });
-      const b = await backup();
-      assert.equal(b.state.recipes.length, a.state.recipes.length);
-      assert.deepEqual(b.state.meals, a.state.meals);
-      assert.deepEqual(b.state.prefs.customAisles, a.state.prefs.customAisles);
-      assert.deepEqual(b.state.items, a.state.items);
-      assert.deepEqual(b.state.lots, a.state.lots);
-      assert.deepEqual(b.state.preps, a.state.preps);
-      assert.equal(b.versions.length, a.versions.length);
-    });
+    await t.test(
+      'restaurer un carnet chez un autre utilisateur conserve ses liens et isole les éditions',
+      async () => {
+        const a = await backup();
+        assert.equal(a.format, 'mijo/1');
+        await assert.rejects(restore(a), /carnet vide/);
+        const other = uid();
+        await db().begin(async (tx) => {
+          await tx`insert into accounts(id) values(${other})`;
+          await tx`insert into preferences(account_id,id,data) values(${other},1,'{}')`;
+        });
+        const b = await withAccount(other, async () => {
+          await restore({ ...a, format: 'table-de-saison/1' });
+          const copy = await backup();
+          await write({
+            action: 'recipe',
+            id: rid,
+            data: { ...r, title: 'Édition dans le second carnet' },
+          });
+          return copy;
+        });
+        const [first, second] = await Promise.all([state(), withAccount(other, state)]);
+        assert.equal(first.revision, a.state.revision);
+        assert.deepEqual(first.recipes, a.state.recipes);
+        assert.equal(
+          second.recipes.find((recipe) => recipe.id === rid)?.data.title,
+          'Édition dans le second carnet',
+        );
+        assert.equal(b.state.recipes.length, a.state.recipes.length);
+        assert.deepEqual(b.state.meals, a.state.meals);
+        assert.deepEqual(b.state.prefs.customAisles, a.state.prefs.customAisles);
+        assert.deepEqual(b.state.items, a.state.items);
+        assert.deepEqual(b.state.lots, a.state.lots);
+        assert.deepEqual(b.state.preps, a.state.preps);
+        assert.equal(b.versions.length, a.versions.length);
+      },
+    );
     await t.test('semaine automatique concurrente, échange et retrait permanent', async () => {
       const w = addDays(day, 70);
       const result = await Promise.all([ensureWeek(w), ensureWeek(w)]);
@@ -443,4 +453,4 @@ test('transactions PostgreSQL, parcours complet, restauration et rejouabilité',
   } finally {
     await db().end();
   }
-});
+}

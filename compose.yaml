@@ -13,11 +13,16 @@ services:
       interval: 3s
       timeout: 3s
       retries: 20
+  mailpit:
+    image: axllent/mailpit:v1.27.6@sha256:68c257dc344553a364a71c758acd18708f21073a78d0597e0120c3c92f03561f
+    ports: ['127.0.0.1:8025:8025', '127.0.0.1:1027:1025']
   app:
     build: .
     environment:
       DATABASE_URL: postgres://table:${POSTGRES_PASSWORD}@db:5432/table
-      APP_PASSWORD_HASH: ${APP_PASSWORD_HASH:?}
+      MIJO_OWNER_EMAIL: ${MIJO_OWNER_EMAIL:-}
+      SMTP_URL: smtp://mailpit:1025
+      MAIL_FROM: Mijo <carnet@mijo.test>
       APP_ORIGIN: ${APP_ORIGIN:-http://localhost:3180}
       MEDIA_DIR: /data/media
     ports: ['127.0.0.1:3180:3000']

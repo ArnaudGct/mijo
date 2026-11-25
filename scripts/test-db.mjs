@@ -34,12 +34,22 @@ try {
     MEDIA_DIR: temp,
     APP_ORIGIN: 'http://127.0.0.1:3181',
     TABLE_TEST_PASSWORD: password,
-    APP_PASSWORD_HASH: salt + ':' + scryptSync(password, salt, 64).toString('hex'),
+    MIJO_OWNER_EMAIL: 'owner@mijo.test',
+    SMTP_URL: 'smtp://127.0.0.1:1027',
+    MAIL_FROM: 'Mijo <carnet@mijo.test>',
     TABLE_TEST_DATABASE: dbName,
   };
   await run(process.execPath, ['scripts/migrate.mjs'], env);
-  if (process.argv[2] === 'e2e') await run('npx', ['--no-install', 'playwright', 'test'], env);
-  else
+  if (process.argv[2] === 'e2e') {
+    const fixture = postgres(url.href, { max: 1 });
+    try {
+      const hash = salt + ':' + scryptSync(password, salt, 64).toString('hex');
+      await fixture`update accounts set verified_at=now(),password_hash=${hash} where email='owner@mijo.test'`;
+    } finally {
+      await fixture.end();
+    }
+    await run('npx', ['--no-install', 'playwright', 'test'], env);
+  } else
     await run(
       process.execPath,
       ['--import', 'tsx', '--test', 'tests/postgres.integration.ts'],

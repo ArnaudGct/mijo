@@ -1,7 +1,19 @@
 const key = 'table-offline';
-const data = JSON.parse(localStorage.getItem(key) || 'null'),
-  statusEl = document.querySelector('#status');
-const save = () => localStorage.setItem(key, JSON.stringify(data));
+const saved = JSON.parse(localStorage.getItem(key) || 'null');
+const ownsCopy = () =>
+  saved?.owner && document.cookie.split('; ').includes('mijo_notebook=' + saved.owner);
+const data = ownsCopy() ? saved : null;
+if (saved && !saved.owner) localStorage.removeItem(key);
+window.addEventListener('pageshow', () => {
+  if (data && !ownsCopy()) location.reload();
+});
+window.addEventListener('storage', (e) => {
+  if (e.key === key && !ownsCopy()) location.reload();
+});
+const statusEl = document.querySelector('#status');
+const save = () => {
+  if (ownsCopy()) localStorage.setItem(key, JSON.stringify(data));
+};
 function show() {
   if (!data) {
     statusEl.textContent = 'Enregistrez la liste sur cet appareil depuis la page Courses.';
@@ -46,7 +58,7 @@ function show() {
 }
 let working = false;
 async function sync() {
-  if (!data || working) return;
+  if (!data || working || !ownsCopy()) return;
   const edits = data.rows
     .filter((r) => r.checked !== r.before)
     .flatMap((r) =>
@@ -62,7 +74,7 @@ async function sync() {
   try {
     const res = await fetch('/api/checks', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-Mijo-Account': data.owner },
       body: JSON.stringify(edits),
     });
     const r = await res.json();

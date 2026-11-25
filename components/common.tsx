@@ -2,6 +2,7 @@
 import {
   useEffect,
   useState,
+  useSyncExternalStore,
   useRef,
   useContext,
   createContext,
@@ -15,7 +16,11 @@ import type { CheckoutReport } from '@/lib/expiry-plan';
 import type { Command } from '@/lib/commands';
 import { addDays, labelDate, monday } from '@/lib/dates';
 export const Feedback = createContext('');
+const subscribeToHydration = () => () => {};
+export const useInteractive = () =>
+  useSyncExternalStore(subscribeToHydration, () => true, () => false);
 export type UI = {
+  accountId: string;
   s: State;
   w: string;
   setW: (v: string) => void;
@@ -118,7 +123,7 @@ export function Form({
     }
   }
   return (
-    <form onSubmit={submit} className="editor">
+    <form onSubmit={submit} method="post" className="editor">
       {children}
       <button type="submit" className="primary" disabled={disabled}>
         {button}
@@ -230,9 +235,13 @@ export function Photo({
 export const quantity = (n: number | null) =>
   n === null ? 'À préciser' : Intl.NumberFormat('fr-FR', { maximumFractionDigits: 3 }).format(n);
 export async function api(path: string, body: unknown, raw = false) {
+  const headers = new Headers();
+  if (!raw) headers.set('Content-Type', 'application/json');
+  const account = document.querySelector<HTMLElement>('[data-notebook]')?.dataset.notebook;
+  if (account) headers.set('X-Mijo-Account', account);
   const res = await fetch('/api/' + path, {
     method: 'POST',
-    headers: raw ? {} : { 'Content-Type': 'application/json' },
+    headers,
     body: raw ? (body as BodyInit) : JSON.stringify(body),
   });
   const data = await res.json();

@@ -35,7 +35,8 @@ test('caméra mobile, deux emballages, prix daté et déplacement du dîner avec
   });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/courses?week=' + week);
-  await page.getByLabel('Mot de passe').fill(process.env.TABLE_TEST_PASSWORD!);
+  await page.getByLabel('Adresse e-mail').fill('owner@mijo.test');
+  await page.getByLabel('Mot de passe', { exact: true }).fill(process.env.TABLE_TEST_PASSWORD!);
   await page.getByRole('button', { name: 'Ouvrir mon carnet' }).click();
   await expect(page.getByRole('heading', { name: 'Mes courses' })).toBeVisible();
   const origin = new URL(page.url()).origin;
@@ -130,7 +131,8 @@ test('une recette pour deux devient quatre repas avec une seule liste de courses
 }) => {
   const week = addDays(monday(today()), 280);
   await page.goto('/recettes?week=2020-01-06');
-  await page.getByLabel('Mot de passe').fill(process.env.TABLE_TEST_PASSWORD!);
+  await page.getByLabel('Adresse e-mail').fill('owner@mijo.test');
+  await page.getByLabel('Mot de passe', { exact: true }).fill(process.env.TABLE_TEST_PASSWORD!);
   await page.getByRole('button', { name: 'Ouvrir mon carnet' }).click();
   await expect(page.getByRole('heading', { name: 'Mon carnet de recettes' })).toBeVisible();
   const state = async (): Promise<State> => (await page.request.get('/api/state')).json();

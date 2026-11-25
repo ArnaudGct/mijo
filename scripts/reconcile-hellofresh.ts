@@ -1,3 +1,4 @@
+import { accountId, withAccount, originalNotebook } from '../lib/account-scope';
 import { writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { isDeepStrictEqual as equal } from 'node:util';
@@ -16,7 +17,7 @@ const report: { title: string; action: string; source?: string; preuve?: string 
 let versions = 0,
   preps = 0,
   archives = 0;
-try {
+async function run() {
   await db().begin(async (tx) => {
     const s = await readState(tx, true);
     for (const row of s.recipes) {
@@ -160,7 +161,7 @@ try {
       });
     }
     if (apply && (versions || archives || preps))
-      await tx`update preferences set revision=revision+1 where id=1`;
+      await tx`update preferences set revision=revision+1 where account_id=${accountId()} and id=1`;
   });
   await writeFile(
     dir + '/' + (apply ? 'resultat' : 'simulation') + '.json',
@@ -175,6 +176,9 @@ try {
     archives,
     apply,
   });
+}
+try {
+  await withAccount(process.env.MIJO_ACCOUNT_ID || originalNotebook, run);
 } finally {
   await db().end();
 }

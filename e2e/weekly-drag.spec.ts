@@ -10,7 +10,8 @@ test('dépôt de lundi à mardi sur une case vide et sur un repas, à la souris 
     next = '2020-01-07';
   await page.setViewportSize({ width: 1360, height: 920 });
   await page.goto('/semaine?week=' + week);
-  await page.getByLabel('Mot de passe').fill(process.env.TABLE_TEST_PASSWORD!);
+  await page.getByLabel('Adresse e-mail').fill('owner@mijo.test');
+  await page.getByLabel('Mot de passe', { exact: true }).fill(process.env.TABLE_TEST_PASSWORD!);
   await page.getByRole('button', { name: 'Ouvrir mon carnet' }).click();
   await expect(page.locator('.calendar')).toBeVisible();
   async function seed(command: Command) {
@@ -55,13 +56,18 @@ test('dépôt de lundi à mardi sur une case vide et sur un repas, à la souris 
       frozen: false,
     },
   });
-  await page.reload();
+  async function reloadPlanner() {
+    await page.reload();
+    await expect(page.locator('.app-shell:not([inert])')).toBeVisible();
+  }
+  await reloadPlanner();
   const monday = page.locator('[data-mealslot="' + week + 'midi"]'),
     lunch = page.locator('[data-mealslot="' + next + 'midi"]'),
     dinner = page.locator('[data-mealslot="' + next + 'soir"]');
   await expect(monday.locator('.scheduled')).toContainText(title);
   const omelette = await monday.getAttribute('data-meal-id');
   async function center(el: Locator) {
+    await expect(el).toBeVisible();
     const b = await el.boundingBox();
     if (!b) throw Error('Élément du planning invisible');
     return { x: b.x + b.width / 2, y: b.y + b.height / 2 };
@@ -80,7 +86,7 @@ test('dépôt de lundi à mardi sur une case vide et sur un repas, à la souris 
   }
   async function persisted(ids: Array<string | null>) {
     for (const reload of [false, true]) {
-      if (reload) await page.reload();
+      if (reload) await reloadPlanner();
       for (const [i, slot] of [monday, lunch, dinner].entries()) {
         if (ids[i]) await expect(slot).toHaveAttribute('data-meal-id', ids[i]!);
         else await expect(slot.locator('.meal-card')).toHaveCount(0);
@@ -163,7 +169,7 @@ test('dépôt de lundi à mardi sur une case vide et sur un repas, à la souris 
       steps: [{ text: 'Cuire.', image: '' }],
     },
   });
-  await page.reload();
+  await reloadPlanner();
   const mondayDinner = page.locator('[data-mealslot="' + week + 'soir"]');
   await mondayDinner.locator('.scheduled').click();
   const dialog = page.getByRole('dialog');
@@ -177,7 +183,7 @@ test('dépôt de lundi à mardi sur une case vide et sur un repas, à la souris 
   await dialog.getByRole('button', { name: 'Ajouter au planning' }).click();
   await dialog.getByRole('button', { name: 'Oui, remplacer' }).click();
   await expect(dialog).toHaveCount(0);
-  await page.reload();
+  await reloadPlanner();
   await expect(mondayDinner.locator('.scheduled')).toContainText(dish);
   await expect(lunch.locator('.scheduled')).toContainText(dish);
   const stored = await (await page.request.get('/api/state')).json();

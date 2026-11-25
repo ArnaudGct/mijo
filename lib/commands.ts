@@ -1,3 +1,4 @@
+import { accountId } from './account-scope';
 import { z } from 'zod';
 import { db, readState, put, saveVersion, type Tx, type Table } from './db';
 import {
@@ -151,7 +152,7 @@ export async function execute(tx: Tx, s: State, c: z.output<typeof input>) {
     return r;
   };
   const del = async (t: Table, id: string) => {
-    await tx`delete from ${tx(t)} where id=${id}`;
+    await tx`delete from ${tx(t)} where account_id=${accountId()} and id=${id}`;
   };
   const free = (m: State['meals'][number]) =>
     requireThat(
@@ -332,7 +333,7 @@ export async function execute(tx: Tx, s: State, c: z.output<typeof input>) {
         }
       }
       if (!s.prefs.generatedWeeks.includes(c.week))
-        await tx`update preferences set data=${tx.json({ ...s.prefs, generatedWeeks: [...s.prefs.generatedWeeks, c.week] })} where id=1`;
+        await tx`update preferences set data=${tx.json({ ...s.prefs, generatedWeeks: [...s.prefs.generatedWeeks, c.week] })} where account_id=${accountId()} and id=1`;
       break;
     }
     case 'moveMeal': {
@@ -570,7 +571,7 @@ export async function execute(tx: Tx, s: State, c: z.output<typeof input>) {
             .filter((old) => old.day !== r.day || old.food !== r.food)
             .concat(r);
       }
-      await tx`update preferences set data=${tx.json({ ...s.prefs, breakfast: cfg })} where id=1`;
+      await tx`update preferences set data=${tx.json({ ...s.prefs, breakfast: cfg })} where account_id=${accountId()} and id=1`;
       break;
     }
     case 'purchaseLot': {
@@ -612,7 +613,7 @@ export async function execute(tx: Tx, s: State, c: z.output<typeof input>) {
       );
       const category = known ?? c.data.category;
       if (c.data.manual && !known) {
-        await tx`update preferences set data=${tx.json({ ...s.prefs, customAisles: [...s.prefs.customAisles, category] })} where id=1`;
+        await tx`update preferences set data=${tx.json({ ...s.prefs, customAisles: [...s.prefs.customAisles, category] })} where account_id=${accountId()} and id=1`;
       }
       await put(tx, 'items', { ...c.data, category, id: existing?.id ?? c.data.id });
       break;
@@ -650,7 +651,7 @@ export async function execute(tx: Tx, s: State, c: z.output<typeof input>) {
       const dismissedDiscoveries = [
         ...new Set([...s.prefs.dismissedDiscoveries, sourceUrl(c.url)]),
       ];
-      await tx`update preferences set data=${tx.json({ ...s.prefs, dismissedDiscoveries })} where id=1`;
+      await tx`update preferences set data=${tx.json({ ...s.prefs, dismissedDiscoveries })} where account_id=${accountId()} and id=1`;
       break;
     }
     case 'prefs':
@@ -658,7 +659,7 @@ export async function execute(tx: Tx, s: State, c: z.output<typeof input>) {
         new Set(c.data.shops.map((x) => clean(x.name))).size === c.data.shops.length,
         'Deux magasins portent le même nom.',
       );
-      await tx`update preferences set data=${tx.json({ ...c.data, dismissedDiscoveries: s.prefs.dismissedDiscoveries, customAisles: s.prefs.customAisles, breakfast: s.prefs.breakfast, generatedWeeks: s.prefs.generatedWeeks })} where id=1`;
+      await tx`update preferences set data=${tx.json({ ...c.data, dismissedDiscoveries: s.prefs.dismissedDiscoveries, customAisles: s.prefs.customAisles, breakfast: s.prefs.breakfast, generatedWeeks: s.prefs.generatedWeeks })} where account_id=${accountId()} and id=1`;
       break;
   }
 }
@@ -680,7 +681,7 @@ async function fillWeek(
   s.meals.push(...plan.meals);
   if (!s.prefs.generatedWeeks.includes(week)) {
     s.prefs.generatedWeeks.push(week);
-    await tx`update preferences set data=${tx.json(s.prefs)} where id=1`;
+    await tx`update preferences set data=${tx.json(s.prefs)} where account_id=${accountId()} and id=1`;
   }
 }
 export async function ensureWeek(week: string) {
@@ -695,7 +696,7 @@ export async function ensureWeek(week: string) {
     )
       return { changed: false };
     await fillWeek(tx, s, week);
-    await tx`update preferences set revision=revision+1 where id=1`;
+    await tx`update preferences set revision=revision+1 where account_id=${accountId()} and id=1`;
     return { changed: true };
   });
 }
@@ -712,7 +713,7 @@ export async function mutate(revision: number, cmd: unknown) {
       const weeks = new Set([...s.preps.map((p) => monday(p.day)), ...s.items.map((i) => i.week)]);
       for (const w of weeks) {
         if (w < monday(today()) && !s.past[w])
-          await tx`insert into week_history values(${w},${tx.json({ stock: s.stock, prices: s.prices, prefs: s.prefs })}) on conflict do nothing`;
+          await tx`insert into week_history(account_id,week,data) values(${accountId()},${w},${tx.json({ stock: s.stock, prices: s.prices, prefs: s.prefs })}) on conflict do nothing`;
       }
     }
     const mealCount = s.meals.length;
@@ -724,12 +725,12 @@ export async function mutate(revision: number, cmd: unknown) {
         'Cette semaine est passée.',
       );
       const plan = expiryPlan(s, c.week, today());
-      for (const m of plan.meals) await tx`delete from meals where id=${m.id}`;
+      for (const m of plan.meals) await tx`delete from meals where account_id=${accountId()} and id=${m.id}`;
       for (const p of plan.preps) await put(tx, 'preps', p);
       for (const m of plan.meals) await put(tx, 'meals', m);
       checkout = plan.report;
     } else id = await execute(tx, s, c);
-    await tx`update preferences set revision=revision+1 where id=1`;
+    await tx`update preferences set revision=revision+1 where account_id=${accountId()} and id=1`;
     return {
       id: id ?? undefined,
       checkout,

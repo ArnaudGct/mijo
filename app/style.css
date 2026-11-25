@@ -2476,3 +2476,8 @@ html {
 .hero .recipe-price strong {
   color: #eeefdb;
 }
+
+.account-links { display: flex; flex-wrap: wrap; gap: 12px 22px; margin-top: 22px; }
+.account-links a { color: var(--green); text-decoration: underline; text-underline-offset: 3px; }
+.side-end > div:has(b) { min-width: 0; }
+.side-end b { max-width: 140px; display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }

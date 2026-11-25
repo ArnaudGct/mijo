@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useRef, type ReactNode } from 'react';
 import Link from 'next/link';
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import {
   LayoutGrid,
   BookOpen,
@@ -23,7 +23,7 @@ import {
 import { type State, date } from '@/lib/model';
 import { today, monday, labelDate, inWeek, money } from '@/lib/dates';
 import { marketBasket } from '@/lib/market';
-import { Feedback, Brand, WeekNav, Photo, Field, Form, str, api, type UI } from './common';
+import { Feedback, Brand, WeekNav, Photo, api, useInteractive, type UI } from './common';
 import { DiscoveryCard, DiscoveryPreview, MoreDiscoveries } from './discoveries';
 import { RecipePrice } from './recipe-price';
 import { useDiscoveries } from './use-discovery';
@@ -39,46 +39,32 @@ const nav = [
   { p: 'cuisiner', n: 'Cuisiner', i: ChefHat },
   { p: 'parametres', n: 'Paramètres', i: Settings },
 ];
-export function Login() {
-  const [error, setError] = useState('');
-  const router = useRouter();
-  return (
-    <main className="login">
-      <div className="login-art">
-        <img
-          src="/cuisine.jpg"
-          alt="Légumes frais et ingrédients disposés sur un plan de travail"
-        />
-        <div className="login-caption">
-          <h1>Mijo</h1>
-        </div>
-      </div>
-      <div className="login-form">
-        <Brand />
-        <div>
-          <h2>Mon carnet de cuisine</h2>
-          <Form
-            button="Ouvrir mon carnet"
-            onSave={async (f) => {
-              try {
-                await api('login', { password: str(f, 'password') });
-                router.refresh();
-              } catch (e) {
-                setError((e as Error).message);
-              }
-            }}
-          >
-            <Field label="Mot de passe">
-              <input type="password" name="password" autoComplete="current-password" required />
-            </Field>
-          </Form>
-          <p role="alert">{error}</p>
-        </div>
-      </div>
-    </main>
-  );
-}
-export function Workspace({ initial, children }: { initial: State; children: ReactNode }) {
+export function Workspace({
+  account,
+  initial,
+  children,
+}: {
+  account: { id: string; email: string };
+  initial: State;
+  children: ReactNode;
+}) {
+  const interactive = useInteractive();
+  useEffect(() => {
+    const checkAccount = () => {
+      if (!document.cookie.split('; ').includes('mijo_notebook=' + account.id)) location.reload();
+    };
+    const checkVisible = () => {
+      if (!document.hidden) checkAccount();
+    };
+    window.addEventListener('pageshow', checkAccount);
+    window.addEventListener('focus', checkAccount);
+    document.addEventListener('visibilitychange', checkVisible);
+    return () => {
+      window.removeEventListener('pageshow', checkAccount);
+      window.removeEventListener('focus', checkAccount);
+      document.removeEventListener('visibilitychange', checkVisible);
+    };
+  }, [account.id]);
   const view = usePathname().replace(/^\/|\/$/g, '');
   const query = useSearchParams();
   const requested = date.safeParse(query.get('week'));
@@ -90,7 +76,6 @@ export function Workspace({ initial, children }: { initial: State; children: Rea
     [busy, setBusy] = useState(false);
   const lock = useRef(false),
     latest = useRef(s);
-  const router = useRouter();
   const notice = message?.text ?? '';
   const setNotice = (text: string) => setMessage(text ? { text } : null);
   useEffect(() => {
@@ -107,9 +92,12 @@ export function Workspace({ initial, children }: { initial: State; children: Rea
     history.replaceState(null, '', u);
   };
   async function reload() {
-    const res = await fetch('/api/state', { cache: 'no-store' });
+    const res = await fetch('/api/state', {
+      cache: 'no-store',
+      headers: { 'X-Mijo-Account': account.id },
+    });
     if (!res.ok) {
-      if (res.status === 401) router.refresh();
+      if (res.status === 401 || res.status === 409) window.location.reload();
       throw Error('Actualisation impossible.');
     }
     const data = (await res.json()) as State;
@@ -138,6 +126,7 @@ export function Workspace({ initial, children }: { initial: State; children: Rea
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasRecipes, generated, w]);
   const ui: UI = {
+    accountId: account.id,
     s,
     w,
     setW,
@@ -182,7 +171,7 @@ export function Workspace({ initial, children }: { initial: State; children: Rea
   const current = nav.find((n) => n.p === view);
   if (!current) return children;
   return (
-    <div className="app-shell">
+    <div className="app-shell" data-notebook={account.id} inert={!interactive}>
       <aside>
         <Link className="brand-link" href={weekLink('')}>
           <Brand />
@@ -201,9 +190,9 @@ export function Workspace({ initial, children }: { initial: State; children: Rea
           ))}
         </nav>
         <div className="side-end">
-          <div className="avatar">A</div>
+          <div className="avatar">{account.email[0].toUpperCase()}</div>
           <div>
-            <b>Arnaud</b>
+            <b title={account.email}>{account.email}</b>
             <small>Carnet personnel</small>
           </div>
           <button

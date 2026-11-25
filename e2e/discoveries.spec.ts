@@ -16,7 +16,8 @@ test('les plats sont sélectionnés dès l’accueil et chaque catégorie garde 
     return route.fulfill({ json: { cards: [dessert, main, starter], next: null, total: 3 } });
   });
   await page.goto('/?week=2020-01-06');
-  await page.getByLabel('Mot de passe').fill(process.env.TABLE_TEST_PASSWORD!);
+  await page.getByLabel('Adresse e-mail').fill('owner@mijo.test');
+  await page.getByLabel('Mot de passe', { exact: true }).fill(process.env.TABLE_TEST_PASSWORD!);
   await page.getByRole('button', { name: 'Ouvrir mon carnet' }).click();
   await expect(page.locator('.hero h2')).toHaveText(main.title);
   await page.getByRole('link', { name: 'Tout voir', exact: true }).last().click();
@@ -60,7 +61,8 @@ test('les sources vérifiées, la découverte et l’ajout explicite au carnet',
     r.fulfill({ json: { cards: seed, next: null, total: seed.length } }),
   );
   await page.goto('/recettes?week=2020-01-06');
-  await page.getByLabel('Mot de passe').fill(process.env.TABLE_TEST_PASSWORD!);
+  await page.getByLabel('Adresse e-mail').fill('owner@mijo.test');
+  await page.getByLabel('Mot de passe', { exact: true }).fill(process.env.TABLE_TEST_PASSWORD!);
   await page.getByRole('button', { name: 'Ouvrir mon carnet' }).click();
   await page.getByRole('button', { name: 'Importer une URL' }).click();
   const dialog = page.getByRole('dialog');
@@ -161,7 +163,8 @@ test('la suite interroge le catalogue, les filtres repartent de zéro et une sug
     });
   });
   await page.goto('/recettes?onglet=suggestions&week=2020-01-06');
-  await page.getByLabel('Mot de passe').fill(process.env.TABLE_TEST_PASSWORD!);
+  await page.getByLabel('Adresse e-mail').fill('owner@mijo.test');
+  await page.getByLabel('Mot de passe', { exact: true }).fill(process.env.TABLE_TEST_PASSWORD!);
   await page.getByRole('button', { name: 'Ouvrir mon carnet' }).click();
   const cards = page.locator('.discovery-cards article');
   await expect(cards).toHaveCount(3);
@@ -186,7 +189,8 @@ test('les deux panneaux partagent leurs filtres et une recherche VG peut cibler 
     return r.fulfill({ json: { cards: [], next: null, total: 0 } });
   });
   await page.goto('/recettes?week=2020-01-06');
-  await page.getByLabel('Mot de passe').fill(process.env.TABLE_TEST_PASSWORD!);
+  await page.getByLabel('Adresse e-mail').fill('owner@mijo.test');
+  await page.getByLabel('Mot de passe', { exact: true }).fill(process.env.TABLE_TEST_PASSWORD!);
   await page.getByRole('button', { name: 'Ouvrir mon carnet' }).click();
   for (const section of ['Mon carnet', 'Suggestions']) {
     await page.getByRole('button', { name: section, exact: true }).click();

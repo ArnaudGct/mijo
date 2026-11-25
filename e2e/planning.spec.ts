@@ -11,7 +11,8 @@ test('parcours privé sur ordinateur et liste emportée sur mobile', async ({
   page.on('pageerror', (e) => errors.push(e.message));
   expect((await request.get('/api/state')).status()).toBe(401);
   await page.goto('/');
-  await page.getByLabel('Mot de passe').fill(process.env.TABLE_TEST_PASSWORD!);
+  await page.getByLabel('Adresse e-mail').fill('owner@mijo.test');
+  await page.getByLabel('Mot de passe', { exact: true }).fill(process.env.TABLE_TEST_PASSWORD!);
   await page.getByRole('button', { name: 'Ouvrir mon carnet' }).click();
   await expect(page.getByRole('heading', { name: 'Mon tableau de bord' })).toBeVisible();
   const sidebar = await page.locator('aside').elementHandle();
@@ -127,7 +128,8 @@ testImport('import corrigé, édition, archives, restauration et suppression sur
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/recettes');
-  await page.getByLabel('Mot de passe').fill(process.env.TABLE_TEST_PASSWORD!);
+  await page.getByLabel('Adresse e-mail').fill('owner@mijo.test');
+  await page.getByLabel('Mot de passe', { exact: true }).fill(process.env.TABLE_TEST_PASSWORD!);
   await page.getByRole('button', { name: 'Ouvrir mon carnet' }).click();
   const dialog = page.getByRole('dialog');
   await page.getByRole('button', { name: 'Importer une URL' }).click();
@@ -216,7 +218,8 @@ testImport('import corrigé, édition, archives, restauration et suppression sur
 test('panier estimé, livraison et fusion des variantes sur mobile', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/courses?week=2030-01-07');
-  await page.getByLabel('Mot de passe').fill(process.env.TABLE_TEST_PASSWORD!);
+  await page.getByLabel('Adresse e-mail').fill('owner@mijo.test');
+  await page.getByLabel('Mot de passe', { exact: true }).fill(process.env.TABLE_TEST_PASSWORD!);
   await page.getByRole('button', { name: 'Ouvrir mon carnet' }).click();
   const dialog = page.getByRole('dialog');
   await page.getByRole('button', { name: 'Ajouter un article', exact: true }).click();
@@ -268,7 +271,8 @@ test('petit-déjeuner : portions modifiables, relevé en briques et en pots, rep
       url.searchParams.get('week') === week &&
       url.searchParams.get('onglet') === 'petit-dejeuner',
   );
-  await page.getByLabel('Mot de passe').fill(process.env.TABLE_TEST_PASSWORD!);
+  await page.getByLabel('Adresse e-mail').fill('owner@mijo.test');
+  await page.getByLabel('Mot de passe', { exact: true }).fill(process.env.TABLE_TEST_PASSWORD!);
   await page.getByRole('button', { name: 'Ouvrir mon carnet' }).click();
   await expect(page.getByRole('heading', { name: 'Ma semaine', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Planning des repas', exact: true }).click();
@@ -353,7 +357,8 @@ test('articles du quotidien, rayon personnalisé réutilisable, export et coches
   const shoppingWeek = '2031-03-03';
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/courses?week=' + shoppingWeek);
-  await page.getByLabel('Mot de passe').fill(process.env.TABLE_TEST_PASSWORD!);
+  await page.getByLabel('Adresse e-mail').fill('owner@mijo.test');
+  await page.getByLabel('Mot de passe', { exact: true }).fill(process.env.TABLE_TEST_PASSWORD!);
   await page.getByRole('button', { name: 'Ouvrir mon carnet' }).click();
   const dialog = page.getByRole('dialog');
   const add = page.getByRole('button', { name: 'Ajouter un article', exact: true });

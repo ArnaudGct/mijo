@@ -1,3 +1,4 @@
+import { accountId } from './account-scope';
 import { db, readState, put } from './db';
 import { needs } from './shopping';
 import { date } from './model';
@@ -40,7 +41,7 @@ export async function syncChecks(input: unknown) {
       await put(tx, 'items', row);
       s.items = s.items.filter((i) => i.id !== row.id).concat(row);
     }
-    if (edits.length) await tx`update preferences set revision=revision+1 where id=1`;
+    if (edits.length) await tx`update preferences set revision=revision+1 where account_id=${accountId()} and id=1`;
     return { synced: edits.length };
   });
 }

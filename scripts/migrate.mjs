@@ -21,6 +21,17 @@ try {
       await tx`insert into schema_migrations values(${name},${digest})`;
       console.log(name);
     }
+    // Only the operator can associate the original notebook with its owner's address.
+    const owner = process.env.MIJO_OWNER_EMAIL?.trim().toLowerCase();
+    if (owner) {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(owner)) throw Error('MIJO_OWNER_EMAIL invalide');
+      const [reserved] =
+        await tx`select email from accounts where id='00000000-0000-4000-8000-000000000001' for update`;
+      if (reserved.email && reserved.email !== owner)
+        throw Error('Le carnet initial a déjà un propriétaire.');
+      if (!reserved.email)
+        await tx`update accounts set email=${owner} where id='00000000-0000-4000-8000-000000000001'`;
+    }
   });
 } finally {
   await sql.end();

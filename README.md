@@ -4,29 +4,31 @@ Carnet de cuisine privé en français. L’application conserve les recettes et 
 
 ## Ouvrir le carnet local
 
-Sur le Mac de développement, l’adresse est **http://localhost:3180**. Le premier mot de passe créé par le script local se trouve dans `data/private/mot-de-passe.txt`. Les données personnelles, les exports Notion, les sauvegardes et les secrets sont exclus du dépôt et de l’image.
+Sur le Mac de développement, l’adresse est **http://localhost:3180**. Choisir **Créer un compte**, saisir une adresse et un mot de passe, puis ouvrir le message dans [Mailpit local](http://localhost:8025). Le bouton de confirmation active le carnet. **Mot de passe oublié** utilise la même boîte de test. Chaque compte conserve ses recettes, photos, menus, courses et exports. Les données personnelles, les exports Notion, les sauvegardes et les secrets sont exclus du dépôt et de l’image.
 
-### Installer sur un nouveau poste
+Pour migrer un carnet existant, renseigner son adresse dans `MIJO_OWNER_EMAIL` avant la migration. Cette adresse peut ensuite créer et confirmer son compte pour retrouver le carnet. Les nouveaux comptes ont un carnet vide.
+
+## Installer sur un nouveau poste
 
 Prérequis : Docker avec Compose v2, Node.js 22 et npm. Les commandes suivantes s’exécutent à la racine du dépôt.
 
 ```sh
 npm ci
 node scripts/setup.mjs
-docker compose up -d db
+docker compose up -d db mailpit
 docker compose build app
 docker compose run --rm app node scripts/migrate.mjs
 docker compose up -d app
 curl --fail http://localhost:3180/api/health
 ```
 
-La base démarre vide. Les volumes nommés appartiennent au projet défini dans `compose.yaml`. La configuration standard publie uniquement le site sur la boucle locale. Le déploiement de l’application et l’application des migrations sont deux opérations explicites.
+La base démarre vide. Les volumes nommés appartiennent au projet défini dans `compose.yaml`. Le site et la boîte mail de test sont accessibles sur la boucle locale. Le déploiement de l’application et l’application des migrations sont deux opérations explicites.
 
 ### Développer
 
 ```sh
 docker compose stop app
-docker compose -f compose.yaml -f compose.dev.yaml up -d db
+docker compose -f compose.yaml -f compose.dev.yaml up -d db mailpit
 npm run migrate
 npm run dev
 ```

@@ -264,7 +264,10 @@ export function Shopping({ ui }: { ui: UI }) {
   async function offline() {
     try {
       const old = JSON.parse(localStorage.getItem('table-offline') || 'null');
-      if (old?.rows.some((r: { before: boolean; checked: boolean }) => r.before !== r.checked)) {
+      if (
+        old?.owner === ui.accountId &&
+        old.rows.some((r: { before: boolean; checked: boolean }) => r.before !== r.checked)
+      ) {
         window.location.assign(new URL('courses-hors-ligne.html', window.location.origin));
         return;
       }
@@ -274,6 +277,7 @@ export function Shopping({ ui }: { ui: UI }) {
       localStorage.setItem(
         'table-offline',
         JSON.stringify({
+          owner: ui.accountId,
           week: w,
           rows: sections
             .flatMap(({ lines }) => lines)
@@ -397,7 +401,9 @@ export function Shopping({ ui }: { ui: UI }) {
               poids indicatifs. Le sel et le poivre « selon le goût » sont supposés au placard.
             </p>
             <p>
-              Votre panier HelloFresh de référence est de {money(s.prefs.hello)}.{' '}
+              {s.prefs.hello > 0 && (
+                <>Votre panier HelloFresh de référence est de {money(s.prefs.hello)}. </>
+              )}
               <a href={priceSource} target="_blank" rel="noreferrer">
                 Relevés Open Prices ↗
               </a>

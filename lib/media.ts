@@ -1,8 +1,14 @@
+import { accountId, originalNotebook } from './account-scope';
 import sharp from 'sharp';
 import { createHash } from 'node:crypto';
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-export const mediaDir = () => process.env.MEDIA_DIR || './data/media';
+export function mediaDir() {
+  const root = process.env.MEDIA_DIR || './data/media';
+  const id = accountId();
+  // Preserve the imported owner's existing photo URLs and volume.
+  return id === originalNotebook ? root : join(root, 'accounts', id);
+}
 export async function storePhoto(source: Buffer, persist = true) {
   if (source.length > 8 * 1024 * 1024) throw Error('Photo trop volumineuse.');
   const img = sharp(source, { limitInputPixels: 25000000, failOn: 'warning' });

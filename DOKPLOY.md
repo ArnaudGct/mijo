@@ -10,6 +10,10 @@ Le fichier privé `/etc/dokploy/mijo-private/app.env` du serveur, lisible unique
 
 L’import initial utilise le dump PostgreSQL et l’archive des médias du Mac. Les sessions de connexion sont renouvelées. Après cet import, la production garde ses propres données et le Mac sa base de test. Pour valider un déploiement, vérifier `/api/health`, la réponse 401 de `/api/state` sans connexion et l’ouverture du carnet après connexion.
 
+## Passage ultérieur aux comptes individuels
+
+Pour déployer la version multi-utilisateur après recette locale, sauvegarder la base et le volume média de production, puis arrêter l’ancienne application pendant la migration. Renseigner `MIJO_OWNER_EMAIL` avec l’adresse du propriétaire du carnet existant, `SMTP_URL` avec le serveur d’envoi et `MAIL_FROM` avec l’expéditeur autorisé. Cette version utilise les mots de passe des comptes. Le compte propriétaire s’active via **Créer un compte** et le lien envoyé à son adresse. La migration SQL s’applique aux données de production en place. La boîte Mailpit du Mac est réservée aux essais locaux.
+
 ## Sauvegardes automatiques à mettre en place
 
 Dans **Database → Backups**, sélectionner une destination externe S3 compatible contrôlée par Arnaud. Planifier un dump quotidien, par exemple `0 2 * * *`, en vérifiant le fuseau horaire affiché par Dokploy. Préparer une rétention adaptée à l’espace disponible, par exemple 14 sauvegardes quotidiennes et 4 hebdomadaires si la destination le permet. Vérifier la première sauvegarde dans le stockage externe. Une destination et un calendrier réels nécessitent la configuration et l’accord de production.

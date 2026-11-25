@@ -1,3 +1,4 @@
+import { accountId } from './account-scope';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { z } from 'zod';
@@ -19,8 +20,9 @@ const archive = z.object({
 export async function backup() {
   const result = await db().begin('isolation level repeatable read read only', async (tx) => ({
     state: await readState(tx),
-    versions: await tx`select * from recipe_versions`,
-    history: await tx`select week::text,data from week_history`,
+    versions:
+      await tx`select id,recipe_id,data from recipe_versions where account_id=${accountId()}`,
+    history: await tx`select week::text,data from week_history where account_id=${accountId()}`,
   }));
   const names = new Set(
     [...JSON.stringify(result).matchAll(/\/api\/media\/([a-f0-9-]{36}\.webp)/g)].map((x) => x[1]),
@@ -36,7 +38,7 @@ export async function restore(input: unknown) {
     const s = await readState(tx, true);
     if (s.revision || tables.some((t) => s[t].length))
       throw new UserError(
-        'La restauration exige une base dédiée vide pour préserver les données existantes.',
+        'La restauration exige un carnet vide pour préserver les données existantes.',
       );
     await mkdir(mediaDir(), { recursive: true });
     for (const m of a.media) {
@@ -62,8 +64,8 @@ export async function restore(input: unknown) {
         for (const v of a.versions) await saveVersion(tx, v.id, v.recipe_id, v.data);
     }
     for (const h of a.history)
-      await tx`insert into week_history values(${h.week},${tx.json(JSON.parse(JSON.stringify(h.data)))})`;
-    await tx`update preferences set revision=${a.state.revision + 1},data=${tx.json(a.state.prefs)} where id=1`;
+      await tx`insert into week_history(account_id,week,data) values(${accountId()},${h.week},${tx.json(JSON.parse(JSON.stringify(h.data)))})`;
+    await tx`update preferences set revision=${a.state.revision + 1},data=${tx.json(a.state.prefs)} where account_id=${accountId()} and id=1`;
   });
   return { restored: a.state.recipes.length };
 }

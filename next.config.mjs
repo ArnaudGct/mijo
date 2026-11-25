@@ -1,7 +1,8 @@
 export default {
   output: 'standalone',
   poweredByHeader: false,
-  serverExternalPackages: ['postgres', 'yauzl', 'sharp'],
+  images: { unoptimized: true },
+  serverExternalPackages: ['postgres', 'yauzl', 'sharp', 'nodemailer'],
   experimental: { cpus: 2 },
   async redirects() {
     return [
