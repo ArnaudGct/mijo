@@ -39,13 +39,23 @@ export function tastes(s: State) {
 export type DiscoveryFilters = {
   course: Course;
   query: string;
+  ingredient: string;
+  cuisine: string;
+  batch: boolean;
+  diet: string;
+  difficulty: string;
   publisher: string;
   minutes: number;
-  order: 'affinity' | 'explore' | 'quick';
+  order: 'name' | 'affinity' | 'explore' | 'quick';
 };
 export const defaults: DiscoveryFilters = {
   course: 'main',
   query: '',
+  ingredient: '',
+  cuisine: '',
+  batch: false,
+  diet: '',
+  difficulty: '',
   publisher: '',
   minutes: 0,
   order: 'affinity',

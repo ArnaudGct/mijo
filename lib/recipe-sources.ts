@@ -1,6 +1,17 @@
 import type { Course } from './discovery-course';
+import type { RecipeCost } from './market';
+
+export const discoveryPublishers = [
+  'HelloFresh',
+  'Batchly',
+  'Marmiton',
+  'CuisineAZ',
+  'Jow',
+  '750g',
+] as const;
 
 export const importSites = [
+  { name: 'Batchly', example: 'https://www.batchly.fr/recettes/hachis-parmentier' },
   {
     name: 'HelloFresh France',
     example:
@@ -16,6 +27,8 @@ export const importSites = [
 ];
 
 export type Discovery = {
+  cost?: RecipeCost;
+  batch?: boolean;
   course: Course;
   title: string;
   url: string;

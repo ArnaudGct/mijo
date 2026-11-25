@@ -35,7 +35,7 @@ export function Brand() {
       <span className="brand-mark">
         <Sprout size={23} />
       </span>
-      Table de saison<span className="brand-dot">.</span>
+      Mijo
     </span>
   );
 }

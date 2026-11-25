@@ -2,8 +2,14 @@
 import Link from 'next/link';
 import { ShoppingScan } from './shopping-scan';
 import { useState } from 'react';
-import { Plus, Download, WifiOff } from 'lucide-react';
-import { marketBasket, marketDate, priceSource, shipping } from '@/lib/market';
+import { Plus, Copy, Download, WifiOff } from 'lucide-react';
+import {
+  marketBasket,
+  marketDate,
+  priceSource,
+  shipping,
+  remainingShoppingText,
+} from '@/lib/market';
 import { fold, groceryName } from '@/lib/grocery-names';
 import { shoppingAisles, suggestAisle } from '@/lib/aisles';
 import { type State } from '@/lib/model';
@@ -202,6 +208,27 @@ export function Shopping({ ui }: { ui: UI }) {
       lines: cart.lines.filter((l) => l.category === aisle),
     }))
     .filter((section) => section.lines.length);
+  const remaining = remainingShoppingText(sections.flatMap((section) => section.lines));
+  async function copyRemaining() {
+    try {
+      await navigator.clipboard.writeText(remaining);
+      ui.notify('Liste des achats restants copiée.');
+    } catch {
+      ui.open(
+        <Dialog title="Copier les achats restants" close={ui.close}>
+          <Field label="Sélectionnez le texte puis copiez-le">
+            <textarea
+              autoFocus
+              readOnly
+              rows={9}
+              value={remaining}
+              onFocus={(e) => e.currentTarget.select()}
+            />
+          </Field>
+        </Dialog>,
+      );
+    }
+  }
   const availableThisWeek = s.items
     .filter((i) => i.week === w && i.inPantry)
     .sort((a, b) => a.name.localeCompare(b.name, 'fr'));
@@ -380,9 +407,14 @@ export function Shopping({ ui }: { ui: UI }) {
             <h2>
               {cart.lines.filter((l) => l.checked).length} / {cart.count} articles cochés
             </h2>
-            <button className="primary" onClick={() => ui.open(<Article ui={ui} />)}>
-              <Plus size={16} /> Ajouter un article
-            </button>
+            <div className="actions">
+              <button disabled={!remaining} onClick={copyRemaining}>
+                <Copy size={16} /> Copier ce qu’il reste à acheter
+              </button>
+              <button className="primary" onClick={() => ui.open(<Article ui={ui} />)}>
+                <Plus size={16} /> Ajouter un article
+              </button>
+            </div>
           </div>
           {sections.map(({ aisle: cat, lines: group }) => {
             return (
@@ -508,16 +540,16 @@ export function Shopping({ ui }: { ui: UI }) {
         </>
       )}
       {tab === 'placard' && (
-        <div className="panel">
-          <div className="split">
-            <h2>Stock disponible</h2>
+        <section className="week-section">
+          <div className="section-heading">
+            <div>
+              <h2>Mes stocks disponibles</h2>
+              <Link className="text-link" href={breakfastHref}>
+                Voir le stock du petit-déjeuner
+              </Link>
+            </div>
             <button onClick={() => ui.open(<StockForm ui={ui} />)}>+ Ingrédient</button>
           </div>
-          {s.prefs.breakfast && (
-            <Link className="text-link" href={breakfastHref}>
-              Voir le stock du petit-déjeuner
-            </Link>
-          )}
           {s.stock.map((v) => (
             <div className="row" key={v.id}>
               <b>{v.name}</b>
@@ -526,27 +558,22 @@ export function Shopping({ ui }: { ui: UI }) {
               </button>
             </div>
           ))}
-          {availableThisWeek.length > 0 && (
-            <section>
-              <h3>Déjà chez moi cette semaine</h3>
-              {availableThisWeek.map((i) => (
-                <div className="row" key={i.id}>
-                  <b>{i.name}</b>
-                  <button
-                    onClick={() =>
-                      ui.run(
-                        { action: 'pantryWeek', week: w, name: i.name, available: false },
-                        'Article remis dans les courses.',
-                      )
-                    }
-                  >
-                    Remettre sur la liste
-                  </button>
-                </div>
-              ))}
-            </section>
-          )}
-        </div>
+          {availableThisWeek.map((i) => (
+            <div className="row" key={i.id}>
+              <b>{i.name}</b>
+              <button
+                onClick={() =>
+                  ui.run(
+                    { action: 'pantryWeek', week: w, name: i.name, available: false },
+                    'Article remis dans les courses.',
+                  )
+                }
+              >
+                Remettre sur la liste
+              </button>
+            </div>
+          ))}
+        </section>
       )}
     </>
   );

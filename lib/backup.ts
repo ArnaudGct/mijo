@@ -8,7 +8,7 @@ import sharp from 'sharp';
 import { mediaDir } from './media';
 const filename = z.string().regex(/^[a-f0-9-]{36}\.webp$/);
 const archive = z.object({
-  format: z.literal('table-de-saison/1'),
+  format: z.enum(['mijo/1', 'table-de-saison/1']),
   state: snapshot,
   versions: z.array(z.object({ id, recipe_id: id, data: recipe })),
   media: z.array(z.object({ name: filename, bytes: z.string().base64() })),
@@ -28,7 +28,7 @@ export async function backup() {
   const media = [];
   for (const name of names)
     media.push({ name, bytes: (await readFile(join(mediaDir(), name))).toString('base64') });
-  return { format: 'table-de-saison/1', ...result, media };
+  return { format: 'mijo/1', ...result, media };
 }
 export async function restore(input: unknown) {
   const a = archive.parse(input);

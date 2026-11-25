@@ -1,9 +1,10 @@
 import { householdAisle, isHouseholdAisle } from './aisles';
 import index from './market-data/market-fr.json';
 import { marketFamily } from './market-family';
-import { fold } from './grocery-names';
+import { fold, groceryMeasure, groceryName } from './grocery-names';
+import { rounded } from './ingredients';
 import { needs, type Need } from './shopping';
-import type { State } from './model';
+import type { Recipe, State } from './model';
 import { breakfastKey } from './breakfast-model';
 import { type BreakfastProduct } from './breakfast';
 
@@ -73,7 +74,11 @@ function valuation(
   }
   return null;
 }
-function measure(r: Need, ref: NonNullable<ReturnType<typeof valuation>>, amount: number) {
+function measure(
+  r: Pick<Need, 'name' | 'unit' | 'unknown'>,
+  ref: NonNullable<ReturnType<typeof valuation>>,
+  amount: number,
+) {
   const { family, quote } = ref;
   const u = fold(r.unit),
     n = fold(r.name);
@@ -88,7 +93,7 @@ function measure(r: Need, ref: NonNullable<ReturnType<typeof valuation>>, amount
   if (quote.kind === 'each') return u === 'piece' ? amount : null;
   if (n.includes('bouillon') && u === 'ml') return amount * 0.02;
   if (n === 'ail' && u === 'tete') return amount * 45;
-  if (n === 'ail' && u === 'gousse') return amount * 5;
+  if (n === 'ail' && /^gousses?$/.test(u)) return amount * 5;
   if (u === 'g' || u === 'ml') return amount;
   if (u === 'piece') return family.piece ? family.piece * amount : null;
   if (u === 'cac' || u === 'cas')
@@ -103,11 +108,72 @@ function measure(r: Need, ref: NonNullable<ReturnType<typeof valuation>>, amount
   if (
     /^(sachet|paquet|boite|tube|pot|botte|barquette|lot hellofresh|bouquet|bocal|portion)/.test(u)
   )
-    return amount * family.portion;
+    return family.portion ? amount * family.portion : null;
   if (/^tranche/.test(u) && family.piece) return amount * family.piece;
   if (u === 'pincee') return amount * 0.35;
   return null;
 }
+function bestFormat(formats: NonNullable<Quote['formats']>, basis: number) {
+  return formats
+    .map((f) => ({ ...f, count: Math.ceil(basis / f.size - 1e-9) }))
+    .sort(
+      (a, b) => a.count * a.cents - b.count * b.cents || a.count * a.size - b.count * b.size,
+    )[0];
+}
+
+export type RecipeCost = {
+  cents: number | null;
+  portions: number | null;
+  missing: number;
+  priced: number;
+};
+
+export function recipeCost(recipe: Pick<Recipe, 'base' | 'ingredients'>): RecipeCost {
+  let total = 0,
+    valued = 0,
+    missing = 0;
+  const groups = new Map<string, Recipe['ingredients']>();
+  for (const i of recipe.ingredients) {
+    const name = groceryName(i.name);
+    if (
+      /^eau(?: du robinet)?$/.test(fold(name)) ||
+      (i.quantity === null && /^(?:sel|poivre)(?: et (?:sel|poivre))?$/.test(fold(name)))
+    )
+      continue;
+    const group = groups.get(name) ?? [];
+    group.push(i);
+    groups.set(name, group);
+  }
+  for (const [name, ingredients] of groups) {
+    const parts = ingredients.map((i) => {
+      const [amount, unit] = groceryMeasure(i.name, i.quantity ?? 0, i.unit);
+      return { name, amount, unit, unknown: i.quantity === null };
+    });
+    const ref = valuation(
+      name,
+      ingredients[0].category === 'Fruits et légumes' && parts.every((p) => p.unit === 'pièce'),
+    );
+    let used = 0;
+    for (const part of parts) {
+      const quantity = ref ? measure(part, ref, part.amount) : null;
+      if (quantity === null) missing++;
+      else {
+        used += quantity;
+        valued++;
+      }
+    }
+    if (!ref || !used) continue;
+    const format = bestFormat(ref.quote.formats ?? [], used);
+    total += used * (format ? format.cents / format.size : ref.quote.rate);
+  }
+  return {
+    cents: valued ? Math.round(total) : null,
+    portions: recipe.base,
+    missing,
+    priced: valued,
+  };
+}
+
 export function marketBasket(s: State, w: string, asOf?: string) {
   const { rows, incomplete, breakfast } = needs(s, w, asOf);
   const groups = new Map<string, Need[]>();
@@ -159,11 +225,7 @@ export function marketBasket(s: State, w: string, asOf?: string) {
             ? ref.quote.formats!.slice(0, 1)
             : (ref?.quote.formats ?? []);
       const basis = required || used || 0;
-      const format = packOptions
-        .map((f) => ({ ...f, count: Math.ceil(basis / f.size - 1e-9) }))
-        .sort(
-          (a, b) => a.count * a.cents - b.count * b.cents || a.count * a.size - b.count * b.size,
-        )[0];
+      const format = bestFormat(packOptions, basis);
       const pack =
         format?.size ||
         (ref?.quote.kind === 'each' ? 1 : 0) ||
@@ -227,4 +289,23 @@ export function marketBasket(s: State, w: string, asOf?: string) {
     missing: lines.filter((r) => r.cents === null).length,
     count: lines.filter((r) => r.buy.length > 0).length,
   };
+}
+
+const formatQuantity = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 6 });
+export function remainingShoppingText(lines: ReturnType<typeof marketBasket>['lines']) {
+  return lines
+    .flatMap((line) => {
+      const amounts: string[] = [];
+      let unknown = false;
+      for (const part of line.buy) {
+        if (part.checked || part.inPantry) continue;
+        const remaining = rounded(part.buy - part.scanned);
+        if (remaining > 0)
+          amounts.push([formatQuantity.format(remaining), part.unit].filter(Boolean).join(' '));
+        unknown ||= part.unknown;
+      }
+      if (unknown) amounts.push('quantité à préciser');
+      return amounts.length ? [line.name + ' · ' + amounts.join(' + ')] : [];
+    })
+    .join('\n');
 }

@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, type DragEvent, type PointerEvent } from '
 import { Plus, GripVertical, X } from 'lucide-react';
 import { monday, addDays, labelDate, inWeek } from '@/lib/dates';
 import { type State, type Prep } from '@/lib/model';
-import { AutoPlanButton } from './auto-plan';
+import { AutoPlanButton, ClearWeekButton } from './auto-plan';
 import { storageAlert, weekPreparations } from '@/lib/planner';
 import {
   Dialog,
@@ -269,9 +269,15 @@ export function Planner({ ui }: { ui: UI }) {
         <PageTabs options={weekTabs} active={active} />
         {active !== 'petit-dejeuner' && (
           <div className="actions">
-            <AutoPlanButton ui={ui} />
-            <button className="primary" onClick={() => ui.open(<PlanForm ui={ui} />)}>
-              <Plus size={16} /> Planifier
+            {active === 'planning' && <AutoPlanButton ui={ui} />}
+            {active === 'planning' && <ClearWeekButton ui={ui} />}
+            <button
+              className="primary"
+              onClick={() =>
+                ui.open(<PlanForm ui={ui} initialBatch={active === 'batch-cooking'} />)
+              }
+            >
+              <Plus size={16} /> {active === 'batch-cooking' ? 'Préparer un plat' : 'Planifier'}
             </button>
           </div>
         )}
@@ -301,17 +307,28 @@ function MealPlanning({ ui, batch }: { ui: UI; batch: boolean }) {
   const { s, w } = ui;
   const entries = weekPreparations(s, w);
   const preps = entries.map((x) => x.p);
+  const batchPreps = new Set(preps.filter((p) => p.batchPerMeal || p.session).map((p) => p.id));
+  const portions = s.meals.reduce(
+    (sum, m) => sum + (m.prepId && batchPreps.has(m.prepId) && inWeek(m.day, w) ? m.servings : 0),
+    0,
+  );
   return (
     <>
       {batch && (
-        <section className="panel">
-          <div className="split">
-            <h2>Sessions de cuisine</h2>
-            {preps.some((p) => !p.session && !p.done) && (
-              <button onClick={() => ui.open(<BatchForm ui={ui} />)}>
-                Regrouper des préparations
-              </button>
-            )}
+        <section className="week-section">
+          <div className="section-heading">
+            <div>
+              <h2>Un plat pour plusieurs repas</h2>
+              <small>
+                {portions
+                  ? portions + (portions === 1 ? ' portion prévue' : ' portions prévues')
+                  : 'Aucune portion prévue'}{' '}
+                cette semaine
+              </small>
+            </div>
+            <Link className="text-link" href={'/recettes?onglet=suggestions&batch=1&week=' + w}>
+              Voir les recettes de batch cooking →
+            </Link>
           </div>
           {s.sessions
             .filter((g) => inWeek(g.day, w))
@@ -323,16 +340,14 @@ function MealPlanning({ ui, batch }: { ui: UI; batch: boolean }) {
                 <Link href={'/cuisiner?week=' + w + '&session=' + g.id}>Cuisiner →</Link>
               </div>
             ))}
-          <p>
-            {preps.length
-              ? 'Regroupez les plats à cuisiner le même jour. Les déjeuners et dîners gardent leurs dates.'
-              : 'Planifiez d’abord les plats de la semaine. Vous pourrez ensuite les préparer ensemble.'}
-          </p>
         </section>
       )}
       <MealCalendar key={w} ui={ui} />
       <div className="section-heading">
         <h2>Préparations de la semaine</h2>
+        {batch && preps.some((p) => !p.session && !p.done) && (
+          <button onClick={() => ui.open(<BatchForm ui={ui} />)}>Regrouper des préparations</button>
+        )}
       </div>
       {entries.map(({ p, first }) => {
         const used = s.meals

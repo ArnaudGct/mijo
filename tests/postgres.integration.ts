@@ -8,6 +8,7 @@ import { ensureWeek, mutate, type Command } from '../lib/commands';
 import { blankRecipe } from '../lib/model';
 import { parseLine } from '../lib/ingredients';
 import { addDays, today, monday } from '../lib/dates';
+import { weekPlan } from '../lib/week-plan';
 import { needs } from '../lib/shopping';
 import { commonMeasures, sessionTasks } from '../lib/planner';
 import { storePhoto } from '../lib/media';
@@ -269,7 +270,8 @@ test('transactions PostgreSQL, parcours complet, restauration et rejouabilité',
     );
     await t.test('restauration JSON sur une base vide de test avec versions et liens', async () => {
       const a = await backup();
-      await assert.rejects(restore(a));
+      assert.equal(a.format, 'mijo/1');
+      await assert.rejects(restore(a), /base dédiée vide/);
       const sql = db();
       await sql.begin(async (tx) => {
         for (const tab of [
@@ -287,7 +289,7 @@ test('transactions PostgreSQL, parcours complet, restauration et rejouabilité',
           await tx`delete from ${tx(tab)}`;
         await tx`update preferences set revision=0,data='{}'`;
       });
-      await restore(a);
+      await restore({ ...a, format: 'table-de-saison/1' });
       const b = await backup();
       assert.equal(b.state.recipes.length, a.state.recipes.length);
       assert.deepEqual(b.state.meals, a.state.meals);
@@ -359,6 +361,83 @@ test('transactions PostgreSQL, parcours complet, restauration et rejouabilité',
         const m = after.meals.find((m) => m.prepId === linked.id)!;
         await write({ action: 'moveMeal', id: m.id, day: addDays(w, 2), slot: 'soir' });
         assert.equal((await state()).preps.find((p) => p.id === linked.id)?.automatic, false);
+      },
+    );
+    await t.test(
+      'renouveler une semaine pleine, appliquer la prévisualisation puis la vider sans toucher aux semaines voisines',
+      async () => {
+        const w = addDays(day, 182);
+        const recipes: string[] = [];
+        const diet = 'Menu variante de test';
+        await write({
+          action: 'prefs',
+          data: { ...(await state()).prefs, diet, target: 7, portions: 2 },
+        });
+        for (let i = 0; i < 16; i++) {
+          recipes.push(
+            (
+              await write({
+                action: 'recipe',
+                data: { ...r, url: '', title: 'Menu du test ' + i, diet },
+              })
+            ).id!,
+          );
+        }
+        for (let i = 0; i < 7; i++)
+          await write({
+            action: 'plan',
+            day: addDays(w, i),
+            slot: 'soir',
+            id: recipes[i],
+            servings: 2,
+            leftovers: true,
+          });
+        await ensureWeek(w);
+        const before = await state();
+        const variation = { seed: uid(), avoid: [] };
+        const preview = weekPlan(before, w, today(), true, true, variation);
+        assert.ok(preview.rows.length >= 7);
+        const revised = {
+          seed: uid(),
+          avoid: [...new Set(preview.rows.map((row) => row.prep.recipeId))],
+        };
+        const next = weekPlan(before, w, today(), true, true, revised);
+        assert.notDeepEqual(
+          next.rows.map((row) => row.prep.recipeId),
+          preview.rows.map((row) => row.prep.recipeId),
+        );
+        await write({
+          action: 'fillWeek',
+          week: w,
+          optimize: true,
+          variation: revised,
+          previewRevision: before.revision,
+        });
+        const after = await state();
+        for (const row of next.rows)
+          assert.equal(
+            after.preps.find(
+              (p) =>
+                p.id ===
+                after.meals.find((m) => m.day === row.meal.day && m.slot === row.meal.slot)?.prepId,
+            )?.recipeId,
+            row.prep.recipeId,
+          );
+        const ahead = after.meals.filter((m) => m.day === addDays(w, 7));
+        assert.ok(ahead.length > 0);
+        await assert.rejects(
+          write({ action: 'clearWeek', week: w, previewRevision: before.revision }),
+        );
+        await write({ action: 'clearWeek', week: w, previewRevision: after.revision });
+        assert.equal((await ensureWeek(w)).changed, false);
+        const cleared = await state();
+        assert.ok(!cleared.meals.some((m) => m.day >= w && m.day < addDays(w, 7)));
+        assert.ok(!cleared.preps.some((p) => p.day >= w && p.day < addDays(w, 7)));
+        assert.deepEqual(
+          cleared.meals.filter((m) => m.day === addDays(w, 7)),
+          ahead,
+        );
+        assert.equal(cleared.preps.find((p) => p.id === ahead[0].prepId)?.servings, 1);
       },
     );
   } finally {

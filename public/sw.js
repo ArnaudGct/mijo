@@ -1,9 +1,8 @@
-const cacheName = 'table-shell-v6';
+const cacheName = 'mijo-shell-v1';
+const shellAssets = ['/courses-hors-ligne.html', '/hors-ligne.js', '/icon.png?v=mijo'];
 self.addEventListener('install', (event) =>
   event.waitUntil(
-    caches
-      .open(cacheName)
-      .then((c) => c.addAll(['/courses-hors-ligne.html', '/hors-ligne.js', '/icon.png'])),
+    caches.open(cacheName).then((cache) => cache.addAll(shellAssets)),
   ),
 );
 self.addEventListener('activate', (event) =>
@@ -15,7 +14,7 @@ self.addEventListener('activate', (event) =>
         .then((keys) =>
           Promise.all(
             keys
-              .filter((k) => k.startsWith('table-shell-') && k !== cacheName)
+              .filter((k) => (k.startsWith('table-shell-') || k.startsWith('mijo-shell-')) && k !== cacheName)
               .map((k) => caches.delete(k)),
           ),
         ),
@@ -25,7 +24,7 @@ self.addEventListener('activate', (event) =>
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   if (url.origin !== location.origin || event.request.method !== 'GET') return;
-  if (['/courses-hors-ligne.html', '/hors-ligne.js', '/icon.png'].includes(url.pathname)) {
+  if (shellAssets.includes(url.pathname + url.search)) {
     event.respondWith(caches.match(event.request).then((r) => r || fetch(event.request)));
     return;
   }

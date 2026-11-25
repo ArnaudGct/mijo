@@ -206,10 +206,6 @@ label {
   letter-spacing: -0.065em;
   font-size: 24px;
 }
-.brand-dot {
-  color: #869560;
-  margin-left: -7px;
-}
 .brand-link {
   padding: 0 4px;
 }
@@ -687,6 +683,30 @@ label {
   gap: 12px;
   align-items: end;
 }
+.filtergrid > .field {
+  margin: 0;
+}
+.recipe-filter-checks {
+  display: grid;
+  gap: 6px;
+  align-self: center;
+}
+.recipe-filter-checks label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+.batch-allocation ul {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0;
+  display: grid;
+  gap: 4px;
+}
+.recipe-filter-checks input {
+  margin: 0;
+}
 .pricegrid {
   margin: 14px 0;
 }
@@ -1000,6 +1020,7 @@ dialog::backdrop {
   justify-content: space-between;
 }
 .page-heading .actions,
+.actions.recipe-actions,
 .row .actions {
   gap: 8px;
 }
@@ -1623,22 +1644,30 @@ html {
   color: var(--green);
   background: transparent;
 }
-.breakfast-sheet {
+.breakfast-sheet,
+.week-section {
   margin-block: 24px;
 }
-.breakfast-sheet .section-heading {
+.breakfast-sheet .section-heading,
+.week-section .section-heading {
   align-items: center;
   gap: 14px;
   flex-wrap: wrap;
 }
 .breakfast-sheet h2,
+.week-section h2,
 .breakfast-table h3 {
   margin: 0;
 }
-.breakfast-sheet small {
+.breakfast-sheet small,
+.week-section .section-heading small {
   display: block;
   color: var(--muted);
   font-size: 13px;
+}
+.week-section .section-heading > div {
+  display: grid;
+  gap: 4px;
 }
 .breakfast-cost {
   display: flex;
@@ -2340,48 +2369,13 @@ html {
     margin-left: 0;
   }
 }
-.discovery-courses {
-  width: fit-content;
-  margin-bottom: 16px;
-}
-.discovery-filters {
-  display: flex;
-  gap: 12px;
-  align-items: end;
-  flex-wrap: wrap;
-  margin-bottom: 20px;
-}
-.discovery-filters label {
-  display: grid;
-  gap: 4px;
-  font-size: 13px;
-}
-.discovery-filters label:first-child {
-  flex: 1;
-  min-width: 190px;
-}
-.discovery-more,
-.discovery-skip {
+.discovery-more {
   margin-block: 12px;
 }
 .confirm-meals p {
   padding-block: 8px;
   border-bottom: 1px solid var(--line);
 }
-@media (max-width: 650px) {
-  .discovery-filters {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .discovery-filters label:first-child {
-    min-width: 0;
-    grid-column: 1/-1;
-  }
-  .discovery-filters select {
-    width: 100%;
-  }
-}
-
 .scan-shopping {
   margin: 1rem 0;
 }
@@ -2459,4 +2453,26 @@ html {
 .scan-result a {
   display: inline-block;
   margin-top: 0.55rem;
+}
+
+.recipe-price,
+.card-foot .recipe-price {
+  display: block;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.recipe-price strong {
+  color: var(--ink);
+  white-space: nowrap;
+}
+.recipe-price .price-coverage {
+  display: block;
+}
+.recipe-price .price-per-portion {
+  white-space: nowrap;
+}
+.hero .recipe-price,
+.hero .recipe-price strong {
+  color: #eeefdb;
 }

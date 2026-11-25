@@ -2,7 +2,7 @@
 
 ## Instance locale
 
-Table de saison est servi sur `http://localhost:3180` par le conteneur applicatif. Le catalogue et les préférences résident dans un volume PostgreSQL 17.12 dédié. Le premier accès est dans `data/private/mot-de-passe.txt`, lisible uniquement par le compte local. L’instance Mac n’est publiée sur aucun domaine. Les six rubriques, l’éditeur, le planificateur, les sessions et la liste hors ligne font partie de l’application livrée.
+Mijo est accessible sur `http://localhost:3180` par le conteneur applicatif. Le catalogue et les préférences résident dans un volume PostgreSQL 17.12 dédié. Le premier accès est dans `data/private/mot-de-passe.txt`, lisible uniquement par le compte local. L’instance Mac n’est publiée sur aucun domaine. Les six rubriques, l’éditeur, le planificateur, les sessions et la liste hors ligne font partie de l’application livrée.
 
 ## Migration réelle
 

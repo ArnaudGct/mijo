@@ -73,6 +73,11 @@ export function useDiscoveries(ui: UI, filters: DiscoveryFilters = defaults) {
   const base = useMemo(() => {
     const terms = searchWords(filters.query);
     return initial.flatMap((c) =>
+      (!filters.batch || ('batch' in c && c.batch === true)) &&
+      !filters.ingredient &&
+      !filters.cuisine &&
+      !filters.diet &&
+      !filters.difficulty &&
       c.course === filters.course &&
       (!filters.publisher || filters.publisher === c.publisher) &&
       (!filters.minutes || (c.minutes !== null && c.minutes <= filters.minutes)) &&
@@ -97,6 +102,8 @@ export function useDiscoveries(ui: UI, filters: DiscoveryFilters = defaults) {
       urls.add(url);
       titles.add(title);
     }
+    if (filters.order === 'name')
+      return result.sort((a, b) => a.title.localeCompare(b.title, 'fr'));
     return filters.order === 'quick'
       ? result.sort(
           (a, b) =>

@@ -1,10 +1,21 @@
 import { load } from 'cheerio';
+import { recipeCost } from './market';
 import { duration, type Recipe } from './model';
 import { getPage, extract } from './web-import';
 import { discoveryTitle, type Discovery } from './recipe-sources';
 import { discoveryCourse } from './discovery-course';
 
 const indexes = [
+  {
+    publisher: 'Batchly',
+    url: 'https://www.batchly.fr/recettes',
+    pattern: /^\/recettes\/[a-z0-9-]+$/,
+  },
+  {
+    publisher: 'HelloFresh',
+    url: 'https://www.hellofresh.fr/recipes',
+    pattern: /^\/recipes\/[^/]+-[a-f0-9]{24}$/,
+  },
   {
     publisher: 'Marmiton',
     url: 'https://www.marmiton.org/recettes/index/categorie/plat-principal',
@@ -56,6 +67,8 @@ export async function sampleSources(perSite: number, day: number) {
                 url: recipe.url,
                 image: recipe.image,
                 publisher,
+                cost: recipeCost(recipe),
+                batch: recipe.batch,
                 minutes: duration(recipe),
               },
             });

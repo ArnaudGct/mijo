@@ -122,6 +122,27 @@ export function parseLine(raw: string): Ingredient {
   let name = raw.trim(),
     unit = '',
     quantity: number | null = null;
+  const pack = raw
+    .trim()
+    .match(
+      /^(\d+)\s+(?:boîtes?|bocaux|pots?|sachets?)\s+(?:de\s+|d['’])?(.+?)\s*\((\d+(?:[.,]\d+)?)\s*(kg|g|ml|cl|l)\)(?:\s*,.*)?$/i,
+    );
+  const weighed = raw
+    .trim()
+    .match(
+      /^(\d+)\s+((?:rôtis?|filets?|pavés?)\s+.+?)\s+de\s+(\d+(?:[.,]\d+)?)\s*(kg|g)\b(?:\s+chacun[e]?s?|\s+bardé[e]?s?)?$/i,
+    );
+  const portioned = pack ?? weighed;
+  if (portioned) {
+    const [, count, food, size, metric] = portioned;
+    return {
+      raw,
+      name: food,
+      quantity: rounded(Number(count) * Number(size.replace(',', '.'))),
+      unit: metric.toLowerCase(),
+      category: categorize(food),
+    };
+  }
   const tagged = raw.match(/^(?:<b>|\*\*)(.+?)(?:<\/b>|\*\*)\s*(.*)$/i);
   if (tagged) {
     name = tagged[1].trim();
@@ -132,7 +153,7 @@ export function parseLine(raw: string): Ingredient {
       quantity = amount(m[1]);
       unit = m[2].replace(/\(s\)/g, '').trim();
     }
-  } else if (/^.+?\s+\([\d½⅓⅔¼¾]/.test(raw)) {
+  } else if (/^.+?\s+\([\d½⅓⅔¼¾][^)]*\)$/.test(raw)) {
     const m = raw.match(/^(.+?)\s+\((.+)\)$/);
     if (m) {
       const parsed = parseLine('<b>' + m[1] + '</b> (' + m[2] + ')');
@@ -147,7 +168,12 @@ export function parseLine(raw: string): Ingredient {
     const m = raw.trim().match(new RegExp('^(' + number + ')\\s*(.+)$'));
     if (m) {
       quantity = amount(m[1]);
-      const tail = m[2].trim().replace(/\(s\)/g, '');
+      const tail = m[2]
+        .trim()
+        .replace(/\(s\)/g, '')
+        .replace(/^c\.?\s*à\s*(soupe|s|café|c)\.?\s+/iu, (_, size: string) =>
+          /^s/i.test(size) ? 'càs ' : 'càc ',
+        );
       const found = tail.match(
         /^(cuillères? à (?:soupe|café)|kilogrammes?|grammes?|millilitres?|litres?|kg|mg|ml|cl|g|l|pièces?|càs|càc|cs|cc|sachets?|gousses?|gou|pincées?|pinc|pots?|tranches?|paquets?|briques?|boîtes?|bouteilles?|noisettes?|pincements?|verres?|bouquets?|branches?|brins?|cm)\.?\s+(?:d[e’']\s*|d'|de la |du )?(.+)$/i,
       );

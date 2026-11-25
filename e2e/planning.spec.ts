@@ -121,7 +121,8 @@ test('parcours privé sur ordinateur et liste emportée sur mobile', async ({
   await expect(page.getByLabel('Mot de passe')).toBeVisible();
   expect(errors).toEqual([]);
 });
-test('import corrigé, édition, archives, restauration et suppression sur téléphone', async ({
+const testImport = test.extend({ serviceWorkers: 'block' });
+testImport('import corrigé, édition, archives, restauration et suppression sur téléphone', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
@@ -184,7 +185,8 @@ test('import corrigé, édition, archives, restauration et suppression sur tél�
   await dialog.getByRole('button', { name: 'Enregistrer' }).click();
   await expect(dialog).toHaveCount(0);
   await page.getByRole('button', { name: 'Ouvrir Soupe corrigée E2E' }).click();
-  await expect(dialog.getByText('3 portions', { exact: true })).toBeVisible();
+  await expect(dialog.locator('.recipe-price')).toContainText('3 portions');
+  await expect(dialog.getByLabel('Portions pour les ingrédients')).toHaveValue('3');
   await dialog.getByRole('button', { name: 'Dupliquer' }).click();
   await dialog.getByRole('button', { name: 'Enregistrer' }).click();
   await expect(dialog).toHaveCount(0);

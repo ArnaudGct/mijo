@@ -1,13 +1,18 @@
 'use client';
+import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Dialog, Empty, Photo, api, type UI } from './common';
 import { duration, type Recipe } from '@/lib/model';
 import { discoveryTitle, type Discovery } from '@/lib/recipe-sources';
 
 import { defaults, type DiscoveryFilters } from '@/lib/discovery-taste';
-import { courses, courseLabels } from '@/lib/discovery-course';
 import { useDiscoveries } from './use-discovery';
+import { difficulties } from '@/lib/recipe-diet';
+import { RecipeFilterFields, RecipeToolbar } from './recipe-toolbar';
+import { discoveryPublishers } from '@/lib/recipe-sources';
 import { EyeOff } from 'lucide-react';
+import { RecipePrice } from './recipe-price';
+import { recipeCost } from '@/lib/market';
 export function DiscoveryPreview({ ui, item }: { ui: UI; item: Discovery }) {
   const [recipe, setRecipe] = useState<Recipe | null>(null),
     [error, setError] = useState(''),
@@ -38,24 +43,19 @@ export function DiscoveryPreview({ ui, item }: { ui: UI; item: Discovery }) {
         <a href={item.url} target="_blank" rel="noreferrer">
           {item.publisher} ↗
         </a>
-        {recipe && (
-          <span>
-            {recipe.base} portions
-            {duration(recipe) !== null ? ' · ' + duration(recipe) + ' min' : ''}
-          </span>
-        )}
+        {recipe && duration(recipe) !== null && <span>{duration(recipe)} min</span>}
       </div>
-      <button
-        className="discovery-skip"
-        onClick={async () => {
-          if (await ui.run({ action: 'dismissDiscovery', url: item.url }, 'Suggestion écartée.'))
-            ui.close();
-        }}
-      >
-        Écarter cette suggestion
-      </button>
-      {recipe ? (
-        <>
+      <RecipePrice cost={recipe ? recipeCost(recipe) : item.cost} />
+      <div className="actions recipe-actions">
+        <button
+          onClick={async () => {
+            if (await ui.run({ action: 'dismissDiscovery', url: item.url }, 'Suggestion écartée.'))
+              ui.close();
+          }}
+        >
+          Écarter cette suggestion
+        </button>
+        {recipe && (
           <button
             className="primary"
             disabled={saving}
@@ -73,6 +73,10 @@ export function DiscoveryPreview({ ui, item }: { ui: UI; item: Discovery }) {
           >
             Ajouter à mon carnet
           </button>
+        )}
+      </div>
+      {recipe ? (
+        <>
           <h3>Ingrédients</h3>
           <ul className="discovery-ingredients">
             {recipe.ingredients.map((i, n) => (
@@ -105,82 +109,64 @@ export function DiscoveryPreview({ ui, item }: { ui: UI; item: Discovery }) {
   );
 }
 export function DiscoveryShelf({ ui }: { ui: UI }) {
-  const [filters, setFilters] = useState<DiscoveryFilters>(defaults),
-    [query, setQuery] = useState('');
+  const batchRequested = useSearchParams().get('batch') === '1';
+  const [filters, setFilters] = useState<DiscoveryFilters>({ ...defaults, batch: batchRequested }),
+    [fields, setFields] = useState({ query: '', ingredient: '', cuisine: '' });
   useEffect(() => {
     const t = setTimeout(
       () =>
-        setFilters((old) => (old.query === query.trim() ? old : { ...old, query: query.trim() })),
+        setFilters((old) => ({
+          ...old,
+          query: fields.query.trim(),
+          ingredient: fields.ingredient.trim(),
+          cuisine: fields.cuisine.trim(),
+        })),
       350,
     );
     return () => clearTimeout(t);
-  }, [query]);
+  }, [fields]);
   const feed = useDiscoveries(ui, filters);
   return (
     <>
-      <div className="tabs discovery-courses" role="group" aria-label="Type de recette">
-        {courses.map((course) => (
-          <button
-            key={course}
-            aria-pressed={filters.course === course}
-            className={filters.course === course ? 'selected' : ''}
-            onClick={() => setFilters((old) => ({ ...old, course }))}
-          >
-            {courseLabels[course]}
-          </button>
-        ))}
-      </div>
-      <div className="discovery-filters">
-        <label>
-          Recette ou ingrédient
-          <input
-            type="search"
-            value={query}
-            maxLength={100}
-            placeholder="Poulet, risotto…"
-            onChange={(e) => setQuery(e.target.value)}
-          />
-        </label>
-        <label>
-          Durée
-          <select
-            value={filters.minutes}
-            onChange={(e) => setFilters({ ...filters, minutes: Number(e.target.value) })}
-          >
-            <option value={0}>Toutes les durées</option>
-            {[20, 30, 45, 60].map((n) => (
-              <option key={n} value={n}>
-                {n} min maximum
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Source
-          <select
-            value={filters.publisher}
-            onChange={(e) => setFilters({ ...filters, publisher: e.target.value })}
-          >
-            <option value="">Toutes les sources</option>
-            {['Marmiton', 'CuisineAZ', 'Jow', '750g'].map((name) => (
-              <option key={name}>{name}</option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Sélection
-          <select
-            value={filters.order}
-            onChange={(e) =>
-              setFilters({ ...filters, order: e.target.value as DiscoveryFilters['order'] })
-            }
-          >
-            <option value="affinity">Pour moi</option>
-            <option value="explore">Explorer</option>
-            <option value="quick">Durée des résultats</option>
-          </select>
-        </label>
-      </div>
+      <RecipeToolbar
+        initiallyExpanded={batchRequested}
+        query={fields.query}
+        onSearch={(query) => setFields({ ...fields, query })}
+        maxLength={100}
+        sort={filters.order}
+        onSort={(order) => setFilters({ ...filters, order })}
+        sorts={[
+          ['name', 'Nom'],
+          ['quick', 'Durée'],
+          ['affinity', 'Préférence'],
+          ['explore', 'Explorer'],
+        ]}
+      >
+        <RecipeFilterFields
+          values={{ ...filters, ...fields }}
+          levels={difficulties}
+          sources={discoveryPublishers}
+          change={({ cuisine, ingredient, ...immediate }) => {
+            if (cuisine !== undefined || ingredient !== undefined)
+              setFields((f) => ({
+                ...f,
+                cuisine: cuisine ?? f.cuisine,
+                ingredient: ingredient ?? f.ingredient,
+              }));
+            else setFilters((f) => ({ ...f, ...immediate }));
+          }}
+        />
+        <div className="recipe-filter-checks">
+          <label>
+            <input
+              type="checkbox"
+              checked={filters.batch}
+              onChange={(e) => setFilters((f) => ({ ...f, batch: e.target.checked }))}
+            />
+            Batch cooking
+          </label>
+        </div>
+      </RecipeToolbar>
       <div className="cards discovery-cards">
         {feed.cards.map((item) => (
           <DiscoveryCard key={item.url} item={item} ui={ui} />
@@ -237,6 +223,9 @@ export function DiscoveryCard({ ui, item }: { ui: UI; item: Discovery }) {
         >
           {item.title}
         </button>
+        <div className="card-foot">
+          <RecipePrice cost={item.cost} />
+        </div>
       </div>
     </article>
   );

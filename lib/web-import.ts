@@ -9,7 +9,8 @@ import { load } from 'cheerio';
 import { recipe, blankRecipe } from './model';
 import { fromHelloFreshPage } from './hellofresh';
 import { parseLine } from './ingredients';
-const agent = 'TableDeSaison/1.0';
+import { vegetarianLabel } from './recipe-diet';
+const agent = 'Mijo/1.0';
 const decompress = promisify(gunzip);
 class DestinationError extends Error {}
 export function publicAddress(ip: string) {
@@ -115,7 +116,7 @@ export async function getPage(raw: string, maxBytes = 3000000) {
       (policy.code !== 200 ||
         robotsParser(robotsUrl.href, policy.body.toString('utf8')).isAllowed(
           u.href,
-          'TableDeSaison',
+          'Mijo',
         ) === false)
     )
       throw Error('Lecture automatisée non autorisée par le site.');
@@ -216,9 +217,20 @@ export function extract(html: string, url: string) {
     prep: minutes(o.prepTime),
     cook: minutes(o.cookTime),
     total: minutes(o.totalTime),
+    diet: [
+      ...list(o.suitableForDiet),
+      ...list(o.keywords).flatMap((v) => String(v).split(',')),
+    ].some((v) => vegetarianLabel(typeof v === 'string' ? v : String(obj(v)['@id'] ?? '')))
+      ? 'Végétarien'
+      : '',
     tags: [...new Set([...(course ? [course] : []), ...list(o.recipeCategory).map(String)])].slice(
       0,
       40,
+    ),
+    batch: [...list(o.keywords), ...list(o.recipeCategory)].some((v) =>
+      String(v)
+        .split(',')
+        .some((t) => /^batch[ -]cooking$/i.test(t.trim())),
     ),
     cuisine: list(o.recipeCuisine).join(', '),
     ingredients: list(o.recipeIngredient).map(plain).filter(Boolean).map(parseLine),

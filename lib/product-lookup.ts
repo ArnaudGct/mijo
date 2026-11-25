@@ -14,7 +14,7 @@ export async function lookupProduct(barcode: string): Promise<ProductInfo | null
     'https://world.openfoodfacts.org/api/v2/product/' + barcode + '.json?fields=' + fields,
     {
       headers: {
-        'User-Agent': 'TableDeSaison/1.0 (personal meal planner)',
+        'User-Agent': 'Mijo/1.0 (personal meal planner)',
         Accept: 'application/json',
       },
       signal: AbortSignal.timeout(4500),

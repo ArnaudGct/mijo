@@ -11,14 +11,69 @@ import {
   weekPreparations,
   optimizedRecipes,
 } from '../lib/planner';
-import { marketBasket, shipping } from '../lib/market';
+import { marketBasket, recipeCost, shipping } from '../lib/market';
 import { needs, basket } from '../lib/shopping';
 import { parseNotion } from '../lib/notion';
 import { publicAddress, publicUrl, extract } from '../lib/web-import';
 import { discoveryCourse } from '../lib/discovery-course';
 import { discoveryQuery } from '../lib/discovery-search';
+import { recipeDiet } from '../lib/recipe-diet';
 const day = '2026-11-16',
   id = () => crypto.randomUUID();
+
+test('prix d’une fiche avant planification, quantités consommées et ingrédients sans tarif', () => {
+  const r = { base: 2, ingredients: [parseLine('Riz | 200 | g')] };
+  const cost = recipeCost(r);
+  assert.ok(cost.cents && cost.cents > 0);
+  assert.deepEqual(cost, recipeCost({ ...r, ingredients: [parseLine('Riz | 0,2 | kg')] }));
+  const extra = parseLine('Produit inconnu | 20 | g');
+  assert.deepEqual(recipeCost({ ...r, ingredients: [...r.ingredients, extra] }), {
+    ...cost,
+    missing: 1,
+  });
+  assert.deepEqual(recipeCost({ base: null, ingredients: [extra] }), {
+    cents: null,
+    portions: null,
+    missing: 1,
+    priced: 0,
+  });
+  assert.deepEqual(
+    recipeCost({ ...r, ingredients: [...r.ingredients, parseLine('Sel'), parseLine('Poivre')] }),
+    cost,
+  );
+  const tin = parseLine('2 boîtes Haricots rouges (400 g), rincés et égouttés');
+  assert.deepEqual([tin.name, tin.quantity, tin.unit], ['Haricots rouges', 800, 'g']);
+  const oil = parseLine('2 c. à soupe Huile d’olive');
+  assert.deepEqual([oil.name, oil.quantity, oil.unit], ['Huile d’olive', 2, 'càs']);
+  assert.equal(parseLine('1 rôti de veau de 1,5 kg bardé').quantity, 1.5);
+});
+
+test('le filtre VG accepte une fiche végétalienne publiée et contrôle les ingrédients contradictoires', () => {
+  const html =
+    '<script type="application/ld+json">' +
+    JSON.stringify({
+      '@type': 'Recipe',
+      suitableForDiet: 'https://schema.org/VeganDiet',
+      recipeIngredient: ['200 g de tofu', 'Riz'],
+      name: 'Bowl de tofu',
+    }) +
+    '</script>';
+  const recipe = extract(html, 'https://www.750g.com/bowl-r123.htm');
+  assert.equal(recipeDiet(recipe), 'Végétarien');
+  assert.equal(
+    recipeDiet({ ...recipe, ingredients: [parseLine('Bouillon de volaille')] }),
+    'Viande',
+  );
+  assert.equal(recipeDiet({ ...recipe, ingredients: [parseLine('Sauce de poisson')] }), 'Poisson');
+  assert.equal(
+    recipeDiet({ ...recipe, diet: '', tags: [], ingredients: [parseLine('Farce maison')] }),
+    '',
+  );
+  assert.equal(
+    recipeDiet({ ...recipe, ingredients: [parseLine('Lardons végétaux')] }),
+    'Végétarien',
+  );
+});
 
 test('les suggestions privilégient les plats et classent les intitulés ambigus avec la rubrique de la fiche', () => {
   assert.equal(

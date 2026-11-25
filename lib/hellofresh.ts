@@ -2,6 +2,7 @@ import { load } from 'cheerio';
 import { z } from 'zod';
 import { blankRecipe, recipe } from './model';
 import { shoppingCategory, normalize, rounded } from './ingredients';
+import { recipeDiet } from './recipe-diet';
 
 const named = z.object({ name: z.string() });
 const source = z.object({
@@ -111,17 +112,7 @@ export function helloFreshRecipe(payload: unknown) {
     total: minutes(r.prepTime),
     prep: minutes(r.totalTime),
     nutrition: (r.nutrition ?? []).map((n) => n.name + ' ' + n.amount + ' ' + n.unit).join(' · '),
-    diet: tags.some((t) => /végétarien|végétalien|veggie|vegan/i.test(t))
-      ? 'Végétarien'
-      : ingredients.some(
-            (i) =>
-              i.category === 'Viandes et poissons' &&
-              /poisson|saumon|crevette|haddock|cabillaud|lieu|merlu|truite/i.test(i.name),
-          )
-        ? 'Poisson'
-        : ingredients.some((i) => i.category === 'Viandes et poissons')
-          ? 'Viande'
-          : '',
+    diet: recipeDiet({ diet: '', ingredients, tags }),
     ingredients,
     steps,
     verified: true,

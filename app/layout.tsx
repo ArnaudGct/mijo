@@ -7,10 +7,12 @@ import { state } from '@/lib/db';
 import { Login, Workspace } from '@/components/workspace';
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
-  title: 'Table de saison · Mon carnet de cuisine',
+  title: 'Mijo · Mon carnet de cuisine',
+  applicationName: 'Mijo',
+  appleWebApp: { capable: true, title: 'Mijo' },
   description: 'Votre carnet privé de recettes, menus et courses.',
   manifest: '/manifest.webmanifest',
-  icons: { icon: '/icon.png' },
+  icons: { icon: '/icon.png?v=mijo', apple: '/icon.png?v=mijo' },
 };
 export const viewport: Viewport = { width: 'device-width', initialScale: 1, themeColor: '#354c38' };
 export default async function Layout({ children }: { children: React.ReactNode }) {

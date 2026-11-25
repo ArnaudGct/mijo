@@ -15,7 +15,7 @@ import {
   type State,
   type Recipe,
 } from './model';
-import { planned, defaultMeals, uid } from './planner';
+import { planned, defaultMeals, batchMeals, uid, type PlanVariation } from './planner';
 import { addDays, inWeek, monday, today } from './dates';
 import { sourceUrl } from './source-url';
 import { cookedLots, expiryPlan, type CheckoutReport } from './expiry-plan';
@@ -74,6 +74,8 @@ export const input = z.discriminatedUnion('action', [
     confirmedBase: portions.optional(),
     replaceMeal: id.optional(),
     replaceLunch: id.optional(),
+    batchPerMeal: portions.optional(),
+    batchReplacements: z.array(id).max(100).optional(),
     previewRevision: z.number().int().optional(),
     slot: z.enum(['soir', 'midi']).default('soir'),
     leftovers: z.boolean(),
@@ -95,8 +97,10 @@ export const input = z.discriminatedUnion('action', [
     action: z.literal('fillWeek'),
     week: date,
     optimize: z.boolean().optional(),
+    variation: z.object({ seed: id, avoid: z.array(id).max(32) }).optional(),
     previewRevision: z.number().int().optional(),
   }),
+  z.object({ action: z.literal('clearWeek'), week: date, previewRevision: z.number().int() }),
   z.object({ action: z.literal('duplicateWeek'), week: date, to: date }),
   z.object({ action: z.literal('session'), data: session }),
   z.object({
@@ -207,11 +211,44 @@ export async function execute(tx: Tx, s: State, c: z.output<typeof input>) {
           r.archived,
         );
       requireThat(!r.archived, 'Recette archivée.');
+      if (c.batchPerMeal) {
+        requireThat(
+          c.batchPerMeal <= c.servings && r.data.base,
+          'Vérifiez les portions de la recette.',
+        );
+        if (!r.data.batch)
+          r = await insertRecipe(
+            tx,
+            { ...r.data, batch: true },
+            r.sourceKey,
+            r.original,
+            r.id,
+            r.archived,
+          );
+      }
       requireThat(
         r.data.ingredients.length && r.data.steps.length,
         'Cette recette a besoin de ses ingrédients et de ses étapes avant la planification.',
       );
       const replacements = [{ id: c.replaceMeal, day: c.day, slot: c.slot }];
+      const batch = c.batchPerMeal ? batchMeals(c.day, c.slot, c.servings, c.batchPerMeal) : null;
+      if (batch) {
+        requireThat(
+          !c.replaceMeal && !c.replaceLunch && !c.leftovers,
+          'Répartition de portions incompatible.',
+        );
+        const conflicts = s.meals.filter((m) =>
+          batch.some((b) => b.day === m.day && b.slot === m.slot),
+        );
+        const approved = new Set(c.batchReplacements ?? []);
+        requireThat(
+          conflicts.length === approved.size &&
+            conflicts.every((m) => approved.has(m.id)) &&
+            (!approved.size || c.previewRevision === s.revision),
+          'Les repas concernés ont changé. Rouvrez le planning.',
+        );
+        replacements.push(...conflicts.map((m) => ({ id: m.id, day: m.day, slot: m.slot })));
+      }
       if (c.replaceLunch) {
         requireThat(
           c.leftovers && c.servings > 1 && c.slot === 'soir',
@@ -227,8 +264,10 @@ export async function execute(tx: Tx, s: State, c: z.output<typeof input>) {
         );
         await execute(tx, s, { action: 'removeMeal', id: old.id });
       }
-      const p = planned(r, c.day, c.servings);
-      const meals = defaultMeals(p, c.leftovers, c.slot);
+      const p = { ...planned(r, c.day, c.servings), batchPerMeal: c.batchPerMeal };
+      const meals = batch
+        ? batch.map((m) => ({ ...m, id: uid(), prepId: p.id, frozen: false, consumed: false }))
+        : defaultMeals(p, c.leftovers, c.slot);
       meals.forEach(free);
       await put(tx, 'preps', p);
       for (const m of meals) await put(tx, 'meals', m);
@@ -263,8 +302,39 @@ export async function execute(tx: Tx, s: State, c: z.output<typeof input>) {
           c.previewRevision === s.revision,
           'Le planning a changé. Rouvrez la proposition.',
         );
-      await fillWeek(tx, s, c.week, true, !!c.optimize);
+      await fillWeek(tx, s, c.week, true, !!c.optimize, c.variation);
       break;
+    case 'clearWeek': {
+      requireThat(monday(c.week) === c.week, 'Choisissez une semaine du calendrier.');
+      requireThat(c.previewRevision === s.revision, 'Le planning a changé. Rouvrez la semaine.');
+      const removed = s.meals.filter((m) => inWeek(m.day, c.week) && !m.consumed);
+      const ids = new Set(removed.map((m) => m.id));
+      const remaining = s.meals.filter((m) => !ids.has(m.id));
+      for (const m of removed) await del('meals', m.id);
+      for (const p of s.preps) {
+        if (p.done || p.ticks.length) continue;
+        const local = inWeek(p.day, c.week);
+        const portions = removed
+          .filter((m) => m.prepId === p.id)
+          .reduce((n, m) => n + m.servings, 0);
+        if (!local && !portions) continue;
+        const kept = remaining.filter((m) => m.prepId === p.id);
+        if (local && !kept.length) {
+          await del('preps', p.id);
+        } else if (portions) {
+          const first = kept.map((m) => m.day).sort()[0];
+          const relocate = local && first && !inWeek(first, c.week);
+          await put(tx, 'preps', {
+            ...p,
+            servings: Math.max(1, p.servings - portions),
+            ...(relocate ? { day: first, session: null } : {}),
+          });
+        }
+      }
+      if (!s.prefs.generatedWeeks.includes(c.week))
+        await tx`update preferences set data=${tx.json({ ...s.prefs, generatedWeeks: [...s.prefs.generatedWeeks, c.week] })} where id=1`;
+      break;
+    }
     case 'moveMeal': {
       const source = s.meals.find((m) => m.id === c.id);
       requireThat(source && !source.consumed, 'Ce repas ne peut plus être déplacé.');
@@ -592,12 +662,19 @@ export async function execute(tx: Tx, s: State, c: z.output<typeof input>) {
       break;
   }
 }
-async function fillWeek(tx: Tx, s: State, week: string, refill = false, optimize = false) {
+async function fillWeek(
+  tx: Tx,
+  s: State,
+  week: string,
+  refill = false,
+  optimize = false,
+  variation?: PlanVariation,
+) {
   requireThat(
     monday(week) === week && week >= monday(today()),
     'Choisissez une semaine présente ou future.',
   );
-  const plan = weekPlan(s, week, today(), refill, optimize);
+  const plan = weekPlan(s, week, today(), refill, optimize, variation);
   for (const p of plan.preps) await put(tx, 'preps', p);
   for (const meal of plan.meals) await put(tx, 'meals', meal);
   s.meals.push(...plan.meals);

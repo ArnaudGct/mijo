@@ -1,0 +1,30 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    command: ["sh", "-c", "node scripts/migrate.mjs && exec node server.js"]
+    env_file:
+      - ${MIJO_ENV_FILE:-/etc/dokploy/mijo-private/app.env}
+    environment:
+      APP_ORIGIN: https://mijo.arnaudgct.fr
+      MEDIA_DIR: /data/media
+    volumes:
+      - media:/data/media
+    networks:
+      - dokploy-network
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: dokploy-network
+      traefik.http.routers.mijo-production.rule: Host(`mijo.arnaudgct.fr`)
+      traefik.http.routers.mijo-production.entrypoints: web
+      traefik.http.routers.mijo-production.service: mijo-production
+      traefik.http.services.mijo-production.loadbalancer.server.port: "3000"
+
+networks:
+  dokploy-network:
+    external: true
+
+volumes:
+  media:
+    name: mijo-production-media
+    external: true

@@ -16,7 +16,7 @@ import urllib.robotparser
 import xml.etree.ElementTree as ET
 
 HOST = "https://www.hellofresh.fr"
-AGENT = "TableDeSaison/1.0"
+AGENT = "Mijo/1.0"
 CACHE = Path("data/private/reconciliation")
 CACHE.mkdir(parents=True, exist_ok=True)
 (CACHE / "recipes").mkdir(exist_ok=True)

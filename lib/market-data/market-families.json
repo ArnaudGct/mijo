@@ -280,7 +280,7 @@
     "portion": 15
   },
   {
-    "pattern": "^pain",
+    "pattern": "^(?:pain|buns?\\b)",
     "tags": [
       "breads"
     ],
@@ -963,6 +963,12 @@
     ],
     "piece": 150,
     "portion": 200
+  },
+  {
+    "pattern": "roti de veau",
+    "tags": ["veal-meat"],
+    "piece": 0,
+    "portion": 0
   },
   {
     "pattern": "paupiette",

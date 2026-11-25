@@ -1,5 +1,5 @@
 import { addDays, inWeek, monday } from './dates';
-import { optimizedRecipes, planned, suggest, uid } from './planner';
+import { optimizedRecipes, planned, suggest, uid, type PlanVariation } from './planner';
 import type { Prep, State } from './model';
 
 export function weekPlan(
@@ -8,6 +8,7 @@ export function weekPlan(
   from: string,
   refill: boolean,
   optimize: boolean,
+  variation?: PlanVariation,
 ) {
   const s = { ...state, preps: [...state.preps], meals: [...state.meals] };
   const writes = new Map<string, Prep>();
@@ -38,11 +39,11 @@ export function weekPlan(
   function allocated(p: Prep) {
     return s.meals.filter((m) => m.prepId === p.id).reduce((n, m) => n + m.servings, 0);
   }
-  for (const { prep, recipe, why } of optimize ? optimizedRecipes(s, week, from) : []) {
+  for (const { prep, recipe, why } of optimize ? optimizedRecipes(s, week, from, variation) : []) {
     put({ ...prep, recipeId: recipe.id, version: recipe.version, snapshot: recipe.data });
     reasons.set(prep.id, why);
   }
-  for (const idea of suggest(s, week, from)) {
+  for (const idea of suggest(s, week, from, variation)) {
     const r = s.recipes.find((r) => r.id === idea.id)!;
     const p = { ...planned(r, idea.day, s.prefs.portions), automatic: true };
     put(p);
@@ -61,7 +62,7 @@ export function weekPlan(
         continue;
       const dinner = at(addDays(day, -1), 'soir');
       const p = s.preps.find((p) => p.id === dinner?.prepId);
-      if (!p || p.day < addDays(day, -2) || p.day > day) continue;
+      if (!p || p.batchPerMeal || p.day < addDays(day, -2) || p.day > day) continue;
       const taken = allocated(p);
       if (taken >= p.servings) {
         if (
@@ -94,6 +95,7 @@ export function weekPlan(
             },
             week,
             day,
+            variation,
           )[0];
           const r = idea && s.recipes.find((r) => r.id === idea.id);
           if (!r) continue;

@@ -74,7 +74,7 @@ export async function GET(_req: Request, ctx: Ctx) {
         headers: {
           ...headers,
           'content-type': 'application/json',
-          'content-disposition': 'attachment; filename="table-de-saison.json"',
+          'content-disposition': 'attachment; filename="mijo.json"',
         },
       });
     if (/^media\/[a-f0-9-]{36}\.webp$/.test(path)) {

@@ -1,19 +1,14 @@
 'use client';
+import { RecipeFilterFields, RecipeToolbar } from './recipe-toolbar';
 import { DiscoveryShelf } from './discoveries';
+import { discoveryCourse, type Course } from '@/lib/discovery-course';
+import { RecipePrice } from './recipe-price';
+import { recipeCost } from '@/lib/market';
 import { AutoPlanButton } from './auto-plan';
+import { difficulties, recipeDiet } from '@/lib/recipe-diet';
 import { importSites } from '@/lib/recipe-sources';
 import { useState } from 'react';
-import {
-  Heart,
-  Clock3,
-  SlidersHorizontal,
-  Plus,
-  Link2,
-  Search,
-  CalendarPlus,
-  ArrowRight,
-  UsersRound,
-} from 'lucide-react';
+import { Heart, Clock3, Plus, Link2, CalendarPlus, ArrowRight } from 'lucide-react';
 import {
   blankRecipe,
   problems,
@@ -24,7 +19,8 @@ import {
   type State,
 } from '@/lib/model';
 import { sourceUrl } from '@/lib/source-url';
-import { clean, amount } from '@/lib/ingredients';
+import { batchMeals } from '@/lib/planner';
+import { clean, amount, rounded } from '@/lib/ingredients';
 import { labelDate, today, inWeek, monday, addDays } from '@/lib/dates';
 import {
   PageTabs,
@@ -67,16 +63,13 @@ export function RecipeCard({ row, ui }: { row: RecipeRow; ui: UI }) {
           {duration(r) === null ? 'Durée inconnue' : duration(r) + ' min'}
           <span>·</span>
           {r.difficulty || 'Niveau inconnu'}
+          {r.diet && ' · ' + r.diet}
         </div>
         <button className="card-title" onClick={() => ui.open(<RecipeDetail row={row} ui={ui} />)}>
           {r.title}
         </button>
         <div className="card-foot">
-          <small>
-            <UsersRound size={14} />
-            {r.base ? r.base + ' portions' : 'Portions à vérifier'}
-            {r.diet ? ' · ' + r.diet : ''}
-          </small>
+          <RecipePrice cost={recipeCost(r)} />
           <button
             disabled={row.archived || !r.steps.length || !r.ingredients.length}
             className="icon"
@@ -183,6 +176,8 @@ export function PlanForm({
   slot = 'soir',
   editing,
   alternative,
+  initialPortions,
+  initialBatch,
 }: {
   ui: UI;
   id?: string;
@@ -190,6 +185,8 @@ export function PlanForm({
   slot?: 'soir' | 'midi';
   editing?: State['meals'][number];
   alternative?: React.ReactNode;
+  initialPortions?: number;
+  initialBatch?: boolean;
 }) {
   const [planDay, setPlanDay] = useState(day ?? (inWeek(today(), ui.w) ? today() : ui.w));
   const [planSlot, setPlanSlot] = useState(slot);
@@ -199,13 +196,30 @@ export function PlanForm({
   );
   const [selected, setSelected] = useState(id ?? '');
   const row = ui.s.recipes.find((r) => r.id === selected);
-  const [servings, setServings] = useState(String(ui.s.prefs.portions));
+  const [batch, setBatch] = useState(initialBatch ?? (!!id && !!row?.data.batch && !editing));
+  const [servings, setServings] = useState(
+    String(initialPortions ?? (batch ? 4 : ui.s.prefs.portions)),
+  );
+  const [perMeal, setPerMeal] = useState('1');
+  const portionCount = Number(servings),
+    perMealCount = Number(perMeal);
+  const validBatch =
+    Number.isInteger(portionCount) &&
+    portionCount >= 1 &&
+    portionCount <= 100 &&
+    Number.isInteger(perMealCount) &&
+    perMealCount >= 1 &&
+    perMealCount <= portionCount;
+  const allocation =
+    batch && planDay && validBatch ? batchMeals(planDay, planSlot, portionCount, perMealCount) : [];
   const [pending, setPending] = useState<Extract<
     import('@/lib/commands').Command,
     { action: 'plan' }
   > | null>(null);
-  const duo = planSlot === 'soir' && Number(servings) > 1;
-  const conflicts = [occupied, duo ? nextLunch : undefined].filter((m) => !!m);
+  const duo = !batch && planSlot === 'soir' && Number(servings) > 1;
+  const conflicts = batch
+    ? ui.s.meals.filter((m) => allocation.some((a) => a.day === m.day && a.slot === m.slot))
+    : [occupied, duo ? nextLunch : undefined].filter((m) => !!m);
   const locked = conflicts.some((m) => m.consumed);
   async function save(cmd: NonNullable<typeof pending>) {
     if (await ui.run(cmd, 'Repas planifiés.')) {
@@ -256,7 +270,7 @@ export function PlanForm({
         )}
         <Form
           button="Ajouter au planning"
-          disabled={!row || locked}
+          disabled={!row || locked || (batch && !validBatch)}
           onSave={async (f) => {
             const cmd: NonNullable<typeof pending> = {
               action: 'plan',
@@ -265,7 +279,9 @@ export function PlanForm({
               slot: planSlot,
               servings: Number(servings),
               leftovers: duo,
-              replaceMeal: occupied?.id,
+              replaceMeal: batch ? undefined : occupied?.id,
+              batchPerMeal: batch ? perMealCount : undefined,
+              batchReplacements: batch ? conflicts.map((m) => m.id) : undefined,
               previewRevision: conflicts.length ? ui.s.revision : undefined,
               replaceLunch: duo ? nextLunch?.id : undefined,
               confirmedBase: num(f, 'confirmedBase') ?? undefined,
@@ -275,12 +291,26 @@ export function PlanForm({
           }}
         >
           <RecipePicker ui={ui} selected={selected} setSelected={setSelected} />
+          <Field label="Organisation des repas">
+            <select
+              value={batch ? 'batch' : 'simple'}
+              onChange={(e) => {
+                const active = e.target.value === 'batch';
+                setBatch(active);
+                if (active && Number(servings) < 4) setServings('4');
+              }}
+            >
+              <option value="simple">Repas habituel</option>
+              <option value="batch">Batch cooking · cuisiner une fois</option>
+            </select>
+          </Field>
           {row && row.data.base === null && (
             <div className="notice">
               <Field label="Portions correspondant aux quantités de la fiche">
                 <input
                   key={selected}
                   name="confirmedBase"
+                  required={batch}
                   type="number"
                   min="1"
                   max="100"
@@ -327,6 +357,41 @@ export function PlanForm({
               />
             </Field>
           </div>
+          {batch && (
+            <>
+              <Field label="Portions par repas">
+                <input
+                  type="number"
+                  min="1"
+                  max={portionCount || 100}
+                  required
+                  value={perMeal}
+                  onChange={(e) => setPerMeal(e.target.value)}
+                />
+              </Field>
+              {!!allocation.length && (
+                <section className="batch-allocation">
+                  <h3>Une préparation, {allocation.length} repas</h3>
+                  <ul>
+                    {allocation.map((m, i) => (
+                      <li key={m.day}>
+                        {labelDate(m.day)} · {m.slot === 'soir' ? 'dîner' : 'déjeuner'} ·{' '}
+                        {m.servings} portion{m.servings > 1 ? 's' : ''}
+                        {i >= 3 && ' · à congeler dès la préparation'}
+                      </li>
+                    ))}
+                  </ul>
+                  <small>Ce plat sera classé dans le filtre Batch cooking du carnet.</small>
+                </section>
+              )}
+              {row?.data.base && validBatch ? (
+                <details>
+                  <summary>Ingrédients pour {portionCount} portions</summary>
+                  <ScaledIngredients recipe={row.data} portions={portionCount} />
+                </details>
+              ) : null}
+            </>
+          )}
           {duo && planDay && (
             <small>
               Une portion au dîner et une au déjeuner du {labelDate(addDays(planDay, 1))}.
@@ -346,17 +411,21 @@ const catalogTabs = [
 export function Catalog({ ui }: { ui: UI }) {
   const section = usePageTab(catalogTabs);
   const [search, setSearch] = useState(''),
-    [filters, setFilters] = useState(false),
     [tab, setTab] = useState('Toutes'),
     [sort, setSort] = useState('Nom'),
-    [time, setTime] = useState(''),
-    [diet, setDiet] = useState(''),
-    [cuisine, setCuisine] = useState(''),
-    [ingredient, setIngredient] = useState(''),
-    [difficulty, setDifficulty] = useState(''),
+    [filters, setFilters] = useState({
+      course: '' as Course | '',
+      minutes: 0,
+      diet: '',
+      cuisine: '',
+      ingredient: '',
+      difficulty: '',
+      publisher: '',
+    }),
     [made, setMade] = useState(false),
     [batch, setBatch] = useState(false),
     [limit, setLimit] = useState(24);
+  const { course, minutes, diet, cuisine, ingredient, difficulty, publisher } = filters;
   const last = (id: string) =>
     ui.s.preps
       .filter((p) => p.recipeId === id && p.done)
@@ -372,8 +441,10 @@ export function Catalog({ ui }: { ui: UI }) {
         clean([r.data.title, r.data.description, ...r.data.tags].join(' ')).includes(
           clean(search),
         ) &&
-        (!time || (duration(r.data) ?? Infinity) <= Number(time)) &&
-        (!diet || r.data.diet === diet) &&
+        (!course || discoveryCourse(r.data.title, r.data.tags) === course) &&
+        (!minutes || (duration(r.data) ?? Infinity) <= minutes) &&
+        (!diet || recipeDiet(r.data) === diet) &&
+        (!publisher || r.data.source === publisher) &&
         clean(r.data.cuisine).includes(clean(cuisine)) &&
         (!ingredient ||
           r.data.ingredients.some((i) => clean(i.name).includes(clean(ingredient)))) &&
@@ -412,84 +483,52 @@ export function Catalog({ ui }: { ui: UI }) {
         <DiscoveryShelf ui={ui} />
       ) : (
         <>
-          <div className="toolbar">
-            <label className="search">
-              <Search size={18} />
-              <input
-                aria-label="Rechercher une recette"
-                placeholder="Rechercher une recette…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </label>
-            <button aria-expanded={filters} onClick={() => setFilters(!filters)}>
-              <SlidersHorizontal size={16} /> Filtres
-            </button>
-            <select
-              aria-label="Tri des recettes"
-              value={sort}
-              onChange={(e) => setSort(e.target.value)}
-            >
-              {['Nom', 'Durée', 'Préférence', 'Dernière préparation'].map((x) => (
-                <option key={x}>{x}</option>
-              ))}
-            </select>
-          </div>
-          {filters && (
-            <div className="panel filtergrid">
-              <Field label="Durée maximale">
-                <select value={time} onChange={(e) => setTime(e.target.value)}>
-                  <option value="">Toutes</option>
-                  {[15, 30, 45, 60].map((n) => (
-                    <option value={n} key={n}>
-                      {n} min
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              <Field label="Cuisine">
-                <input value={cuisine} onChange={(e) => setCuisine(e.target.value)} />
-              </Field>
-              <Field label="Ingrédient">
-                <input value={ingredient} onChange={(e) => setIngredient(e.target.value)} />
-              </Field>
-              <Field label="Alimentation">
-                <select value={diet} onChange={(e) => setDiet(e.target.value)}>
-                  <option value="">Toutes</option>
-                  {['Viande', 'Poisson', 'Végétarien'].map((x) => (
-                    <option key={x}>{x}</option>
-                  ))}
-                </select>
-              </Field>
-              <Field label="Difficulté">
-                <select value={difficulty} onChange={(e) => setDifficulty(e.target.value)}>
-                  <option value="">Toutes</option>
-                  {[...new Set(ui.s.recipes.map((r) => r.data.difficulty))]
-                    .filter(Boolean)
-                    .map((x) => (
-                      <option key={x}>{x}</option>
-                    ))}
-                </select>
-              </Field>
-              <label>
-                <input type="checkbox" checked={made} onChange={(e) => setMade(e.target.checked)} />{' '}
-                Déjà réalisées
-              </label>
+          <RecipeToolbar
+            query={search}
+            onSearch={setSearch}
+            sort={sort}
+            onSort={setSort}
+            sorts={['Nom', 'Durée', 'Préférence', 'Dernière préparation'].map(
+              (x) => [x, x] as const,
+            )}
+          >
+            <RecipeFilterFields
+              allCourses
+              values={filters}
+              change={(patch) => setFilters((f) => ({ ...f, ...patch }))}
+              sources={[...new Set(ui.s.recipes.map((r) => r.data.source).filter(Boolean))].sort()}
+              levels={[
+                ...new Set([
+                  ...difficulties,
+                  ...ui.s.recipes.map((r) => r.data.difficulty).filter(Boolean),
+                ]),
+              ]}
+            />
+            <div className="recipe-filter-checks">
               <label>
                 <input
                   type="checkbox"
                   checked={batch}
                   onChange={(e) => setBatch(e.target.checked)}
-                />{' '}
+                />
                 Batch cooking
               </label>
+              <label>
+                <input type="checkbox" checked={made} onChange={(e) => setMade(e.target.checked)} />
+                Déjà réalisées
+              </label>
             </div>
-          )}
+          </RecipeToolbar>
           <div className="section-heading">
-            <div className="tabs">
-              {['Toutes', 'Favoris', 'À vérifier', 'Archives'].map((t) => (
-                <button className={tab === t ? 'selected' : ''} key={t} onClick={() => setTab(t)}>
-                  {t}
+            <div className="tabs" role="group" aria-label="Classement du carnet">
+              {['Toutes', 'Favoris', 'À vérifier', 'Archives'].map((label) => (
+                <button
+                  key={label}
+                  aria-pressed={tab === label}
+                  className={tab === label ? 'selected' : ''}
+                  onClick={() => setTab(label)}
+                >
+                  {label}
                 </button>
               ))}
             </div>
@@ -572,8 +611,33 @@ function UrlImport({ ui }: { ui: UI }) {
     </Dialog>
   );
 }
+function ScaledIngredients({ recipe, portions }: { recipe: Recipe; portions: number | null }) {
+  return recipe.ingredients.map((i, n) => (
+    <div className="row" key={n}>
+      <span>{i.name}</span>
+      <b>
+        {i.unit === 'selon le goût'
+          ? 'Selon le goût'
+          : [
+              quantity(
+                i.quantity !== null && recipe.base && portions
+                  ? rounded((i.quantity * portions) / recipe.base)
+                  : i.quantity,
+              ),
+              i.unit,
+            ].join(' ')}
+      </b>
+    </div>
+  ));
+}
+
 export function RecipeDetail({ row, ui }: { row: RecipeRow; ui: UI }) {
   const r = row.data;
+  const [portions, setPortions] = useState(
+    String(r.base ? (r.batch ? Math.max(4, r.base) : r.base) : ''),
+  );
+  const count = Number(portions);
+  const validCount = Number.isInteger(count) && count >= 1 && count <= 100;
   return (
     <Dialog title={r.title} close={ui.close}>
       <Photo src={r.image} className="detail-photo" />
@@ -584,7 +648,6 @@ export function RecipeDetail({ row, ui }: { row: RecipeRow; ui: UI }) {
           r.cuisine,
           ...r.tags,
           duration(r) !== null ? duration(r) + ' min' : 'Durée inconnue',
-          r.base ? r.base + ' portions' : 'Portions inconnues',
         ]
           .filter(Boolean)
           .map((s, i) => (
@@ -592,11 +655,18 @@ export function RecipeDetail({ row, ui }: { row: RecipeRow; ui: UI }) {
           ))}
       </div>
       <p>{r.description}</p>
+      {(!r.base || validCount) && (
+        <RecipePrice cost={recipeCost(r)} servings={validCount ? count : null} />
+      )}
       <div className="actions">
         <button
           disabled={row.archived || !r.ingredients.length || !r.steps.length}
           className="primary"
-          onClick={() => ui.open(<PlanForm ui={ui} id={row.id} />)}
+          onClick={() =>
+            ui.open(
+              <PlanForm ui={ui} id={row.id} initialPortions={validCount ? count : undefined} />,
+            )
+          }
         >
           Planifier <ArrowRight size={16} />
         </button>
@@ -616,16 +686,22 @@ export function RecipeDetail({ row, ui }: { row: RecipeRow; ui: UI }) {
         {r.verified ? 'Vérifiés' : 'À vérifier'} ·{' '}
         {problems(r).join(' · ') || 'Données renseignées'}
       </p>
-      {r.ingredients.map((i, n) => (
-        <div className="row" key={n}>
-          <span>{i.name}</span>
-          <b>
-            {i.unit === 'selon le goût'
-              ? 'Selon le goût'
-              : [quantity(i.quantity), i.unit].join(' ')}
-          </b>
-        </div>
-      ))}
+      {r.base && (
+        <Field label="Portions pour les ingrédients">
+          <input
+            type="number"
+            min="1"
+            max="100"
+            value={portions}
+            onChange={(e) => setPortions(e.target.value)}
+          />
+        </Field>
+      )}
+      {!r.base || validCount ? (
+        <ScaledIngredients recipe={r} portions={validCount ? count : null} />
+      ) : (
+        <p>Choisis entre 1 et 100 portions.</p>
+      )}
       <h3>Préparation</h3>
       {r.steps.map((x, i) => (
         <div key={i} className="step">

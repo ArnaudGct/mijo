@@ -25,6 +25,7 @@ import { today, monday, labelDate, inWeek, money } from '@/lib/dates';
 import { marketBasket } from '@/lib/market';
 import { Feedback, Brand, WeekNav, Photo, Field, Form, str, api, type UI } from './common';
 import { DiscoveryCard, DiscoveryPreview, MoreDiscoveries } from './discoveries';
+import { RecipePrice } from './recipe-price';
 import { useDiscoveries } from './use-discovery';
 import { Catalog, RecipeEditor } from './recipes';
 import { MealCalendar, Planner } from './weekly';
@@ -49,7 +50,7 @@ export function Login() {
           alt="Légumes frais et ingrédients disposés sur un plan de travail"
         />
         <div className="login-caption">
-          <h1>Table de saison.</h1>
+          <h1>Mijo</h1>
         </div>
       </div>
       <div className="login-form">
@@ -85,11 +86,18 @@ export function Workspace({ initial, children }: { initial: State; children: Rea
   const initialSession = query.get('session') ?? '';
   const [s, setS] = useState(initial),
     [dialog, setDialog] = useState<ReactNode>(null),
-    [notice, setNotice] = useState(''),
+    [message, setMessage] = useState<{ text: string } | null>(null),
     [busy, setBusy] = useState(false);
   const lock = useRef(false),
     latest = useRef(s);
   const router = useRouter();
+  const notice = message?.text ?? '';
+  const setNotice = (text: string) => setMessage(text ? { text } : null);
+  useEffect(() => {
+    if (!message || dialog) return;
+    const timer = window.setTimeout(() => setMessage(null), 5000);
+    return () => window.clearTimeout(timer);
+  }, [message, dialog]);
   useEffect(() => {
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
   }, []);
@@ -326,6 +334,7 @@ function Home({ ui }: { ui: UI }) {
               )}
             </p>
           )}
+          {feature && <RecipePrice cost={feature.cost} />}
           <button className="on-green" onClick={openRecipe}>
             {feature ? 'Voir la recette' : 'Ajouter une recette'}
             <ArrowRight size={15} />

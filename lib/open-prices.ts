@@ -7,7 +7,7 @@ async function query(path: string, params: Record<string, string>) {
     redirect: 'error',
     headers: {
       accept: 'application/json',
-      'user-agent': 'TableDeSaison/1.0 (personal meal planner)',
+      'user-agent': 'Mijo/1.0 (personal meal planner)',
     },
     cache: 'no-store',
   });

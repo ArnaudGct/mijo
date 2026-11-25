@@ -5,7 +5,13 @@
     "image": "https://assets.afcdn.com/recipe/20221012/136013_w1024h1024c1cx727cy1355cxt0cyt502cxb1462cyb2051.jpg",
     "publisher": "Marmiton",
     "minutes": 45,
-    "course": "main"
+    "course": "main",
+    "cost": {
+      "cents": 1086,
+      "portions": 4,
+      "missing": 2,
+      "priced": 9
+    }
   },
   {
     "title": "Croziflette",
@@ -13,7 +19,13 @@
     "image": "https://assets.afcdn.com/recipe/20221010/135908_w1024h1024c1cx1139cy384cxt0cyt0cxb2121cyb1238.jpg",
     "publisher": "Marmiton",
     "minutes": 50,
-    "course": "main"
+    "course": "main",
+    "cost": {
+      "cents": 292,
+      "portions": 4,
+      "missing": 2,
+      "priced": 3
+    }
   },
   {
     "title": "Endives au jambon",
@@ -21,7 +33,13 @@
     "image": "https://assets.afcdn.com/recipe/20221003/135673_w1024h1024c1cx1093cy636cxt0cyt0cxb2121cyb1414.jpg",
     "publisher": "Marmiton",
     "minutes": 70,
-    "course": "main"
+    "course": "main",
+    "cost": {
+      "cents": 1113,
+      "portions": 6,
+      "missing": 2,
+      "priced": 5
+    }
   },
   {
     "title": "Risotto aux champignons : la vraie recette",
@@ -29,7 +47,13 @@
     "image": "https://assets.afcdn.com/recipe/20221020/136481_w1024h1024c1cx3588cy2733cxt0cyt0cxb7216cyb5412.jpg",
     "publisher": "Marmiton",
     "minutes": 75,
-    "course": "main"
+    "course": "main",
+    "cost": {
+      "cents": 453,
+      "portions": 2,
+      "missing": 5,
+      "priced": 8
+    }
   },
   {
     "title": "Pot-au-feu facile",
@@ -37,7 +61,13 @@
     "image": "https://assets.afcdn.com/recipe/20141014/47748_w1024h1024c1cx800cy800.jpg",
     "publisher": "Marmiton",
     "minutes": 150,
-    "course": "main"
+    "course": "main",
+    "cost": {
+      "cents": 819,
+      "portions": 6,
+      "missing": 3,
+      "priced": 7
+    }
   },
   {
     "title": "Rôti de veau au four",
@@ -45,7 +75,13 @@
     "image": "https://assets.afcdn.com/recipe/20180503/79003_w1024h1024c1cx3390cy3500cxt0cyt0cxb6666cyb4992.jpg",
     "publisher": "Marmiton",
     "minutes": 75,
-    "course": "main"
+    "course": "main",
+    "cost": {
+      "cents": 2119,
+      "portions": 6,
+      "missing": 1,
+      "priced": 3
+    }
   },
   {
     "title": "Riz cantonais facile",
@@ -53,7 +89,13 @@
     "image": "https://assets.afcdn.com/recipe/20160517/45721_w1024h1024c1cx2000cy3000.jpg",
     "publisher": "Marmiton",
     "minutes": 50,
-    "course": "main"
+    "course": "main",
+    "cost": {
+      "cents": 647,
+      "portions": 4,
+      "missing": 0,
+      "priced": 7
+    }
   },
   {
     "title": "Paupiettes de veau",
@@ -61,7 +103,13 @@
     "image": "https://assets.afcdn.com/recipe/20221007/135809_w1024h1024c1cx851cy1190cxt0cyt0cxb1686cyb1778.jpg",
     "publisher": "Marmiton",
     "minutes": 45,
-    "course": "main"
+    "course": "main",
+    "cost": {
+      "cents": 807,
+      "portions": 2,
+      "missing": 2,
+      "priced": 5
+    }
   },
   {
     "title": "Sauté de porc à la crème de moutarde",
@@ -69,7 +117,13 @@
     "image": "https://assets.afcdn.com/recipe/20180712/80926_w1024h1024c1cx1706cy2274cxt0cyt0cxb3412cyb4549.jpg",
     "publisher": "Marmiton",
     "minutes": 40,
-    "course": "main"
+    "course": "main",
+    "cost": {
+      "cents": 3647,
+      "portions": 4,
+      "missing": 1,
+      "priced": 8
+    }
   },
   {
     "title": "Croque-monsieur",
@@ -77,7 +131,13 @@
     "image": "https://assets.afcdn.com/recipe/20170112/28965_w1024h1024c1cx1500cy1000.jpg",
     "publisher": "Marmiton",
     "minutes": 15,
-    "course": "main"
+    "course": "main",
+    "cost": {
+      "cents": 589,
+      "portions": 4,
+      "missing": 2,
+      "priced": 5
+    }
   },
   {
     "title": "Fajitas au poulet et aux poivrons",
@@ -85,7 +145,13 @@
     "image": "https://static.750g.com/images/1200-675/1122f2b0bbf07b7e2f935b3af2dc058e/fajitas-au-poulet-et-aux-poivrons.jpeg",
     "publisher": "750g",
     "minutes": 50,
-    "course": "main"
+    "course": "main",
+    "cost": {
+      "cents": 2215,
+      "portions": 6,
+      "missing": 4,
+      "priced": 10
+    }
   },
   {
     "title": "Pulled pork Burger ou burger au porc effiloché",
@@ -93,7 +159,13 @@
     "image": "https://static.750g.com/images/1200-675/e52c1566c9bf48124978f971221c2e82/pulled-pork-burger-ou-burger-au-porc-effiloche-r98288.png",
     "publisher": "750g",
     "minutes": 45,
-    "course": "main"
+    "course": "main",
+    "cost": {
+      "cents": 3038,
+      "portions": 4,
+      "missing": 5,
+      "priced": 14
+    }
   },
   {
     "title": "Hamburger au poisson pané",
@@ -101,7 +173,13 @@
     "image": "https://static.750g.com/images/1200-675/aa1f4eba2329f4ec26250b7b98b08434/hamburger-au-poisson-pane.png",
     "publisher": "750g",
     "minutes": 20,
-    "course": "main"
+    "course": "main",
+    "cost": {
+      "cents": 125,
+      "portions": 4,
+      "missing": 2,
+      "priced": 3
+    }
   },
   {
     "title": "Saumon gravlax à préparer à l'avance",
@@ -109,7 +187,13 @@
     "image": "https://img.cuisineaz.com/671x671/2023/11/23/i196621-saumon-gravlax-facile-et-rapide.jpg",
     "publisher": "CuisineAZ",
     "minutes": 20,
-    "course": "starter"
+    "course": "starter",
+    "cost": {
+      "cents": 1455,
+      "portions": 8,
+      "missing": 2,
+      "priced": 4
+    }
   },
   {
     "title": "Terrine de poisson pas chère",
@@ -117,7 +201,13 @@
     "image": "https://img.cuisineaz.com/1067x1067/2023/04/21/i193147-terrine-de-poisson-pas-chere.jpg",
     "publisher": "CuisineAZ",
     "minutes": 80,
-    "course": "starter"
+    "course": "starter",
+    "cost": {
+      "cents": 290,
+      "portions": 8,
+      "missing": 2,
+      "priced": 3
+    }
   },
   {
     "title": "Biscuits de Noël à la poudre d’amande à l’Airfryer",
@@ -125,7 +215,13 @@
     "image": "https://img.cuisineaz.com/768x768/2026/11/12/i211453-biscuits-de-noel-a-la-poudre-d-amande-a-l-airfryer.jpg",
     "publisher": "CuisineAZ",
     "minutes": 55,
-    "course": "dessert"
+    "course": "dessert",
+    "cost": {
+      "cents": 305,
+      "portions": 4,
+      "missing": 0,
+      "priced": 8
+    }
   },
   {
     "title": "Sablés de Noël à l'Airfryer",
@@ -133,7 +229,13 @@
     "image": "https://img.cuisineaz.com/667x667/2024/10/18/i200852-sables-de-noel-a-l-airfryer.jpg",
     "publisher": "CuisineAZ",
     "minutes": 32,
-    "course": "dessert"
+    "course": "dessert",
+    "cost": {
+      "cents": 192,
+      "portions": 8,
+      "missing": 1,
+      "priced": 6
+    }
   },
   {
     "title": "Plancha de burrata, pickles de fraise et choux rouge",
@@ -141,7 +243,13 @@
     "image": "https://img.cuisineaz.com/495x495/2026/04/23/i208373-plancha-burrata-choux-rouge-et-fraises-en-pickles.jpg",
     "publisher": "CuisineAZ",
     "minutes": 10,
-    "course": "starter"
+    "course": "starter",
+    "cost": {
+      "cents": 208,
+      "portions": 4,
+      "missing": 5,
+      "priced": 1
+    }
   },
   {
     "title": "Champignons farcis à la mozzarella",
@@ -149,7 +257,13 @@
     "image": "https://img.cuisineaz.com/535x535/2025/11/20/i207402-champignons-farcis.jpg",
     "publisher": "CuisineAZ",
     "minutes": 35,
-    "course": "starter"
+    "course": "starter",
+    "cost": {
+      "cents": 571,
+      "portions": 6,
+      "missing": 0,
+      "priced": 5
+    }
   },
   {
     "title": "Frites de courgettes croustillantes, sauce épicée",
@@ -157,7 +271,13 @@
     "image": "https://img.cuisineaz.com/667x667/2017/06/16/i128300-frites-de-courgettes-panees-au-parmesan-a-picorer.jpeg",
     "publisher": "CuisineAZ",
     "minutes": 45,
-    "course": "starter"
+    "course": "starter",
+    "cost": {
+      "cents": 357,
+      "portions": 4,
+      "missing": 4,
+      "priced": 7
+    }
   },
   {
     "title": "Accras de légumes",
@@ -165,7 +285,13 @@
     "image": "https://img.cuisineaz.com/667x667/2021/07/29/i180046-shutterstock-1937939719.jpeg",
     "publisher": "CuisineAZ",
     "minutes": 60,
-    "course": "starter"
+    "course": "starter",
+    "cost": {
+      "cents": 53,
+      "portions": 6,
+      "missing": 4,
+      "priced": 3
+    }
   },
   {
     "title": "Patatas bravas traditionnelles façon tapas espagnoles",
@@ -173,6 +299,127 @@
     "image": "https://img.cuisineaz.com/1200x1200/2025/07/18/i206112-patatas-bravas.jpg",
     "publisher": "CuisineAZ",
     "minutes": 45,
-    "course": "starter"
+    "course": "starter",
+    "cost": {
+      "cents": 491,
+      "portions": 4,
+      "missing": 0,
+      "priced": 8
+    }
+  },
+  {
+    "title": "Pavé de saumon en croûte de pistaches",
+    "url": "https://www.hellofresh.fr/recipes/filet-de-saumon-en-croute-de-pistaches-6827564899bb603b9b435e25",
+    "image": "https://media.hellofresh.com/w_750,q_auto,f_auto,c_limit,fl_lossy/hellofresh_s3/image/HF_Y25_R293_W34_FR_PFR16513-26_Main_high-f04dd6fa.jpg",
+    "publisher": "HelloFresh",
+    "minutes": 45,
+    "course": "main",
+    "cost": {
+      "cents": 1187,
+      "portions": 2,
+      "missing": 0,
+      "priced": 13
+    }
+  },
+  {
+    "title": "Bavette de bœuf, échalotes confites & frites",
+    "url": "https://www.hellofresh.fr/recipes/bavette-de-boeuf-echalotes-confites-and-frites-69d9024868ee73d4d3ffe1ac",
+    "image": "https://media.hellofresh.com/w_750,q_auto,f_auto,c_limit,fl_lossy/hellofresh_s3/image/HF_Y26_R294_W27_FR_BFR29803719-4_main_high-0e54805c.jpg",
+    "publisher": "HelloFresh",
+    "minutes": 40,
+    "course": "main",
+    "cost": {
+      "cents": 1330,
+      "portions": 2,
+      "missing": 0,
+      "priced": 14
+    }
+  },
+  {
+    "title": "Blanquette de saumon & riz pilaf",
+    "url": "https://www.hellofresh.fr/recipes/blanquette-de-saumon-and-riz-pilaf-5f69f2d30359920d4b2c8d25",
+    "image": "https://media.hellofresh.com/w_750,q_auto,f_auto,c_limit,fl_lossy/hellofresh_s3/image/HF200901_R211_W43_FR_RFR16681751-1_KB_Main_low-1d5050e7.jpg",
+    "publisher": "HelloFresh",
+    "minutes": 30,
+    "course": "main",
+    "cost": {
+      "cents": 1274,
+      "portions": 2,
+      "missing": 0,
+      "priced": 13
+    }
+  },
+  {
+    "title": "Bibimbap coréen porc haché, miso & sésame",
+    "url": "https://www.hellofresh.fr/recipes/bibimbap-coreen-porc-hache-miso-and-sesame-67cf4d66ec0bcc743e8247f8",
+    "image": "https://media.hellofresh.com/w_750,q_auto,f_auto,c_limit,fl_lossy/hellofresh_s3/image/HF_Y25_R238_W24_FR_RFR29804567-50_MAIN_10_high-5a1603c3.jpg",
+    "publisher": "HelloFresh",
+    "minutes": 40,
+    "course": "main",
+    "cost": {
+      "cents": 832,
+      "portions": 2,
+      "missing": 0,
+      "priced": 16
+    }
+  },
+  {
+    "title": "Le Country Burger poulet-bacon & cheddar",
+    "url": "https://www.hellofresh.fr/recipes/le-country-burger-poulet-bacon-and-cheddar-6679c6e43d7908a0f17bf930",
+    "image": "https://media.hellofresh.com/w_750,q_auto,f_auto,c_limit,fl_lossy/hellofresh_s3/image/HF_Y24_R291_W30_FR_PFR23287-1_remove_tomatos_Main_3_high-ad99a456.jpg",
+    "publisher": "HelloFresh",
+    "minutes": 60,
+    "course": "main",
+    "cost": {
+      "cents": 1072,
+      "portions": 2,
+      "missing": 0,
+      "priced": 13
+    }
+  },
+  {
+    "course": "main",
+    "url": "https://www.batchly.fr/recettes/hachis-parmentier",
+    "title": "Hachis parmentier",
+    "minutes": 80,
+    "publisher": "Batchly",
+    "image": "https://ztzuwaswvbcrlzmntbnm.supabase.co/storage/v1/object/public/plats/hachis-parmentier-6ba3a206.webp",
+    "batch": true,
+    "cost": {
+      "cents": 683,
+      "portions": 4,
+      "missing": 2,
+      "priced": 10
+    }
+  },
+  {
+    "course": "main",
+    "url": "https://www.batchly.fr/recettes/chili-sin-carne",
+    "title": "Chili sin carne",
+    "minutes": 55,
+    "publisher": "Batchly",
+    "image": "https://ztzuwaswvbcrlzmntbnm.supabase.co/storage/v1/object/public/plats/chili-sin-carne-8fbb15a9.webp",
+    "batch": true,
+    "cost": {
+      "cents": 891,
+      "portions": 4,
+      "missing": 2,
+      "priced": 11
+    }
+  },
+  {
+    "course": "main",
+    "url": "https://www.batchly.fr/recettes/dahl-lentilles-corail",
+    "title": "Dahl de lentilles corail",
+    "minutes": 40,
+    "publisher": "Batchly",
+    "image": "https://ztzuwaswvbcrlzmntbnm.supabase.co/storage/v1/object/public/plats/dahl-lentilles-corail-9e8a1f5e.webp",
+    "batch": true,
+    "cost": {
+      "cents": 802,
+      "portions": 4,
+      "missing": 0,
+      "priced": 13
+    }
   }
 ]

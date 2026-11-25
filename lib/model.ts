@@ -97,6 +97,7 @@ export const recipeRow = z.object({
   data: recipe,
 });
 export const preparation = z.object({
+  batchPerMeal: portions.optional(),
   automatic: z.boolean().optional(),
   id,
   recipeId: id,

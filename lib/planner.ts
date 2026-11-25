@@ -30,6 +30,13 @@ export function defaultMeals(
     meals.push({ ...base, id: uid(), day: addDays(p.day, 1), slot: 'midi' });
   return meals;
 }
+export function batchMeals(day: string, slot: 'midi' | 'soir', servings: number, perMeal: number) {
+  return Array.from({ length: Math.ceil(servings / perMeal) }, (_, i) => ({
+    day: addDays(day, i),
+    slot,
+    servings: Math.min(perMeal, servings - i * perMeal),
+  }));
+}
 // Stable within a week, different across weeks even for an entirely new carnet.
 function variety(seed: string) {
   let hash = 2166136261;
@@ -37,7 +44,8 @@ function variety(seed: string) {
   return (hash >>> 0) / 4294967296;
 }
 type Recipe = RecipeRow['data'];
-type Occasion = { day: string; servings: number };
+type Occasion = { day: string; servings: number; recipeId?: string };
+export type PlanVariation = { seed: string; avoid: string[] };
 function groceries(recipe: Recipe) {
   const result = new Map<string, { name: string; weight: number }>();
   for (const i of recipe.ingredients) {
@@ -75,7 +83,13 @@ function protein(r: Recipe) {
     /\b(tofu|tempeh)\b/,
   ].findIndex((re) => re.test(names));
 }
-function recommend(s: State, w: string, slots: Occasion[], fixed: Prep[]) {
+function recommend(
+  s: State,
+  w: string,
+  slots: Occasion[],
+  fixed: Prep[],
+  variation?: PlanVariation,
+) {
   if (!slots.length) return [];
   const used = [...fixed];
   const proteins = new Map<number, number>();
@@ -110,17 +124,22 @@ function recommend(s: State, w: string, slots: Occasion[], fixed: Prep[]) {
   const inStock = new Set(
     s.stock.filter((i) => i.quantity > 0).map((i) => fold(groceryName(i.name))),
   );
-  for (const { day, servings } of slots) {
-    const candidates = options
-      .filter(
-        ({ r, url }) =>
-          !used.some(
-            (p) =>
-              p.recipeId === r.id ||
-              fold(p.snapshot.title) === fold(r.data.title) ||
-              (url && sourceUrl(p.snapshot.url) === url),
-          ),
-      )
+  const previousMenu = new Set(slots.map((slot) => slot.recipeId));
+  const previousPreview = new Set(variation?.avoid);
+  for (const { day, servings, recipeId } of slots) {
+    const unused = options.filter(
+      ({ r, url }) =>
+        !used.some(
+          (p) =>
+            p.recipeId === r.id ||
+            fold(p.snapshot.title) === fold(r.data.title) ||
+            (url && sourceUrl(p.snapshot.url) === url),
+        ),
+    );
+    // A small carnet can already contain repeated meals. Offer an alternative
+    // to an existing slot even when every eligible recipe has been used.
+    const available = unused.length || !variation || !recipeId ? unused : options;
+    const candidates = available
       .map(({ r, foods, family, main }) => {
         const history = previous.filter((p) => p.recipeId === r.id);
         let overlap = 0,
@@ -144,7 +163,7 @@ function recommend(s: State, w: string, slots: Occasion[], fixed: Prep[]) {
           (10 * overlap) / Math.max(1, overlap + novelty) -
           Math.min(12, novelty) * 0.35 +
           (!counts.size ? (5 * support) / Math.max(1, novelty) : 0) +
-          variety(day + r.id) * 2 +
+          variety((variation?.seed ?? '') + day + r.id) * (variation ? 8 : 2) +
           (r.data.favorite ? 4 : 0) +
           r.data.rating +
           Math.min(3, history.filter((p) => p.done || !p.automatic).length) -
@@ -153,9 +172,14 @@ function recommend(s: State, w: string, slots: Occasion[], fixed: Prep[]) {
           (main < 0 ? 0 : Math.max(0, (proteins.get(main) ?? 0) - 1) * 5) -
           used.filter((p) => r.data.cuisine && p.snapshot.cuisine === r.data.cuisine).length * 2 -
           (s.prefs.maxTime && time && time > s.prefs.maxTime ? 12 : 0);
-        return { r, score, shared };
+        const repeat = variation
+          ? Number(recipeId === r.id) * 4 +
+            Number(previousPreview.has(r.id)) * 2 +
+            Number(previousMenu.has(r.id))
+          : 0;
+        return { r, score, shared, repeat };
       })
-      .sort((a, b) => b.score - a.score || a.r.id.localeCompare(b.r.id));
+      .sort((a, b) => a.repeat - b.repeat || b.score - a.score || a.r.id.localeCompare(b.r.id));
     if (!candidates.length) break;
     // Compare retail packs for promising recipes; stock and the existing basket are already accounted for.
     const basket = marketBasket({ ...s, preps: used }, w);
@@ -167,7 +191,7 @@ function recommend(s: State, w: string, slots: Occasion[], fixed: Prep[]) {
         const over = s.prefs.budget === null ? 0 : Math.max(0, after.cash - s.prefs.budget) / 300;
         return { ...c, rank: c.score - Math.min(8, extra * 0.6) - unknown * 2 - over };
       })
-      .sort((a, b) => b.rank - a.rank || a.r.id.localeCompare(b.r.id));
+      .sort((a, b) => a.repeat - b.repeat || b.rank - a.rank || a.r.id.localeCompare(b.r.id));
     const { r, shared } = finalists[0];
     results.push({
       id: r.id,
@@ -205,7 +229,7 @@ export function weekPreparations(s: State, w: string) {
         a.p.snapshot.title.localeCompare(b.p.snapshot.title, 'fr'),
     );
 }
-export function suggest(s: State, w: string, from = w) {
+export function suggest(s: State, w: string, from = w, variation?: PlanVariation) {
   const weekMeals = s.meals.filter((m) => inWeek(m.day, w) && m.slot === 'soir');
   const slots = Array.from({ length: 7 }, (_, i) => ({
     day: addDays(w, i),
@@ -218,21 +242,30 @@ export function suggest(s: State, w: string, from = w) {
     w,
     slots,
     weekPreparations(s, w).map((x) => x.p),
+    variation,
   );
 }
-export function optimizedRecipes(s: State, w: string, from: string) {
+export function optimizedRecipes(s: State, w: string, from: string, variation?: PlanVariation) {
   const week = weekPreparations(s, w).map((x) => x.p);
   const editable = week.filter((p) => {
     const meals = s.meals.filter((m) => m.prepId === p.id);
     return (
-      p.automatic &&
+      (variation || p.automatic) &&
+      !p.batchPerMeal &&
       inWeek(p.day, w) &&
       p.day >= from &&
       !p.done &&
       !p.session &&
       !p.ticks.length &&
       meals.length &&
-      meals.every((m) => !m.consumed && !m.frozen && m.day >= from && inWeek(m.day, w))
+      meals.every(
+        (m) =>
+          !m.consumed &&
+          !m.frozen &&
+          m.day >= from &&
+          (inWeek(m.day, w) ||
+            (variation && p.day === addDays(w, 6) && m.slot === 'midi' && m.day === addDays(w, 7))),
+      )
     );
   });
   const ideas = recommend(
@@ -240,6 +273,7 @@ export function optimizedRecipes(s: State, w: string, from: string) {
     w,
     editable,
     week.filter((p) => !editable.includes(p)),
+    variation,
   );
   if (ideas.length !== editable.length) return [];
   return ideas.flatMap((idea, i) =>
