@@ -12,13 +12,6 @@ services:
       - media:/data/media
     networks:
       - dokploy-network
-    labels:
-      traefik.enable: "true"
-      traefik.docker.network: dokploy-network
-      traefik.http.routers.mijo-production.rule: Host(`mijo.arnaudgct.fr`)
-      traefik.http.routers.mijo-production.entrypoints: web
-      traefik.http.routers.mijo-production.service: mijo-production
-      traefik.http.services.mijo-production.loadbalancer.server.port: "3000"
 
 networks:
   dokploy-network:

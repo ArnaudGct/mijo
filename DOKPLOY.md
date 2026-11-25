@@ -4,7 +4,7 @@
 
 Le projet **Mijo**, environnement **production**, contient le service Compose **Mijo** et un service **PostgreSQL** dédié. Le fournisseur GitHub de Dokploy suit la branche `master` de `ArnaudGct/mijo`, en mode **On Push**, avec le chemin `./compose.dokploy.yaml`. Chaque push reconstruit l’application depuis le Dockerfile du dépôt. Le démarrage applique les migrations SQL en transaction avant de lancer Next.js.
 
-Cloudflare termine le HTTPS de `mijo.arnaudgct.fr`. Le fichier Compose déclare la route HTTP interne sur l’entrée Traefik `web` et le port de conteneur 3000. Le réseau externe `dokploy-network` relie le service à Traefik et à PostgreSQL. Le champ **External Port** de la base reste vide.
+Le domaine `mijo.arnaudgct.fr` se gère dans l’onglet **Domains** du service Compose **Mijo**. Il cible le service `app`, chemin `/`, port de conteneur `3000`. Cloudflare termine le HTTPS public. Dans Dokploy, l’option **HTTPS** reste désactivée pour cette route HTTP interne. Après une modification du domaine, redéployer le service Compose pour appliquer la règle. Le réseau externe `dokploy-network` relie le service à Traefik et à PostgreSQL. Le champ **External Port** de la base reste vide.
 
 Le fichier privé `/etc/dokploy/mijo-private/app.env` du serveur, lisible uniquement par root, fournit `DATABASE_URL` et `APP_PASSWORD_HASH`. Les médias résident dans le volume Docker externe `mijo-production-media`, accessible en écriture à l’UID 1000. Pour recréer l’environnement sur un autre serveur, provisionner la base, le fichier privé et ce volume avant le déploiement.
 
