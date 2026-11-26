@@ -106,11 +106,13 @@ export function Form({
   children,
   button = 'Enregistrer',
   disabled = false,
+  secondaryAction,
 }: {
   onSave: (f: FormData) => Promise<void> | void;
   children: ReactNode;
   button?: string;
   disabled?: boolean;
+  secondaryAction?: ReactNode;
 }) {
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -124,12 +126,22 @@ export function Form({
       if (b) b.disabled = false;
     }
   }
+  const submitButton = (
+    <button type="submit" className="primary" disabled={disabled}>
+      {button}
+    </button>
+  );
   return (
     <form onSubmit={submit} method="post" className="editor">
       {children}
-      <button type="submit" className="primary" disabled={disabled}>
-        {button}
-      </button>
+      {secondaryAction ? (
+        <div className="form-actions">
+          {submitButton}
+          {secondaryAction}
+        </div>
+      ) : (
+        submitButton
+      )}
     </form>
   );
 }
@@ -163,7 +175,7 @@ export function PageTabs({
     history.replaceState(null, '', url);
   }
   return (
-    <div className="tabs">
+    <div className="tabs page-tabs">
       {options.map(([key, label]) => (
         <button
           key={key}

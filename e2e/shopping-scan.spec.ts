@@ -118,6 +118,10 @@ test('caméra mobile, scan continu, abandon et achats partiels', async ({ page }
       const frame = rect('.scan-date-control');
       const mention = rect('.scan-dates select');
       return {
+        actionGap: rect('.form-actions').top - mention.bottom,
+        buttonGap:
+          rect('.form-actions button[type=button]').top -
+          rect('.form-actions button[type=submit]').bottom,
         gaps: fields.map((f, i) => Math.round(f.top - (i ? fields[i - 1] : product).bottom)),
         heights: controls.map((control) => control.getBoundingClientRect().height),
         widths: [...controls, el.querySelector('button[type=submit]')!].map((control) =>
@@ -133,6 +137,8 @@ test('caméra mobile, scan continu, abandon et achats partiels', async ({ page }
       };
     });
     expect(layout.overflow).toBe(false);
+    expect(layout.actionGap).toBe(32);
+    expect(layout.buttonGap).toBe(8);
     expect(layout.dateContained).toBe(true);
     expect(layout.dateAligned).toBe(true);
     expect(layout.gaps).toEqual([16, 16, 16, 16]);
@@ -302,6 +308,10 @@ test('une recette pour deux devient quatre repas avec une seule liste de courses
   await page.reload();
   await expect(page.getByRole('button', { name: 'Vider la semaine' })).toBeDisabled();
   await page.getByRole('button', { name: 'Batch cooking', exact: true }).click();
-  await page.getByRole('link', { name: /Voir les recettes de batch cooking/ }).click();
-  await expect(page.getByRole('checkbox', { name: 'Batch cooking' })).toBeChecked();
+  const batchHeader = page.locator('.week-section .section-heading');
+  await expect(
+    batchHeader.getByRole('heading', { name: 'Un plat pour plusieurs repas' }),
+  ).toBeVisible();
+  await batchHeader.getByRole('button', { name: 'Préparer un plat' }).click();
+  await expect(dialog.getByLabel('Organisation des repas')).toHaveValue('batch');
 });

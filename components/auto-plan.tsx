@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { RefreshCw, Trash2, CalendarDays } from 'lucide-react';
+import { RefreshCw, CalendarDays } from 'lucide-react';
 import { addDays, inWeek, monday, today, labelDate, money } from '@/lib/dates';
 import type { PlanPreviewResult } from './plan-preview.worker';
 import { permitsMeal, type PlanVariation } from '@/lib/planner';
@@ -169,9 +169,6 @@ export function ClearWeekButton({ ui }: { ui: UI }) {
     );
   return (
     <button
-      className="clear-week icon"
-      aria-label="Vider la semaine"
-      title="Vider la semaine"
       disabled={!available}
       onClick={() =>
         ui.open(
@@ -201,7 +198,7 @@ export function ClearWeekButton({ ui }: { ui: UI }) {
         )
       }
     >
-      <Trash2 size={18} />
+      Vider la semaine
     </button>
   );
 }

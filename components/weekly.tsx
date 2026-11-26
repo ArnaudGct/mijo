@@ -265,28 +265,7 @@ export function Planner({ ui }: { ui: UI }) {
         <h1>Ma semaine</h1>
         <WeekNav ui={ui} />
       </header>
-      <div className="section-tools">
-        <PageTabs options={weekTabs} active={active} />
-        {active !== 'petit-dejeuner' && (
-          <div className="week-actions">
-            <button
-              className="primary"
-              onClick={() =>
-                ui.open(
-                  <PlanForm
-                    ui={ui}
-                    weeklyPlan={active === 'planning'}
-                    initialBatch={active === 'batch-cooking'}
-                  />,
-                )
-              }
-            >
-              <Plus size={16} /> {active === 'batch-cooking' ? 'Préparer un plat' : 'Planifier'}
-            </button>
-            {active === 'planning' && <ClearWeekButton ui={ui} />}
-          </div>
-        )}
-      </div>
+      <PageTabs options={weekTabs} active={active} />
       {active === 'petit-dejeuner' ? (
         <Breakfast ui={ui} />
       ) : (
@@ -313,29 +292,43 @@ function MealPlanning({ ui, batch }: { ui: UI; batch: boolean }) {
   const entries = weekPreparations(s, w);
   const preps = entries.map((x) => x.p);
   const batchPreps = new Set(preps.filter((p) => p.batchPerMeal || p.session).map((p) => p.id));
-  const portions = s.meals.reduce(
-    (sum, m) => sum + (m.prepId && batchPreps.has(m.prepId) && inWeek(m.day, w) ? m.servings : 0),
+  const meals = s.meals.filter((m) => inWeek(m.day, w));
+  const lunches = meals.filter((m) => m.slot === 'midi').length;
+  const dinners = meals.length - lunches;
+  const portions = meals.reduce(
+    (sum, m) => sum + (m.prepId && batchPreps.has(m.prepId) ? m.servings : 0),
     0,
   );
   return (
     <>
-      {batch && (
-        <section className="week-section">
-          <div className="section-heading">
-            <div>
-              <h2>Un plat pour plusieurs repas</h2>
-              <small>
-                {portions
-                  ? portions + (portions === 1 ? ' portion prévue' : ' portions prévues')
-                  : 'Aucune portion prévue'}{' '}
-                cette semaine
-              </small>
-            </div>
-            <Link className="text-link" href={'/recettes?onglet=suggestions&batch=1&week=' + w}>
-              Voir les recettes de batch cooking →
-            </Link>
+      <section className="week-section">
+        <div className="section-heading">
+          <div>
+            <h2>{batch ? 'Un plat pour plusieurs repas' : 'Mes repas de la semaine'}</h2>
+            <small>
+              {batch
+                ? (portions
+                    ? portions + (portions === 1 ? ' portion prévue' : ' portions prévues')
+                    : 'Aucune portion prévue') + ' cette semaine'
+                : lunches +
+                  (lunches > 1 ? ' déjeuners' : ' déjeuner') +
+                  ' · ' +
+                  dinners +
+                  (dinners > 1 ? ' dîners' : ' dîner')}
+            </small>
           </div>
-          {s.sessions
+          <div className="actions">
+            {!batch && <ClearWeekButton ui={ui} />}
+            <button
+              className="primary"
+              onClick={() => ui.open(<PlanForm ui={ui} weeklyPlan={!batch} initialBatch={batch} />)}
+            >
+              <Plus size={16} /> {batch ? 'Préparer un plat' : 'Planifier'}
+            </button>
+          </div>
+        </div>
+        {batch &&
+          s.sessions
             .filter((g) => inWeek(g.day, w))
             .map((g) => (
               <div className="row" key={g.id}>
@@ -345,8 +338,7 @@ function MealPlanning({ ui, batch }: { ui: UI; batch: boolean }) {
                 <Link href={'/cuisiner?week=' + w + '&session=' + g.id}>Cuisiner →</Link>
               </div>
             ))}
-        </section>
-      )}
+      </section>
       <MealCalendar key={w} ui={ui} />
       <div className="section-heading">
         <h2>Préparations de la semaine</h2>

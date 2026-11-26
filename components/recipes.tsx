@@ -472,7 +472,7 @@ export function Catalog({ ui }: { ui: UI }) {
       <header className="page-heading">
         <h1>Mon carnet de recettes</h1>
       </header>
-      <div className="section-tools">
+      <div className="catalog-actions">
         <PageTabs options={catalogTabs} active={section} />
         <button className="primary" onClick={() => ui.open(<RecipeEditor ui={ui} />)}>
           <Plus size={17} /> Ajouter une recette

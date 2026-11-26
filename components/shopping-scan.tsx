@@ -250,6 +250,13 @@ function LotEditor({ ui, code, rows, existing, onSave, onBack }: EditorProps) {
       <Form
         button={existing ? 'Enregistrer les modifications' : 'Ajouter cet emballage'}
         disabled={!selection}
+        secondaryAction={
+          onBack && (
+            <button type="button" disabled={saving} onClick={onBack}>
+              Retour au scan
+            </button>
+          )
+        }
         onSave={async () => {
           setSaving(true);
           const label = line?.sourceName || name.trim();
@@ -320,6 +327,11 @@ function LotEditor({ ui, code, rows, existing, onSave, onBack }: EditorProps) {
                   setAmount(e.target.value);
                 }}
               />
+              {line && !line.unknown && (
+                <small>
+                  À acheter · {quantity(Math.max(0, line.buy - line.scanned))} {targetUnit}
+                </small>
+              )}
             </Field>
             {!line && (
               <Field label="Unité">
@@ -355,18 +367,8 @@ function LotEditor({ ui, code, rows, existing, onSave, onBack }: EditorProps) {
             </select>
           </Field>
         </div>
-        {line && !line.unknown && (
-          <small>
-            À acheter · {quantity(Math.max(0, line.buy - line.scanned))} {targetUnit}
-          </small>
-        )}
         {saveError && <p role="alert">{saveError}</p>}
       </Form>
-      {onBack && (
-        <button disabled={saving} onClick={onBack}>
-          Retour au scan
-        </button>
-      )}
     </>
   );
 }

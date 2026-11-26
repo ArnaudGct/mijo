@@ -1167,11 +1167,19 @@ html {
   }
   .page-heading {
     padding: 24px 0 16px;
-    align-items: flex-start;
+    align-items: center;
     gap: 12px;
   }
   .page-heading h1 {
     font-size: 39px;
+  }
+  .page-heading:has(> .weeknav) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 8px;
+  }
+  .page-heading:has(> .weeknav) h1 {
+    font-size: clamp(28px, 8.5vw, 39px);
   }
   .weeknav {
     font-size: 11px;
@@ -1706,7 +1714,7 @@ html {
   color: var(--muted);
   font-size: 13px;
 }
-.week-section .section-heading > div {
+.week-section .section-heading > div:first-child {
   display: grid;
   gap: 4px;
 }
@@ -2349,28 +2357,68 @@ html {
 .plan-idea:last-of-type {
   margin-bottom: 12px;
 }
-.section-tools {
-  display: grid;
+.catalog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
   gap: 12px;
   margin-bottom: 20px;
 }
-.section-tools > .tabs {
-  justify-self: start;
+.tabs.page-tabs {
+  width: fit-content;
   max-width: 100%;
+  gap: 8px;
+  padding: 0;
+  border: 0;
 }
-.section-tools > .primary, .week-actions > .primary {
+.page-tabs button {
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+.page-tabs button.selected {
+  border-color: #c7d4bb;
+  background: #dfe8d5;
+}
+.catalog-actions > button,
+.week-section .section-heading button,
+.breakfast-sheet .section-heading button {
   min-height: 44px;
 }
-.week-actions {
-  display: flex;
+.week-section .section-heading .actions {
   gap: 8px;
 }
-.week-actions > .primary {
-  flex: 1;
-}
-.clear-week {
-  width: 44px;
-  border: 1px solid var(--line);
+@media (max-width: 760px) {
+  .tabs.page-tabs {
+    width: 100%;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+  }
+  .page-tabs button {
+    padding: 6px 8px;
+    line-height: 1.2;
+  }
+  .catalog-actions {
+    gap: 8px;
+  }
+  .catalog-actions > .page-tabs {
+    width: auto;
+    flex: 1 1 155px;
+  }
+  .catalog-actions > button {
+    flex: 1 0 auto;
+    padding-inline: 10px;
+    font-size: 14px;
+  }
+  .week-section .section-heading .actions {
+    flex-basis: 100%;
+  }
+  .week-section .section-heading .actions button {
+    flex: 1;
+  }
 }
 .weekly-auto {
   width: 100%;
@@ -2583,6 +2631,12 @@ html {
   grid-template-columns: minmax(0, 1fr);
   gap: var(--scan-gap);
 }
+.scan-shopping .form-actions {
+  display: grid;
+  gap: 8px;
+  margin-top: var(--scan-gap);
+  justify-self: end;
+}
 .scan-date-control {
   position: relative;
   display: grid;
@@ -2657,6 +2711,9 @@ html {
   .scan-date-hint {
     inset: 0;
     font-size: 16px;
+  }
+  .scan-shopping .form-actions {
+    justify-self: stretch;
   }
   .scan-shopping .dialog-body button:not(.icon) {
     width: 100%;
