@@ -1,4 +1,5 @@
-import { addDays, inWeek } from './dates';
+import { shoppingPreps, shoppingStart } from './shopping-period';
+import { addDays } from './dates';
 import { breakfastMeasure, breakfastPlan } from './breakfast';
 import { breakfastKey, foodsOn } from './breakfast-model';
 import { fold, groceryName } from './grocery-names';
@@ -67,11 +68,20 @@ export function cookedLots(s: State, p: Prep, done: boolean, asOf: string) {
         delete used[p.id];
         return { ...l, used };
       });
-  const lots = s.lots.filter((l) => inWeek(p.day, l.week) && unused(l) > 0).sort(byDate);
+  const weeks = [...new Set(s.lots.map((l) => l.week))].filter(
+    (week) => shoppingPreps({ ...s, preps: [p] }, shoppingStart(s, week)).length > 0,
+  );
+  const lots = s.lots.filter((l) => weeks.includes(l.week) && unused(l) > 0).sort(byDate);
   if (!lots.length) return [];
   const before = lots.map(unused),
     left = [...before];
-  allocate(recipeNeeds(p, breakfastPlan(s, lots[0].week, asOf)), asOf, lots, lotIndex(lots), left);
+  allocate(
+    recipeNeeds(p, breakfastPlan(s, addDays(shoppingStart(s, lots[0].week), 1), asOf)),
+    asOf,
+    lots,
+    lotIndex(lots),
+    left,
+  );
   return lots.flatMap((l, i) =>
     before[i] > left[i]
       ? [{ ...l, used: { ...l.used, [p.id]: rounded(before[i] - left[i]) } }]
@@ -90,17 +100,19 @@ export type CheckoutReport = {
   }[];
 };
 export function expiryPlan(s: State, week: string, asOf: string) {
-  const days = Array.from({ length: 7 }, (_, i) => addDays(week, i)).filter((d) => d >= asOf);
+  const start = shoppingStart(s, week);
+  const lastLunch = addDays(start, 7);
+  const days = Array.from({ length: 8 }, (_, i) => addDays(start, i)).filter((d) => d >= asOf);
   const lots = s.lots.filter((l) => l.week === week && l.expires && unused(l) > 0).sort(byDate);
   const report: CheckoutReport = { moves: [], reminders: [] };
   const preps: Prep[] = [],
     meals: State['meals'] = [];
   if (!lots.length || !days.length) return { preps, meals, report };
   const groups = lotIndex(lots);
-  const foods = breakfastPlan(s, week, asOf);
+  const foods = breakfastPlan(s, addDays(start, 1), asOf);
   const fixed = days.map((): Demand[] => []);
   const movable: { p: Prep; meals: State['meals']; demand: Demand[]; original: number }[] = [];
-  for (const p of s.preps) {
+  for (const p of shoppingPreps(s, start)) {
     const original = days.indexOf(p.day);
     if (original < 0 || p.done) continue;
     const demand = recipeNeeds(p, foods).filter((d) => groups.has(d.key));
@@ -118,6 +130,7 @@ export function expiryPlan(s: State, week: string, asOf: string) {
   }
   // A breakfast uses its own portion even if the same ingredient also appears at dinner.
   days.forEach((d, i) => {
+    if (d === start) return;
     const routine = foodsOn(s.prefs.breakfast?.routines ?? [], d);
     for (const food of foods) {
       const serving = routine?.[food.key]?.serving;
@@ -130,6 +143,7 @@ export function expiryPlan(s: State, week: string, asOf: string) {
   const allowed = movable.map((m) =>
     days.map(
       (d) =>
+        d < lastLunch &&
         !occupied.has(d + 'soir') &&
         (m.meals.length === 1 || !occupied.has(addDays(d, 1) + 'midi')),
     ),

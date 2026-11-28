@@ -40,7 +40,7 @@ function usage(routines: Routine[], food: string, start: string, end: string) {
   }
   return { quantity: rounded(total), days };
 }
-export function breakfastPlan(s: State, week: string, asOf = today()) {
+export function breakfastPlan(s: State, week: string, asOf = today(), purchaseDay = week) {
   const cfg = s.prefs.breakfast;
   if (!cfg?.routines.length) return [];
   const routines = [...cfg.routines].sort((a, b) => a.from.localeCompare(b.from));
@@ -49,7 +49,8 @@ export function breakfastPlan(s: State, week: string, asOf = today()) {
   const afterMorning = cfg.readings.some((r) => r.day === asOf && r.afterBreakfast);
   const currentStart = afterMorning ? next : asOf;
   const start = [week, asOf < end ? currentStart : week, routines[0].from].sort().at(-1)!;
-  const stockStart = [week, asOf < end ? asOf : week].sort()[1];
+  // A grocery trip begins before the first dinner, even when the first bowl is tomorrow.
+  const stockStart = asOf > purchaseDay && asOf < end ? asOf : purchaseDay;
   if (start > end || routines[0].from >= end) return [];
   // Include earlier products for shared recipe stock even after they leave the bowl.
   const foods: Routine['foods'] = {};

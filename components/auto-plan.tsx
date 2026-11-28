@@ -3,7 +3,10 @@ import { useEffect, useState } from 'react';
 import { RefreshCw, CalendarDays } from 'lucide-react';
 import { addDays, inWeek, monday, today, labelDate, money } from '@/lib/dates';
 import type { PlanPreviewResult } from './plan-preview.worker';
-import { permitsMeal, type PlanVariation } from '@/lib/planner';
+import { mealsToClear } from '@/lib/week-plan';
+import { shoppingStart } from '@/lib/shopping-period';
+import { planningSource } from '@/lib/recipe-sources';
+import { eligibleDish, type PlanVariation } from '@/lib/planner';
 import { type UI, Dialog, Field } from './common';
 
 export function AutoPlanButton({ ui }: { ui: UI }) {
@@ -15,31 +18,59 @@ export function AutoPlanButton({ ui }: { ui: UI }) {
     </button>
   );
 }
-function PlanPreview({ ui }: { ui: UI }) {
-  const { s, w } = ui;
+export function PlanPreview({
+  ui,
+  initialStart = shoppingStart(ui.s, ui.w),
+}: {
+  ui: UI;
+  initialStart?: string;
+}) {
+  const { s } = ui;
+  const [w, setStart] = useState(initialStart);
+  const sources = [
+    ...new Set(s.recipes.filter((r) => !r.archived).map((r) => planningSource(r.data))),
+  ].sort((a, b) => a.localeCompare(b, 'fr'));
+
   const [variation, setVariation] = useState<PlanVariation>(() => ({
     seed: crypto.randomUUID(),
     avoid: [],
   }));
   const [response, setResponse] = useState<{
     variation: PlanVariation;
+    week: string;
     result?: PlanPreviewResult;
   } | null>(null);
   useEffect(() => {
     const worker = new Worker(new URL('./plan-preview.worker.ts', import.meta.url));
     worker.onmessage = (event: MessageEvent<PlanPreviewResult>) =>
-      setResponse({ variation, result: event.data });
-    worker.onerror = () => setResponse({ variation });
+      setResponse({ variation, week: w, result: event.data });
+    worker.onerror = () => setResponse({ variation, week: w });
     worker.postMessage({ state: s, week: w, variation });
     return () => worker.terminate();
   }, [s, w, variation]);
-  const current = response?.variation === variation ? response : null;
+  const current = response?.variation === variation && response.week === w ? response : null;
   const result = current?.result;
   const rows = result?.rows ?? [];
   const cart = result?.cost;
-  const remaining = rows.filter((r) => r.outsideDiet).length;
+  const remaining = rows.filter((r) => r.outsideSelection).length;
   return (
     <Dialog title="Planifier ma semaine" close={ui.close}>
+      <Field label="Premier dîner">
+        <input
+          type="date"
+          value={w}
+          min={monday(today())}
+          onChange={(e) => {
+            if (e.target.value) {
+              setStart(e.target.value);
+              setVariation({ ...variation, avoid: [] });
+            }
+          }}
+        />
+      </Field>
+      <p className="muted">
+        Du dîner du {labelDate(w)} au déjeuner du {labelDate(addDays(w, 7))}.
+      </p>
       <div className="columns plan-criteria">
         <Field label="Alimentation">
           <select
@@ -76,6 +107,47 @@ function PlanPreview({ ui }: { ui: UI }) {
           </select>
         </Field>
       </div>
+      <fieldset className="planning-sources">
+        <legend>Sources des recettes</legend>
+        <div className="checks">
+          <label>
+            <input
+              type="checkbox"
+              checked={!variation.sources?.length}
+              onChange={() => setVariation({ ...variation, avoid: [], sources: [] })}
+            />{' '}
+            Toutes les sources
+          </label>
+          {sources.map((source) => (
+            <label key={source}>
+              <input
+                type="checkbox"
+                checked={!!variation.sources?.includes(source)}
+                onChange={(e) =>
+                  setVariation({
+                    ...variation,
+                    avoid: [],
+                    sources: e.target.checked
+                      ? [...(variation.sources ?? []), source]
+                      : variation.sources?.filter((v) => v !== source),
+                  })
+                }
+              />{' '}
+              {source}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+      <label className="planning-favorites">
+        <input
+          type="checkbox"
+          checked={!!variation.favoritesOnly}
+          onChange={(e) =>
+            setVariation({ ...variation, avoid: [], favoritesOnly: e.target.checked })
+          }
+        />{' '}
+        Mes favoris uniquement
+      </label>
       {cart && (
         <p className="notice">
           Panier estimé de la semaine · <strong>{money(cart.cents)}</strong>
@@ -84,18 +156,13 @@ function PlanPreview({ ui }: { ui: UI }) {
       )}
       {remaining > 0 && (
         <p className="notice">
-          {remaining} repas déjà au planning restent hors de la sélection végétarienne.
+          {remaining} repas déjà au planning sont conservés même s’ils ne correspondent pas aux
+          critères.
         </p>
       )}
-      {variation.diet === 'vegetarian' &&
-        !s.recipes.some(
-          (r) =>
-            !r.archived &&
-            r.data.base &&
-            r.data.steps.length &&
-            r.data.ingredients.length &&
-            permitsMeal(r.data, variation),
-        ) && <p role="status">Aucune recette végétarienne complète dans le carnet.</p>}
+      {!s.recipes.some((r) => eligibleDish(r, s, variation)) && (
+        <p role="status">Aucun plat complet ne correspond à ces critères dans ton carnet.</p>
+      )}
       <p>
         Tu peux remplacer les plats à venir, y compris ceux choisis à la main. Les préparations
         commencées, les plats de batch cooking et les portions congelées gardent leur place.
@@ -160,9 +227,9 @@ function PlanPreview({ ui }: { ui: UI }) {
 
 export function ClearWeekButton({ ui }: { ui: UI }) {
   const { s, w } = ui;
-  const meals = s.meals.filter((m) => inWeek(m.day, w));
+  const meals = mealsToClear(s, w);
   const available =
-    meals.some((m) => !m.consumed) ||
+    meals.length > 0 ||
     s.preps.some(
       (p) =>
         inWeek(p.day, w) && !p.done && !p.ticks.length && !s.meals.some((m) => m.prepId === p.id),
@@ -175,7 +242,8 @@ export function ClearWeekButton({ ui }: { ui: UI }) {
           <Dialog title="Vider la semaine ?" close={ui.close}>
             <p>
               Retirer du planning les repas du {labelDate(w)} au {labelDate(addDays(w, 6))} ? Les
-              repas consommés et l’historique de cuisine sont conservés.
+              restes du dimanche soir seront retirés avec leur dîner. Les restes de la semaine
+              précédente, les repas consommés et les portions congelées sont conservés.
             </p>
             <div className="actions">
               <button onClick={ui.close}>Annuler</button>

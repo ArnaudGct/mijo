@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { storePhoto, mediaDir } from '@/lib/media';
 import { db, state } from '@/lib/db';
 import { authenticated, login, logout, requestLink, consumeLink } from '@/lib/auth';
-import { mutate, ensureWeek, UserError } from '@/lib/commands';
+import { mutate, UserError } from '@/lib/commands';
 import { backup, restore } from '@/lib/backup';
 import { discoverPage, discoveryQuery, searchPreview } from '@/lib/discovery-search';
 import { cachedDiscovery, discoveryFeed } from '@/lib/discovery-feed';
@@ -134,8 +134,11 @@ export async function POST(req: Request, ctx: Ctx) {
           );
         }
       }
-      if (path === 'week')
-        return json(await ensureWeek(z.iso.date().parse((await body(500)).week)));
+      if (path === 'week') {
+        // Installed clients used to request generation on every calendar visit.
+        z.iso.date().parse((await body(500)).week);
+        return json({ changed: false });
+      }
       if (path === 'checks') return json(await syncChecks(await body()));
       if (path === 'command') {
         const v = await body(800000);

@@ -1,5 +1,6 @@
-import { addDays, inWeek, monday } from './dates';
+import { addDays, inWeek } from './dates';
 import {
+  eligibleDish,
   optimizedRecipes,
   permitsMeal,
   planned,
@@ -7,13 +8,13 @@ import {
   uid,
   type PlanVariation,
 } from './planner';
+import { isPlanningDish } from './discovery-course';
 import type { Prep, State } from './model';
 
 export function weekPlan(
   state: State,
   week: string,
   from: string,
-  refill: boolean,
   optimize: boolean,
   variation?: PlanVariation,
 ) {
@@ -61,27 +62,28 @@ export function weekPlan(
     // Include the Sunday/Monday boundary in both directions. Reserve each portion once.
     for (let i = 0; i <= 7; i++) {
       const day = addDays(week, i);
-      if (
-        day < from ||
-        at(day, 'midi') ||
-        (i === 7 && !refill && s.prefs.generatedWeeks.includes(monday(day)))
-      )
-        continue;
+      if (day < from || at(day, 'midi')) continue;
       const dinner = at(addDays(day, -1), 'soir');
       const p = s.preps.find((p) => p.id === dinner?.prepId);
       if (
         !p ||
-        !permitsMeal(p.snapshot, variation) ||
+        !isPlanningDish(p.snapshot.title, p.snapshot.tags) ||
+        (p.day >= week && !permitsMeal(p.snapshot, variation)) ||
         p.batchPerMeal ||
         p.day < addDays(day, -2) ||
         p.day > day
       )
         continue;
+      if (p.day >= week && (variation?.sources?.length || variation?.favoritesOnly)) {
+        const recipe = s.recipes.find((r) => r.id === p.recipeId);
+        if (!recipe || !eligibleDish(recipe, s, variation)) continue;
+      }
       const taken = allocated(p);
       if (taken >= p.servings) {
         if (
           p.done ||
           p.ticks.length ||
+          p.day < week ||
           p.day < from ||
           taken >= s.prefs.portions ||
           s.meals.some((m) => m.prepId === p.id && m.consumed)
@@ -90,41 +92,6 @@ export function weekPlan(
         put({ ...p, servings: taken + 1 });
       }
       book(p, day, 'midi');
-    }
-    if (s.prefs.target >= 7) {
-      // A full week can begin without a Sunday dinner, or follow a meal eaten out.
-      // Use a genuine spare portion first, otherwise plan a single lunch.
-      for (let i = 0; i < 7; i++) {
-        const day = addDays(week, i);
-        if (day < from || at(day, 'midi')) continue;
-        let p = s.preps
-          .filter(
-            (p) =>
-              permitsMeal(p.snapshot, variation) &&
-              p.day <= day &&
-              p.day >= addDays(day, -2) &&
-              allocated(p) < p.servings,
-          )
-          .sort((a, b) => a.day.localeCompare(b.day) || a.recipeId.localeCompare(b.recipeId))[0];
-        if (!p) {
-          const idea = suggest(
-            {
-              ...s,
-              prefs: { ...s.prefs, target: 7 },
-              meals: s.meals.filter((m) => !(m.slot === 'soir' && m.day === day)),
-            },
-            week,
-            day,
-            variation,
-          )[0];
-          const r = idea && s.recipes.find((r) => r.id === idea.id);
-          if (!r) continue;
-          p = { ...planned(r, day, 1), automatic: true };
-          put(p);
-          reasons.set(p.id, idea.why);
-        }
-        book(p, day, 'midi');
-      }
     }
   }
   const affected = new Set([...writes.keys(), ...meals.map((m) => m.prepId)]);
@@ -139,4 +106,23 @@ export function weekPlan(
       why: reasons.get(m.prepId!),
     }));
   return { preps: [...writes.values()], meals, rows, projected: s };
+}
+
+export function mealsToClear(s: State, week: string) {
+  const lastDinner = addDays(week, 6);
+  const nextLunch = addDays(week, 7);
+  const prepDays = new Map(s.preps.map((p) => [p.id, p.day]));
+  const pairs = new Set(
+    s.meals
+      .filter((m) => m.day === lastDinner && m.slot === 'soir' && !m.consumed && !m.frozen)
+      .map((m) => m.prepId)
+      .filter(Boolean),
+  );
+  return s.meals.filter((m) => {
+    if (m.consumed || m.frozen) return false;
+    if (m.day === week && m.slot === 'midi' && m.prepId && (prepDays.get(m.prepId) ?? week) < week)
+      return false;
+    if (inWeek(m.day, week)) return true;
+    return m.day === nextLunch && m.slot === 'midi' && !!m.prepId && pairs.has(m.prepId);
+  });
 }

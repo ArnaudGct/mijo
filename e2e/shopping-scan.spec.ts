@@ -232,6 +232,7 @@ test('une recette pour deux devient quatre repas avec une seule liste de courses
     expect(response.ok(), await response.text()).toBe(true);
   }
   await command({ action: 'clearWeek', week, previewRevision: (await state()).revision });
+  await command({ action: 'shoppingPeriod', start: week });
   const title = 'Hachis du test batch cooking';
   await command({
     action: 'recipe',

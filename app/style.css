@@ -2751,3 +2751,22 @@ html {
 .account-links a { color: var(--green); text-decoration: underline; text-underline-offset: 3px; }
 .side-end > div:has(b) { min-width: 0; }
 .side-end b { max-width: 140px; display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+
+.weeknav .period-picker {
+  background: transparent;
+  border: 0;
+  padding: 0 4px;
+  font-size: inherit;
+}
+.shopping-coverage {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-block: 14px;
+}
+.shopping-coverage p { margin: 0; }
+.planning-sources { min-width: 0; border: 1px solid var(--line); border-radius: 9px; padding: 12px; }
+.planning-sources label, .planning-favorites { display: inline-flex; align-items: center; gap: 6px; overflow-wrap: anywhere; }
+@media (max-width: 600px) { .shopping-coverage > button { width: 100%; } }

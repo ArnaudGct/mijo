@@ -3,7 +3,8 @@ import { groceryName, fold, groceryMeasure } from './grocery-names';
 import { breakfastKey } from './breakfast-model';
 import { breakfastPlan, breakfastMeasure } from './breakfast';
 import { clean, normalize, rounded } from './ingredients';
-import { inWeek, addDays, today } from './dates';
+import { shoppingPreps, shoppingStart } from './shopping-period';
+import { addDays, today } from './dates';
 export type Need = {
   key: string;
   name: string;
@@ -21,7 +22,13 @@ export type Need = {
   bag: string;
   manual: boolean;
 };
-export function needs(s: State, week: string, asOf = today()) {
+export function needs(
+  s: State,
+  week: string,
+  asOf = today(),
+  start = shoppingStart(s, week),
+  morningStart = addDays(start, 1),
+) {
   s = s.past?.[week] ? { ...s, ...s.past[week] } : s;
   const rows = new Map<string, Need>();
   const weekItems = s.items.filter((i) => i.week === week);
@@ -29,7 +36,7 @@ export function needs(s: State, week: string, asOf = today()) {
     weekItems.filter((i) => i.listEdit).map((i) => [fold(i.name), i.listEdit!]),
   );
   const incomplete: string[] = [];
-  const breakfast = breakfastPlan(s, week, asOf);
+  const breakfast = breakfastPlan(s, morningStart, asOf, start);
   const byFood = new Map(breakfast.map((p) => [p.key, p]));
   const cookedBefore = new Map<string, number>();
   function include(
@@ -82,7 +89,7 @@ export function needs(s: State, week: string, asOf = today()) {
     if (title && !row.recipes.includes(title)) row.recipes.push(title);
     rows.set(key, row);
   }
-  for (const p of s.preps.filter((p) => inWeek(p.day, week))) {
+  for (const p of shoppingPreps(s, start)) {
     const r = p.snapshot;
     if (!r.base || !r.ingredients.length) incomplete.push(r.title);
     for (const i of r.ingredients)
@@ -171,7 +178,8 @@ export function basket(s: State, w: string, shop: string, provider = recordedPri
     known = 0,
     estimated = false,
     consumedKnown = 0;
-  const cutoff = addDays(w, 6) < today() ? addDays(w, 6) : today();
+  const end = addDays(shoppingStart(s, w), 7);
+  const cutoff = end < today() ? end : today();
   const prices = provider.observations(s).filter((p) => p.day <= cutoff && p.shop === shop);
   const all = rows.map((row) => {
     const latest = new Map<string, { p: Offer; size: number }>();
@@ -220,7 +228,7 @@ export function basket(s: State, w: string, shop: string, provider = recordedPri
   const lines = all.filter((r) => r.buy > 0 || r.unknown);
   const complete = known === lines.length && !incomplete.length;
   const delivery = config?.freeAt != null && cash >= config.freeAt ? 0 : (config?.delivery ?? null);
-  const planned = s.preps.filter((p) => inWeek(p.day, w)),
+  const planned = shoppingPreps(s, shoppingStart(s, w)),
     servings = planned.reduce((n, p) => n + p.servings, 0);
   const comparable =
     complete && planned.length === s.prefs.helloMeals && servings === s.prefs.helloPortions;

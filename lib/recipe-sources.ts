@@ -43,3 +43,17 @@ export function discoveryTitle(title: string) {
     .replace(/^Recette\s*[-–:]\s*/i, '')
     .trim();
 }
+
+export function planningSource(recipe: { source: string; url: string }) {
+  const source = recipe.source.trim();
+  const domain = URL.canParse(recipe.url) ? new URL(recipe.url).hostname.replace(/^www\./, '') : '';
+  const site = importSites.find((site) => {
+    const host = new URL(site.example).hostname.replace(/^www\./, '');
+    return source.toLowerCase().replace(/^www\./, '') === host || (!source && domain === host);
+  });
+  if (site) return site.name.replace(' France', '');
+  return (
+    discoveryPublishers.find((name) => name.toLowerCase() === source.toLowerCase()) ??
+    (source || domain || 'Personnelle')
+  );
+}

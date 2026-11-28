@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { type State, date } from '@/lib/model';
 import { today, monday, labelDate, inWeek, money } from '@/lib/dates';
+import { currentShoppingWeek } from '@/lib/shopping-period';
 import { marketBasket } from '@/lib/market';
 import { Feedback, Brand, WeekNav, Photo, api, useInteractive, type UI } from './common';
 import { DiscoveryCard, DiscoveryPreview, MoreDiscoveries } from './discoveries';
@@ -67,12 +68,16 @@ export function Workspace({
   const view = usePathname().replace(/^\/|\/$/g, '');
   const query = useSearchParams();
   const requested = date.safeParse(query.get('week'));
-  const w = monday(requested.success ? requested.data : today());
   const initialSession = query.get('session') ?? '';
   const [s, setS] = useState(initial),
     [dialog, setDialog] = useState<ReactNode>(null),
     [message, setMessage] = useState<{ text: string } | null>(null),
     [busy, setBusy] = useState(false);
+  const w = requested.success
+    ? monday(requested.data)
+    : view === 'courses'
+      ? currentShoppingWeek(s, today())
+      : monday(today());
   const lock = useRef(false),
     latest = useRef(s);
   const notice = message?.text ?? '';
@@ -104,26 +109,6 @@ export function Workspace({
     latest.current = data;
     setS(data);
   }
-  const hasRecipes = s.recipes.some(
-    (r) => !r.archived && r.data.base && r.data.steps.length && r.data.ingredients.length,
-  );
-  const generated = s.prefs.generatedWeeks.includes(w);
-  useEffect(() => {
-    if (!hasRecipes || generated || w < monday(today())) return;
-    let current = true;
-    api('week', { week: w })
-      .then(() => {
-        if (current) return reload();
-      })
-      .catch((e: Error) => {
-        if (current) setNotice(e.message);
-      });
-    return () => {
-      current = false;
-    };
-    // reload reads the current database and uses stable state setters.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasRecipes, generated, w]);
   const ui: UI = {
     accountId: account.id,
     s,
@@ -165,7 +150,7 @@ export function Workspace({
       }
     },
   };
-  const weekLink = (p: string) => '/' + p + '?week=' + w;
+  const weekLink = (p: string) => '/' + p + (requested.success ? '?week=' + w : '');
   const current = view === 'parametres' ? { n: 'Paramètres' } : nav.find((n) => n.p === view);
   if (!current) return children;
   return (
@@ -294,7 +279,8 @@ function Home({ ui }: { ui: UI }) {
     };
   }, [count, paused, interacting, focused]);
   const meals = s.meals.filter((m) => inWeek(m.day, w));
-  const cart = marketBasket(s, w);
+  const listWeek = w === monday(today()) ? currentShoppingWeek(s, today()) : w;
+  const cart = marketBasket(s, listWeek);
   const openRecipe = () => {
     if (feature) ui.open(<DiscoveryPreview ui={ui} item={feature} />);
     else ui.open(<RecipeEditor ui={ui} />);
@@ -397,7 +383,11 @@ function Home({ ui }: { ui: UI }) {
             p: 'courses',
           },
         ].map((k) => (
-          <Link className="stat" href={'/' + k.p + '?week=' + w} key={k.n}>
+          <Link
+            className="stat"
+            href={'/' + k.p + '?week=' + (k.p === 'courses' ? listWeek : w)}
+            key={k.n}
+          >
             <div className="stat-icon">
               <k.i size={20} />
             </div>

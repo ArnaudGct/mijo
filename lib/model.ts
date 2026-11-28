@@ -67,6 +67,7 @@ export const aisleName = z
 export const settings = z.object({
   breakfast: breakfastSettings.optional(),
   customAisles: z.array(aisleName).default([]),
+  shoppingDays: z.record(date, z.number().int().min(0).max(6)).optional(),
   generatedWeeks: z.array(date).default([]),
   dismissedDiscoveries: z.array(z.string().max(3000)).default([]),
   portions: portions.default(2),

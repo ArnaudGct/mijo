@@ -1,5 +1,7 @@
 'use client';
 import Link from 'next/link';
+import { PlanPreview } from './auto-plan';
+import { shoppingStart } from '@/lib/shopping-period';
 import { ShoppingScan } from './shopping-scan';
 import { useState } from 'react';
 import { Plus, Copy, Download, WifiOff, Pencil } from 'lucide-react';
@@ -13,7 +15,7 @@ import {
 import { fold, groceryName } from '@/lib/grocery-names';
 import { shoppingAisles, suggestAisle } from '@/lib/aisles';
 import { type State } from '@/lib/model';
-import { money, labelDate } from '@/lib/dates';
+import { money, labelDate, addDays, inWeek, monday, today } from '@/lib/dates';
 import {
   Form,
   Field,
@@ -252,9 +254,46 @@ const shoppingTabs = [
   ['liste', 'Liste'],
   ['placard', 'Placard'],
 ] as const;
+function ShoppingDate({ ui, start }: { ui: UI; start: string }) {
+  const [date, setDate] = useState(start);
+  return (
+    <Dialog title="Jour des courses" close={ui.close}>
+      <Form
+        button="Afficher cette liste"
+        onSave={async () => {
+          if (
+            date &&
+            (await ui.run(
+              { action: 'shoppingPeriod', start: date },
+              'Jour des courses enregistré.',
+            ))
+          ) {
+            ui.setW(monday(date));
+            ui.close();
+          }
+        }}
+      >
+        <Field label="Premier dîner">
+          <input type="date" required value={date} onChange={(e) => setDate(e.target.value)} />
+        </Field>
+        {date && (
+          <p>
+            Cette liste va du {labelDate(date)} soir au {labelDate(addDays(date, 7))} midi. Les
+            prochaines listes commenceront le même jour de la semaine.
+          </p>
+        )}
+      </Form>
+    </Dialog>
+  );
+}
 export function Shopping({ ui }: { ui: UI }) {
   const { s, w } = ui;
   const tab = usePageTab(shoppingTabs);
+  const start = shoppingStart(s, w);
+  const rangeLabel =
+    'Du ' + labelDate(start) + ' soir au ' + labelDate(addDays(start, 7)) + ' midi';
+  const dinners = s.meals.filter((m) => m.slot === 'soir' && inWeek(m.day, start)).length;
+
   const breakfastHref = '/semaine?week=' + w + '&onglet=petit-dejeuner';
   const [delivery, setDelivery] = useState(false);
   const [carrier, setCarrier] = useState<'leclerc' | 'monoprix'>('leclerc');
@@ -336,6 +375,7 @@ export function Shopping({ ui }: { ui: UI }) {
         JSON.stringify({
           owner: ui.accountId,
           week: w,
+          periodLabel: rangeLabel,
           rows: sections
             .flatMap(({ lines }) => lines)
             .filter((l) => l.buy.length)
@@ -362,11 +402,28 @@ export function Shopping({ ui }: { ui: UI }) {
     <>
       <header className="page-heading">
         <h1>Mes courses</h1>
-        <WeekNav ui={ui} />
+        <WeekNav
+          ui={ui}
+          start={start}
+          editPeriod={() => ui.open(<ShoppingDate ui={ui} start={start} />)}
+        />
       </header>
       <PageTabs options={shoppingTabs} active={tab} />
       {tab === 'liste' && (
         <>
+          <div className="shopping-coverage">
+            <p>
+              Du <strong>{labelDate(start)} soir</strong> au{' '}
+              <strong>{labelDate(addDays(start, 7))} midi</strong>
+              <br />
+              {dinners} dîner{dinners > 1 ? 's' : ''} prévu{dinners > 1 ? 's' : ''} sur 7
+            </p>
+            {addDays(start, 6) >= today() && (
+              <button onClick={() => ui.open(<PlanPreview ui={ui} initialStart={start} />)}>
+                Planifier ces repas
+              </button>
+            )}
+          </div>
           <ShoppingScan key={w} ui={ui} />
           <section className="basket-summary" aria-label="Estimation du panier">
             <div>
@@ -577,17 +634,19 @@ export function Shopping({ ui }: { ui: UI }) {
             <button
               onClick={() =>
                 download(
-                  'courses-' + w + '.txt',
-                  sections
-                    .map(({ aisle, lines }) =>
-                      [
-                        aisle,
-                        ...lines.map(
-                          (l) => (l.checked ? '☑ ' : '☐ ') + l.name + ' · ' + describe(l),
-                        ),
-                      ].join('\n'),
-                    )
-                    .join('\n\n'),
+                  'courses-' + start + '.txt',
+                  rangeLabel +
+                    '\n\n' +
+                    sections
+                      .map(({ aisle, lines }) =>
+                        [
+                          aisle,
+                          ...lines.map(
+                            (l) => (l.checked ? '☑ ' : '☐ ') + l.name + ' · ' + describe(l),
+                          ),
+                        ].join('\n'),
+                      )
+                      .join('\n\n'),
                 )
               }
             >

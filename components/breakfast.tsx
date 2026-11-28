@@ -112,7 +112,7 @@ function StockForm({ ui }: { ui: UI }) {
   );
 }
 export function Breakfast({ ui }: { ui: UI }) {
-  const cart = marketBasket(ui.s, ui.w);
+  const cart = marketBasket(ui.s, ui.w, undefined, ui.w, ui.w);
   const forecast = cart.breakfast.filter((p) => p.activeDays > 0);
   const first = forecast[0],
     cfg = ui.s.prefs.breakfast;

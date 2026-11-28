@@ -1,4 +1,6 @@
 import { test, expect } from '@playwright/test';
+import { blankRecipe, type State } from '../lib/model';
+import { parseLine } from '../lib/ingredients';
 import { today, monday, addDays } from '../lib/dates';
 const week = addDays(monday(today()), 14);
 const tuesday = addDays(week, 1);
@@ -50,7 +52,7 @@ test('parcours privé sur ordinateur et liste emportée sur mobile', async ({
   await dialog.getByLabel('Priorité').selectOption('economy');
   await expect(dialog.getByText(/Panier estimé de la semaine/)).toBeVisible();
   await dialog.getByLabel('Alimentation').selectOption('vegetarian');
-  await expect(dialog.getByText(/Aucune recette végétarienne complète/)).toBeVisible();
+  await expect(dialog.getByText(/Aucun plat complet ne correspond/)).toBeVisible();
   await dialog.getByLabel('Alimentation').selectOption('preferences');
   // The two existing portions were deliberately moved to two dinners.
   await expect(dialog.getByText('Aucun changement à proposer pour cette semaine.')).toBeVisible();
@@ -427,4 +429,95 @@ test('articles du quotidien, rayon personnalisé réutilisable, export et coches
   await expect(dialog.getByRole('combobox', { name: 'Rayon', exact: true })).toHaveValue(
     'Hygiène et soins',
   );
+});
+
+test('courses du mardi au mardi, semaines vides à la consultation et sources combinables', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page.getByLabel('Adresse e-mail').fill('owner@mijo.test');
+  await page.getByLabel('Mot de passe', { exact: true }).fill(process.env.TABLE_TEST_PASSWORD!);
+  await page.getByRole('button', { name: 'Ouvrir mon carnet' }).click();
+  await expect(page.getByRole('heading', { name: 'Mon tableau de bord' })).toBeVisible();
+  const w = addDays(week, 210),
+    start = addDays(w, 1);
+  const state = async (): Promise<State> => (await page.request.get('/api/state')).json();
+  const source = 'Atelier du mardi';
+  for (const title of ['Risotto du mardi', 'Cookies aux pépites']) {
+    const saved = await page.request.post('/api/command', {
+      headers: { Origin: new URL(page.url()).origin },
+      data: {
+        revision: (await state()).revision,
+        command: {
+          action: 'recipe',
+          data: {
+            ...blankRecipe(),
+            title,
+            source,
+            favorite: true,
+            base: 2,
+            ingredients: [parseLine('Riz | 200 | g')],
+            steps: [{ text: 'Cuire.', image: '' }],
+          },
+        },
+      },
+    });
+    expect(saved.ok()).toBe(true);
+  }
+  await page.goto('/semaine?week=' + w);
+  await expect(page.getByRole('heading', { name: 'Ma semaine' })).toBeVisible();
+  const before = await (await page.request.get('/api/state')).json();
+  const legacy = await page.evaluate(
+    async (week) =>
+      (
+        await fetch('/api/week', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Mijo-Account':
+              document.querySelector<HTMLElement>('[data-notebook]')!.dataset.notebook!,
+          },
+          body: JSON.stringify({ week }),
+        })
+      ).json(),
+    w,
+  );
+  expect(legacy).toEqual({ changed: false });
+  await page.goto('/courses?week=' + w);
+  await page.getByRole('button', { name: 'Changer le jour des courses' }).click();
+  const dialog = page.getByRole('dialog');
+  await dialog.getByLabel('Premier dîner').fill(start);
+  await dialog.getByRole('button', { name: 'Afficher cette liste' }).click();
+  await expect(page.getByText('0 dîner prévu sur 7')).toBeVisible();
+  await page.getByRole('button', { name: 'Planifier ces repas' }).click();
+  await expect(dialog.getByLabel('Premier dîner')).toHaveValue(start);
+  await dialog.getByLabel('Mes favoris uniquement').check();
+  await expect(dialog.getByLabel('Toutes les sources')).toBeChecked();
+  await dialog.getByRole('button', { name: 'Fermer' }).click();
+  await page.getByRole('button', { name: 'Semaine suivante' }).click();
+  await expect(page.getByText('0 dîner prévu sur 7')).toBeVisible();
+  const after = await (await page.request.get('/api/state')).json();
+  expect(after.meals).toEqual(before.meals);
+  expect(after.preps).toEqual(before.preps);
+  await page.getByRole('button', { name: 'Semaine précédente' }).click();
+  await page.getByRole('button', { name: 'Planifier ces repas' }).click();
+  await dialog.getByLabel(source, { exact: true }).check();
+  await dialog.getByLabel('Mes favoris uniquement').check();
+  await dialog.getByLabel('Priorité').selectOption('economy');
+  await expect(dialog.getByText('Risotto du mardi', { exact: true }).first()).toBeVisible();
+  await expect(dialog.getByText('Cookies aux pépites', { exact: true })).toHaveCount(0);
+  await dialog.getByRole('button', { name: 'Appliquer au planning' }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(page.getByText('7 dîners prévus sur 7')).toBeVisible();
+  const planned = await state();
+  const preps = planned.preps.filter((p) => p.day >= start && p.day < addDays(start, 7));
+  expect(preps).toHaveLength(7);
+  expect(preps.every((p) => p.snapshot.title === 'Risotto du mardi')).toBe(true);
+  const last = preps.find((p) => p.day === addDays(start, 6))!;
+  expect(
+    planned.meals.some(
+      (m) => m.day === addDays(start, 7) && m.slot === 'midi' && m.prepId === last.id,
+    ),
+  ).toBe(true);
+  await expect(page.getByRole('button', { name: 'Modifier · Riz' })).toBeVisible();
 });

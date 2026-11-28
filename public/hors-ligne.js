@@ -19,7 +19,7 @@ function show() {
     statusEl.textContent = 'Enregistrez la liste sur cet appareil depuis la page Courses.';
     return;
   }
-  statusEl.textContent = 'Semaine du ' + data.week;
+  statusEl.textContent = data.periodLabel || 'Semaine du ' + data.week;
   document.querySelector('a[href="/courses"]').href =
     '/courses?week=' + encodeURIComponent(data.week);
   const rows = document.querySelector('#rows');

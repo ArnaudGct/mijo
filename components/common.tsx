@@ -190,7 +190,19 @@ export function PageTabs({
   );
 }
 
-export function WeekNav({ ui }: { ui: UI }) {
+export function WeekNav({
+  ui,
+  start = ui.w,
+  editPeriod,
+}: {
+  ui: UI;
+  start?: string;
+  editPeriod?: () => void;
+}) {
+  const range =
+    labelDate(start, { day: 'numeric', month: 'short' }) +
+    ' – ' +
+    labelDate(addDays(start, editPeriod ? 7 : 6), { day: 'numeric', month: 'short' });
   return (
     <div className="weeknav">
       <button
@@ -200,17 +212,27 @@ export function WeekNav({ ui }: { ui: UI }) {
       >
         <ChevronLeft size={17} />
       </button>
-      <label>
-        <CalendarDays size={16} />
-        {labelDate(ui.w, { day: 'numeric', month: 'short' })} –{' '}
-        {labelDate(addDays(ui.w, 6), { day: 'numeric', month: 'short' })}
-        <input
-          type="date"
-          value={ui.w}
-          aria-label="Choisir une semaine"
-          onChange={(e) => e.target.value && ui.setW(monday(e.target.value))}
-        />
-      </label>
+      {editPeriod ? (
+        <button
+          className="period-picker"
+          aria-label="Changer le jour des courses"
+          onClick={editPeriod}
+        >
+          <CalendarDays size={16} />
+          {range}
+        </button>
+      ) : (
+        <label>
+          <CalendarDays size={16} />
+          {range}
+          <input
+            type="date"
+            value={ui.w}
+            aria-label="Choisir une semaine"
+            onChange={(e) => e.target.value && ui.setW(monday(e.target.value))}
+          />
+        </label>
+      )}
       <button
         className="icon"
         aria-label="Semaine suivante"

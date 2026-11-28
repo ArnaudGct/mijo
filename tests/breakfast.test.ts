@@ -54,8 +54,8 @@ test('sept bols : prix au format familial, quantités des repas regroupées et s
   const c = marketBasket(s, week, week);
   const milk = c.lines.filter((l) => l.name === 'Lait');
   assert.equal(milk.length, 1);
-  assert.equal(milk[0].buy[0].buy, 760);
-  assert.equal(milk[0].packs, 1);
+  assert.equal(milk[0].buy[0].buy, 1010);
+  assert.equal(milk[0].packs, 2);
   assert.equal(c.lines.filter((l) => l.breakfast).length, 5);
   assert.equal(c.lines.find((l) => l.name === 'Skyr nature')!.pack, 850);
   assert.equal(c.lines.find((l) => l.name === 'Flocons d’avoine')!.packs, 2);
@@ -76,7 +76,7 @@ test('autonomie dans le temps : ni double déduction ni ravitaillement fictif', 
   assert.equal(next.find((p) => p.key === 'skyr')!.stock, 2060);
   cfg.readings.push({ day: '2026-11-25', food: 'milk', amount: 750 });
   const row = needs(s, week, '2026-11-25').rows.find((l) => l.name === 'Lait')!;
-  assert.equal(row.buy, 500);
+  assert.equal(row.buy, 750);
   assert.equal(breakfastPlan(s, '2026-12-07', week).find((p) => p.key === 'milk')!.stock, 0);
 });
 test('modifications datées des portions et limites de semaines', () => {
@@ -92,7 +92,7 @@ test('modifications datées des portions et limites de semaines', () => {
   cfg.readings.push({ day: '2026-11-29', afterBreakfast: true, food: 'milk', amount: 1000 });
   addMilk(s, '2026-11-29', 1500, 'ml');
   assert.equal(breakfastPlan(s, week, '2026-11-29')[0].days, 0);
-  assert.equal(needs(s, week, '2026-11-29').rows.find((r) => r.name === 'Lait')!.buy, 500);
+  assert.equal(needs(s, week, '2026-11-29').rows.find((r) => r.name === 'Lait')!.buy, 750);
   assert.equal(
     breakfastPlan(s, '2026-11-30', '2026-11-29').find((p) => p.key === 'milk')!.stock,
     0,
@@ -125,13 +125,13 @@ test('une ancienne routine se personnalise à une date sans déplacer les stocks
   cfg.routines.push({ from: '2026-11-26', foods: { ...withoutApple, 'food:banane': banana } });
   const basket = marketBasket(saved, week, week);
   const fruit = basket.lines.find((l) => l.name === 'Banane')!;
-  assert.equal(fruit.breakfast!.product.quantity, 4);
-  assert.equal(fruit.breakfast!.product.activeDays, 4);
+  assert.equal(fruit.breakfast!.product.quantity, 5);
+  assert.equal(fruit.breakfast!.product.activeDays, 5);
   assert.equal(fruit.breakfast!.product.stock, null);
-  assert.equal(fruit.packs, 4);
+  assert.equal(fruit.packs, 5);
   assert.ok(fruit.cents! > 0);
   const apples = basket.lines.find((l) => l.name === 'Pomme')!;
-  assert.equal(apples.breakfast!.product.quantity, 3);
+  assert.equal(apples.breakfast!.product.quantity, 2);
   assert.equal(apples.cents, 0);
   cfg.routines.push({
     from: '2026-11-30',
@@ -147,4 +147,14 @@ test('une ancienne routine se personnalise à une date sans déplacer les stocks
   assert.equal(unpriced.packs, 3);
   const restored = snapshot.parse(JSON.parse(JSON.stringify(saved)));
   assert.deepEqual(restored.prefs.breakfast, cfg);
+});
+
+test('le dîner du jour des courses utilise aussi le panier quand le stock relevé est nul', () => {
+  const s = setup();
+  s.prefs.shoppingDays = { [week]: 1 };
+  const tuesday = '2026-11-24';
+  addMilk(s, tuesday, 500, 'ml');
+  s.prefs.breakfast!.readings = [{ day: tuesday, food: 'milk', amount: 0, afterBreakfast: true }];
+  const basket = needs(s, week, tuesday);
+  assert.equal(basket.rows.find((row) => row.name === 'Lait')?.buy, 7 * 250 + 500);
 });

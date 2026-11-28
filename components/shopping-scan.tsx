@@ -3,7 +3,8 @@ import { useEffect, useRef, useState } from 'react';
 import { ScanBarcode, CalendarDays, Pencil } from 'lucide-react';
 import { Dialog, Field, Form, api, quantity, type UI } from './common';
 import { type PurchaseLot } from '@/lib/model';
-import { labelDate, money, monday, today } from '@/lib/dates';
+import { labelDate, money, today } from '@/lib/dates';
+import { shoppingOpen } from '@/lib/shopping-period';
 import { needs, type Need } from '@/lib/shopping';
 import { groceryName } from '@/lib/grocery-names';
 import { normalize } from '@/lib/ingredients';
@@ -426,7 +427,7 @@ function ScanDialog({
 export function ShoppingScan({ ui }: { ui: UI }) {
   const [editing, setEditing] = useState<PurchaseLot | 'new' | null>(null);
   const lots = ui.s.lots.filter((l) => l.week === ui.w);
-  const active = ui.w >= monday(today());
+  const active = shoppingOpen(ui.s, ui.w, today());
   if (!active && !lots.length) return null;
   return (
     <section className="scan-shopping" aria-label="Achats en magasin">

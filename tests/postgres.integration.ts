@@ -5,7 +5,7 @@ import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
 import { readFileSync } from 'node:fs';
 import { state, db } from '../lib/db';
-import { ensureWeek, mutate, type Command } from '../lib/commands';
+import { mutate, type Command } from '../lib/commands';
 import { blankRecipe } from '../lib/model';
 import { parseLine } from '../lib/ingredients';
 import { addDays, today, monday } from '../lib/dates';
@@ -309,10 +309,10 @@ async function runNotebookTests(t: import('node:test').TestContext) {
         assert.equal(b.versions.length, a.versions.length);
       },
     );
-    await t.test('semaine automatique concurrente, échange et retrait permanent', async () => {
+    await t.test('planification explicite, échange et retrait permanent', async () => {
       const w = addDays(day, 70);
-      const result = await Promise.all([ensureWeek(w), ensureWeek(w)]);
-      assert.equal(result.filter((r) => r.changed).length, 1);
+      assert.ok(!(await state()).meals.some((m) => m.day === w));
+      await write({ action: 'fillWeek', week: w });
       const rows = (await state()).meals.filter((m) => m.day >= w && m.day < addDays(w, 7));
       assert.ok(rows.length >= 2);
       const [a, b] = rows;
@@ -322,7 +322,6 @@ async function runNotebookTests(t: import('node:test').TestContext) {
       assert.equal(moved.find((m) => m.id === b.id)?.slot, a.slot);
       assert.equal(moved.find((m) => m.id === a.id)?.slot, b.slot);
       await write({ action: 'removeMeal', id: a.id });
-      assert.equal((await ensureWeek(w)).changed, false);
       assert.ok(!(await state()).meals.some((m) => m.day === b.day && m.slot === b.slot));
     });
     await t.test(
@@ -349,7 +348,7 @@ async function runNotebookTests(t: import('node:test').TestContext) {
           leftovers: false,
           slot: 'soir',
         });
-        await ensureWeek(w);
+        await write({ action: 'fillWeek', week: w });
         const before = await state();
         const linked = before.preps.find((p) => p.day === addDays(w, 1) && p.recipeId === potato)!;
         assert.ok(linked?.automatic);
@@ -402,16 +401,16 @@ async function runNotebookTests(t: import('node:test').TestContext) {
             servings: 2,
             leftovers: true,
           });
-        await ensureWeek(w);
+        await write({ action: 'fillWeek', week: w });
         const before = await state();
         const variation = { seed: uid(), avoid: [] };
-        const preview = weekPlan(before, w, today(), true, true, variation);
+        const preview = weekPlan(before, w, today(), true, variation);
         assert.ok(preview.rows.length >= 7);
         const revised = {
           seed: uid(),
           avoid: [...new Set(preview.rows.map((row) => row.prep.recipeId))],
         };
-        const next = weekPlan(before, w, today(), true, true, revised);
+        const next = weekPlan(before, w, today(), true, revised);
         assert.notDeepEqual(
           next.rows.map((row) => row.prep.recipeId),
           preview.rows.map((row) => row.prep.recipeId),
@@ -439,15 +438,11 @@ async function runNotebookTests(t: import('node:test').TestContext) {
           write({ action: 'clearWeek', week: w, previewRevision: before.revision }),
         );
         await write({ action: 'clearWeek', week: w, previewRevision: after.revision });
-        assert.equal((await ensureWeek(w)).changed, false);
         const cleared = await state();
         assert.ok(!cleared.meals.some((m) => m.day >= w && m.day < addDays(w, 7)));
         assert.ok(!cleared.preps.some((p) => p.day >= w && p.day < addDays(w, 7)));
-        assert.deepEqual(
-          cleared.meals.filter((m) => m.day === addDays(w, 7)),
-          ahead,
-        );
-        assert.equal(cleared.preps.find((p) => p.id === ahead[0].prepId)?.servings, 1);
+        assert.ok(ahead.every(m => !cleared.meals.some(kept => kept.id === m.id)));
+        assert.ok(!cleared.preps.some(p => p.id === ahead[0].prepId));
       },
     );
   } finally {

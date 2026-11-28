@@ -9,13 +9,13 @@ export const courseLabels = { main: 'Plats', starter: 'Entrées', dessert: 'Dess
 const starter =
   /\b(terrines?|carpaccios?|gravlax|verrines?|tapas|accras?|bruschettas?|gaspachos?|gazpachos?|rillettes?|oeufs? mimosa|salades? de crudites|entrees?)\b/;
 const dessert =
-  /\b(gateaux?|cheese ?cakes?|tiramisu|biscuits?|sables?|brownies?|cookies?|meringues?|sorbets?|clafoutis|panna cotta|patisseries?|desserts?|profiteroles?|madeleines?|speculoos|creme brulee|riz au lait|salade de fruits|omelette norvegienne|galette des rois)\b/;
+  /\b(gateaux?|cheese ?cakes?|tiramisu|biscuits?|gaufres?|pancakes?|beignets? au sucre|eclairs? au chocolat|choux a la creme|sables?|brownies?|cookies?|meringues?|sorbets?|clafoutis|panna cotta|patisseries?|desserts?|profiteroles?|madeleines?|speculoos|creme brulee|riz au lait|salade de fruits|omelette norvegienne|galette des rois)\b/;
 const savory =
   /\b(sale[e]?s?|saumon|thon|jambon|lardons?|poulet|boeuf|porc|dinde|chevre|feta|tomates?|courgettes?|epinards?|poireaux?|aubergines?|pommes? de terre)\b/;
 const sweet =
   /\b(chocolat|vanille|nutella|caramel|praline|framboises?|fraises?|myrtilles?|bananes?|poires?|pommes?|abricots?|cerises?|citrons?)\b/;
 const pastry =
-  /\b(tartes?|tartelettes?|flans?|mousses?|crepes?|cakes?|muffins?|crumbles?|fondants?|moelleux|gratins?|pizzas?|soupes?|risottos?|raviolis?)\b/;
+  /\b(tartes?|tartelettes?|cremes?|flans?|mousses?|crepes?|cakes?|muffins?|crumbles?|fondants?|moelleux|gratins?|pizzas?|soupes?|risottos?|raviolis?)\b/;
 const main =
   /\b(hachis|parmentier|croziflette|tartiflette|raclette|risottos?|paella|couscous|tajines?|lasagnes?|spaghettis?|tagliatelles?|raviolis?|gnocchis?|bibimbap|currys?|dah?ls?|burgers?|hamburgers?|fajitas?|burritos?|ramen|quiches?|pizzas?|omelettes?|blanquette|bourguignon|cassoulet|pot au feu|paupiettes?|croque monsieur|riz cantonais|chili|woks?|ragouts?|boulettes?|steaks?|rotis?)\b/;
 const other =
@@ -49,4 +49,14 @@ export function discoveryCourse(title: string, categories: string[] = []): Cours
     return 'main';
   if (isSavory && /\b(tartes?|crepes?|gratins?)\b/.test(name)) return 'main';
   return null;
+}
+
+export function isPlanningDish(title: string, tags: string[]) {
+  const course = discoveryCourse(title, tags);
+  if (course) return course === 'main';
+  // A personal recipe can have a descriptive title and no course tag.
+  return (
+    !other.test(fold(title)) &&
+    !/\b(accompagnements?|boissons?|condiments?|side dish|beverage)\b/.test(fold(tags.join(' ')))
+  );
 }

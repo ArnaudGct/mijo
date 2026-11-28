@@ -174,8 +174,14 @@ export function recipeCost(recipe: Pick<Recipe, 'base' | 'ingredients'>): Recipe
   };
 }
 
-export function marketBasket(s: State, w: string, asOf?: string) {
-  const { rows, incomplete, breakfast } = needs(s, w, asOf);
+export function marketBasket(
+  s: State,
+  w: string,
+  asOf?: string,
+  start?: string,
+  morningStart?: string,
+) {
+  const { rows, incomplete, breakfast } = needs(s, w, asOf, start, morningStart);
   const groups = new Map<string, Need[]>();
   for (const r of rows) {
     const key = fold(r.sourceName);

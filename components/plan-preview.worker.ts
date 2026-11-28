@@ -1,12 +1,12 @@
 import { addDays, inWeek, today } from '@/lib/dates';
 import { marketBasket } from '@/lib/market';
 import type { State } from '@/lib/model';
-import { permitsMeal, type PlanVariation } from '@/lib/planner';
+import { eligibleDish, type PlanVariation } from '@/lib/planner';
 import { weekPlan } from '@/lib/week-plan';
 
 function preview(state: State, week: string, variation: PlanVariation) {
   const day = today();
-  const plan = weekPlan(state, week, day, true, true, variation);
+  const plan = weekPlan(state, week, day, true, variation);
   const changes = new Map(plan.rows.map((r) => [r.meal.id, r]));
   const preps = new Map(plan.projected.preps.map((p) => [p.id, p]));
   const rows = plan.projected.meals
@@ -33,10 +33,13 @@ function preview(state: State, week: string, variation: PlanVariation) {
             ? 'Remplace ' + previous.snapshot.title
             : 'Déjà prévu',
         why: change?.why ?? '',
-        outsideDiet: !permitsMeal(p.snapshot, variation),
+        outsideSelection: !state.recipes.some(
+          (r) => r.id === p.recipeId && eligibleDish(r, state, variation),
+        ),
       };
     });
-  const cart = variation.strategy === 'economy' ? marketBasket(plan.projected, week) : null;
+  const cart =
+    variation.strategy === 'economy' ? marketBasket(plan.projected, week, undefined, week) : null;
   return {
     rows,
     changed: plan.rows.length > 0,

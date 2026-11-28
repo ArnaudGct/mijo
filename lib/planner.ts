@@ -3,6 +3,8 @@ import { fold, groceryName } from './grocery-names';
 import { sourceUrl } from './source-url';
 import { clean, normalize, rounded, shoppingCategory } from './ingredients';
 import { marketBasket, recipeCost } from './market';
+import { isPlanningDish } from './discovery-course';
+import { planningSource } from './recipe-sources';
 import { recipeDiet } from './recipe-diet';
 import { addDays, inWeek } from './dates';
 
@@ -51,11 +53,29 @@ export const planDiets = ['preferences', 'mixed', 'flexitarian', 'vegetarian'] a
 export type PlanVariation = {
   seed: string;
   avoid: string[];
+  sources?: string[];
+  favoritesOnly?: boolean;
   strategy?: (typeof planStrategies)[number];
   diet?: (typeof planDiets)[number];
 };
 export function permitsMeal(recipe: Recipe, variation?: PlanVariation) {
   return variation?.diet !== 'vegetarian' || recipeDiet(recipe) === 'Végétarien';
+}
+export function eligibleDish(r: RecipeRow, s: State, variation?: PlanVariation) {
+  const data = r.data;
+  return (
+    !r.archived &&
+    !!data.base &&
+    !!data.ingredients.length &&
+    !!data.steps.length &&
+    isPlanningDish(data.title, data.tags) &&
+    permitsMeal(data, variation) &&
+    (!variation?.favoritesOnly || data.favorite) &&
+    (!variation?.sources?.length || variation.sources.includes(planningSource(data))) &&
+    ((variation?.diet && variation.diet !== 'preferences') ||
+      !s.prefs.diet ||
+      clean(data.diet).includes(clean(s.prefs.diet)))
+  );
 }
 function groceries(recipe: Recipe) {
   const result = new Map<string, { name: string; weight: number }>();
@@ -107,17 +127,7 @@ function recommend(
   const proteins = new Map<number, number>();
   const previous = s.preps.filter((p) => p.day < w);
   const options = s.recipes
-    .filter(
-      (r) =>
-        !r.archived &&
-        r.data.base &&
-        r.data.steps.length &&
-        r.data.ingredients.length &&
-        permitsMeal(r.data, variation) &&
-        ((variation?.diet && variation.diet !== 'preferences') ||
-          !s.prefs.diet ||
-          clean(r.data.diet).includes(clean(s.prefs.diet))),
-    )
+    .filter((r) => eligibleDish(r, s, variation))
     .map((r) => ({
       r,
       foods: groceries(r.data),
@@ -156,7 +166,12 @@ function recommend(
     // A small carnet can already contain repeated meals. Offer an alternative
     // to an existing slot even when every eligible recipe has been used.
     let available =
-      unused.length || !variation || (!recipeId && variation.diet !== 'vegetarian')
+      unused.length ||
+      !variation ||
+      (!recipeId &&
+        variation.diet !== 'vegetarian' &&
+        !variation.sources?.length &&
+        !variation.favoritesOnly)
         ? unused
         : options;
     if (variation?.diet === 'flexitarian') {
@@ -234,12 +249,17 @@ function recommend(
       );
     if (!candidates.length) break;
     // Compare retail packs for promising recipes; stock and the existing basket are already accounted for.
-    const basket = marketBasket({ ...s, preps: used }, w);
+    const basket = marketBasket({ ...s, preps: used }, w, undefined, w);
     const finalists = (
       s.prefs.budget === null && strategy !== 'economy' ? candidates.slice(0, 8) : candidates
     )
       .map((c) => {
-        const after = marketBasket({ ...s, preps: [...used, planned(c.r, day, servings)] }, w);
+        const after = marketBasket(
+          { ...s, preps: [...used, planned(c.r, day, servings)] },
+          w,
+          undefined,
+          w,
+        );
         const extra = Math.max(0, after.cash - basket.cash) / 100;
         const unknown = Math.max(0, after.missing - basket.missing);
         const over = s.prefs.budget === null ? 0 : Math.max(0, after.cash - s.prefs.budget) / 300;
@@ -341,6 +361,7 @@ export function optimizedRecipes(s: State, w: string, from: string, variation?: 
       !p.session &&
       !p.ticks.length &&
       meals.length &&
+      !meals.some((m) => m.day === w && m.slot === 'midi') &&
       meals.every(
         (m) =>
           !m.consumed &&

@@ -1,4 +1,4 @@
-import { weekPlan } from '../lib/week-plan';
+import { mealsToClear, weekPlan } from '../lib/week-plan';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { blankRecipe, snapshot, type RecipeRow } from '../lib/model';
@@ -466,7 +466,7 @@ test('une portion manuelle du lundi devient un duo, annoncé puis enregistré un
   s.prefs.target = 1;
   s.preps = [p];
   s.meals = defaultMeals(p, false);
-  const result = weekPlan(s, w, w, true, false);
+  const result = weekPlan(s, w, w, false);
   assert.deepEqual(
     result.rows.map((r) => [r.meal.day, r.meal.slot, r.added]),
     [
@@ -480,15 +480,11 @@ test('une portion manuelle du lundi devient un duo, annoncé puis enregistré un
     { ...s, preps: result.preps, meals: [...s.meals, ...result.meals] },
     w,
     w,
-    true,
     false,
   );
   assert.equal(again.meals.length, 0);
   assert.equal(again.preps.length, 0);
-  assert.equal(
-    weekPlan({ ...s, preps: [{ ...p, done: true }] }, w, w, true, false).meals.length,
-    0,
-  );
+  assert.equal(weekPlan({ ...s, preps: [{ ...p, done: true }] }, w, w, false).meals.length, 0);
 });
 
 test('les critères de planification combinent régime, coût et tirage reproductible', () => {
@@ -515,7 +511,7 @@ test('les critères de planification combinent régime, coût et tirage reproduc
   assert.ok(suggest(s, day, day, options).every((r) => r.id !== chicken.id));
   s.recipes = [rice];
   s.prefs.target = 7;
-  const seven = weekPlan(s, day, day, true, true, options);
+  const seven = weekPlan(s, day, day, true, options);
   assert.equal(seven.meals.filter((m) => m.slot === 'soir').length, 7);
   s.recipes = [chicken];
   assert.equal(suggest(s, day, day, options).length, 0);
@@ -531,4 +527,87 @@ test('le mode ingrédients en commun privilégie le produit frais déjà prévu'
   s.prefs.target = 2;
   const result = suggest(s, day, day, { seed: id(), avoid: [], strategy: 'shared' });
   assert.equal(result[0].id, shared.id);
+});
+
+test('courses du mardi soir au mardi midi avec deux dîners de part et d’autre du dimanche', () => {
+  const s = fixture(),
+    week = '2026-11-30';
+  s.prefs.shoppingDays = { [week]: 1 };
+  s.preps = [];
+  s.meals = [];
+  function meal(title: string, date: string, slot: 'midi' | 'soir') {
+    const recipe = recipeRow(title, 'Riz | 100 | g');
+    const p = planned(recipe, date, 2);
+    s.preps.push(p);
+    s.meals.push(...defaultMeals(p, true, slot));
+  }
+  meal('Lundi précédent', '2026-11-30', 'soir');
+  meal('Premier soir', '2026-12-01', 'soir');
+  meal('Dimanche soir et lundi midi', '2026-12-06', 'soir');
+  meal('Lundi suivant', '2026-12-07', 'soir');
+  // Independent lunches at either end are tested separately from the linked leftovers.
+  s.meals = s.meals.filter(
+    (m) => !['2026-12-01', '2026-12-08'].includes(m.day) || m.slot !== 'midi',
+  );
+  meal('Déjeuner avant les courses', '2026-12-01', 'midi');
+  meal('Dernier déjeuner', '2026-12-08', 'midi');
+  meal('Prochain panier', '2026-12-08', 'soir');
+  const row = needs(s, week).rows[0];
+  assert.deepEqual(row.recipes, [
+    'Premier soir',
+    'Dimanche soir et lundi midi',
+    'Lundi suivant',
+    'Dernier déjeuner',
+  ]);
+  assert.equal(row.quantity, 400);
+  assert.deepEqual(needs(s, '2026-12-07').rows[0].recipes, ['Prochain panier']);
+});
+
+test('les sources et favoris se cumulent avec le régime et la priorité, sans dessert ni déjeuner inventé', () => {
+  const s = fixture();
+  s.preps = [];
+  s.meals = [];
+  function candidate(title: string, ingredient: string, source: string, favorite: boolean) {
+    const r = recipeRow(title, ingredient);
+    Object.assign(r.data, { source, favorite, diet: 'Végétarien', tags: ['Plat'] });
+    return r;
+  }
+  const ok = candidate('Risotto', 'Riz | 200 | g', 'HelloFresh', true);
+  s.recipes = [
+    ok,
+    candidate('Cookies au chocolat', 'Chocolat | 50 | g', 'HelloFresh', true),
+    candidate('Quiche', 'Poireau | 2 | pièce', 'Notion', true),
+    candidate('Curry', 'Lentilles | 50 | g', 'HelloFresh', false),
+    candidate('Poulet rôti', 'Poulet | 200 | g', 'HelloFresh', true),
+  ];
+  const filters = {
+    seed: id(),
+    avoid: [],
+    diet: 'vegetarian' as const,
+    strategy: 'economy' as const,
+    favoritesOnly: true,
+    sources: ['HelloFresh'],
+  };
+  const plan = weekPlan(s, '2026-12-01', '2026-12-01', false, filters);
+  assert.equal(plan.preps.length, 7);
+  assert.ok(plan.preps.every((p) => p.recipeId === ok.id));
+  assert.equal(plan.meals.length, 14);
+  assert.ok(!plan.meals.some((m) => m.day === '2026-12-01' && m.slot === 'midi'));
+  for (const end of ['2026-12-07', '2026-12-08']) {
+    const lunch = plan.meals.find((m) => m.day === end && m.slot === 'midi')!;
+    assert.ok(plan.meals.some((m) => m.slot === 'soir' && m.prepId === lunch.prepId));
+  }
+  assert.equal(weekPlan(s, day, day, false, { ...filters, sources: ['Jow'] }).meals.length, 0);
+});
+
+test('vider la semaine garde le déjeuner issu du dimanche précédent et retire le duo du dernier soir', () => {
+  const s = fixture();
+  const before = planned(s.recipes[0], '2026-11-15', 2);
+  const last = planned(s.recipes[1], '2026-11-22', 2);
+  s.preps = [before, last];
+  s.meals = [...defaultMeals(before, true), ...defaultMeals(last, true)];
+  assert.deepEqual(
+    mealsToClear(s, day).map((m) => m.id),
+    s.meals.slice(2).map((m) => m.id),
+  );
 });
