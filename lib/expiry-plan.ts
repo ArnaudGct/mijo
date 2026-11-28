@@ -1,4 +1,4 @@
-import { shoppingPreps, shoppingStart } from './shopping-period';
+import { groupedMeals, shoppingPreps, shoppingStart } from './shopping-period';
 import { addDays } from './dates';
 import { breakfastMeasure, breakfastPlan } from './breakfast';
 import { breakfastKey, foodsOn } from './breakfast-model';
@@ -68,20 +68,25 @@ export function cookedLots(s: State, p: Prep, done: boolean, asOf: string) {
         delete used[p.id];
         return { ...l, used };
       });
-  const weeks = [...new Set(s.lots.map((l) => l.week))].filter(
-    (week) => shoppingPreps({ ...s, preps: [p] }, shoppingStart(s, week)).length > 0,
-  );
-  const lots = s.lots.filter((l) => weeks.includes(l.week) && unused(l) > 0).sort(byDate);
+  const list = s.prefs.shoppingList;
+  const belongs =
+    p.purchasedFor ??
+    (list && groupedMeals({ ...s, preps: [p] }, list).preps.length ? list.id : undefined);
+  const lots = s.lots
+    .filter((l) => {
+      if (!unused(l)) return false;
+      if ((l.listId ?? l.week) === belongs) return true;
+      return (
+        !l.listId &&
+        l.week.length === 10 &&
+        shoppingPreps({ ...s, preps: [p] }, shoppingStart(s, l.week)).length > 0
+      );
+    })
+    .sort(byDate);
   if (!lots.length) return [];
   const before = lots.map(unused),
     left = [...before];
-  allocate(
-    recipeNeeds(p, breakfastPlan(s, addDays(shoppingStart(s, lots[0].week), 1), asOf)),
-    asOf,
-    lots,
-    lotIndex(lots),
-    left,
-  );
+  allocate(recipeNeeds(p, breakfastPlan(s, p.day, asOf)), asOf, lots, lotIndex(lots), left);
   return lots.flatMap((l, i) =>
     before[i] > left[i]
       ? [{ ...l, used: { ...l.used, [p.id]: rounded(before[i] - left[i]) } }]

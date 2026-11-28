@@ -142,6 +142,21 @@ export async function POST(req: Request, ctx: Ctx) {
       if (path === 'checks') return json(await syncChecks(await body()));
       if (path === 'command') {
         const v = await body(800000);
+        // An older installed app can still display a weekly basket. Its edits may target
+        // different ingredients and quantities from those in the current grouped list.
+        const c = v.command;
+        const oldKey =
+          c?.action === 'item' || c?.action === 'purchaseLot'
+            ? c.data?.week
+            : c?.action === 'shoppingLine' || c?.action === 'pantryWeek'
+              ? c.week
+              : undefined;
+        if (
+          (typeof oldKey === 'string' && z.iso.date().safeParse(oldKey).success) ||
+          c?.action === 'shoppingPeriod' ||
+          c?.action === 'finishShopping'
+        )
+          throw new UserError('Rechargez Mijo pour retrouver votre liste de courses groupée.', 409);
         return json(await mutate(z.number().int().parse(v.revision), v.command));
       }
       if (path === 'product') {

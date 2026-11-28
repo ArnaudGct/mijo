@@ -45,6 +45,9 @@ try {
     try {
       const hash = salt + ':' + scryptSync(password, salt, 64).toString('hex');
       await fixture`update accounts set verified_at=now(),password_hash=${hash} where email='owner@mijo.test'`;
+      const [shopper] =
+        await fixture`insert into accounts(email,verified_at,password_hash) values('grouped@mijo.test',now(),${hash}) returning id`;
+      await fixture`insert into preferences(account_id,id,data) values(${shopper.id},1,'{}')`;
     } finally {
       await fixture.end();
     }

@@ -354,6 +354,7 @@ export function optimizedRecipes(s: State, w: string, from: string, variation?: 
     const meals = s.meals.filter((m) => m.prepId === p.id);
     return (
       (variation || p.automatic) &&
+      !p.purchasedFor &&
       !p.batchPerMeal &&
       inWeek(p.day, w) &&
       p.day >= from &&

@@ -411,7 +411,7 @@ function MealPlanning({ ui, batch }: { ui: UI; batch: boolean }) {
           )
         }
       >
-        Dupliquer la semaine et sa liste
+        Dupliquer la semaine
       </button>
     </>
   );

@@ -164,8 +164,9 @@ export function PlanPreview({
         <p role="status">Aucun plat complet ne correspond à ces critères dans ton carnet.</p>
       )}
       <p>
-        Tu peux remplacer les plats à venir, y compris ceux choisis à la main. Les préparations
-        commencées, les plats de batch cooking et les portions congelées gardent leur place.
+        Tu peux remplacer les plats à venir, y compris ceux choisis à la main. Les préparations déjà
+        commencées, les repas dont les courses sont faites, les plats de batch cooking et les
+        portions congelées gardent leur place.
       </p>
       {!current && <p role="status">Calcul de la proposition…</p>}
       {current && !result && (

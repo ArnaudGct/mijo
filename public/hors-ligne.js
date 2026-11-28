@@ -20,8 +20,7 @@ function show() {
     return;
   }
   statusEl.textContent = data.periodLabel || 'Semaine du ' + data.week;
-  document.querySelector('a[href="/courses"]').href =
-    '/courses?week=' + encodeURIComponent(data.week);
+  document.querySelector('a[href="/courses"]').href = '/courses';
   const rows = document.querySelector('#rows');
   let category;
   for (const row of data.rows) {

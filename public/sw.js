@@ -1,4 +1,4 @@
-const cacheName = 'mijo-shell-v3';
+const cacheName = 'mijo-shell-v4';
 const shellAssets = ['/courses-hors-ligne.html', '/hors-ligne.js', '/icon.png?v=mijo'];
 self.addEventListener('install', (event) =>
   event.waitUntil(

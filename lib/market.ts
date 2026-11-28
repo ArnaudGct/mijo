@@ -305,7 +305,7 @@ export function remainingShoppingText(lines: ReturnType<typeof marketBasket>['li
       let unknown = false;
       for (const part of line.buy) {
         if (part.checked || part.inPantry) continue;
-        const remaining = rounded(part.buy - part.scanned);
+        const remaining = rounded(part.buy - part.bought);
         if (remaining > 0)
           amounts.push([formatQuantity.format(remaining), part.unit].filter(Boolean).join(' '));
         unknown ||= part.unknown;

@@ -90,7 +90,12 @@ async function runNotebookTests(t: import('node:test').TestContext) {
       await syncChecks([e]);
       await syncChecks([e]);
       await assert.rejects(syncChecks([{ ...e, quantity: 999 }]));
-      assert.equal(needs(await state(), day).rows.find((r) => r.name === 'Chou')?.checked, true);
+      const checkedState = await state();
+      assert.equal(
+        needs(checkedState, checkedState.prefs.shoppingList!.id).rows.find((r) => r.name === 'Chou')
+          ?.checked,
+        true,
+      );
     });
     await t.test(
       'un rayon personnalisé survit aux préférences et les variantes du nom réutilisent le même rayon',
@@ -441,8 +446,98 @@ async function runNotebookTests(t: import('node:test').TestContext) {
         const cleared = await state();
         assert.ok(!cleared.meals.some((m) => m.day >= w && m.day < addDays(w, 7)));
         assert.ok(!cleared.preps.some((p) => p.day >= w && p.day < addDays(w, 7)));
-        assert.ok(ahead.every(m => !cleared.meals.some(kept => kept.id === m.id)));
-        assert.ok(!cleared.preps.some(p => p.id === ahead[0].prepId));
+        assert.ok(ahead.every((m) => !cleared.meals.some((kept) => kept.id === m.id)));
+        assert.ok(!cleared.preps.some((p) => p.id === ahead[0].prepId));
+      },
+    );
+    await t.test(
+      'liste unique : reprise de l’ancien panier, nouvelles quantités et clôture concurrente',
+      async () => {
+        const other = uid(),
+          start = addDays(day, 1),
+          week = monday(start);
+        const manual = {
+          id: uid(),
+          week,
+          key: 'manuel:test',
+          name: 'Savon',
+          quantity: 1,
+          unit: 'pièce',
+          category: 'Hygiène',
+          manual: true,
+          checked: false,
+          bag: null,
+        };
+        await db().begin(async (tx) => {
+          await tx`insert into accounts(id) values(${other})`;
+          await tx`insert into preferences(account_id,id,data) values(${other},1,${tx.json({ shoppingDays: { [week]: 1 } })})`;
+          await tx`insert into items(account_id,id,data) values(${other},${manual.id},${tx.json(manual)})`;
+        });
+        await withAccount(other, async () => {
+          const [first, again] = await Promise.all([state(), state()]);
+          const key = first.prefs.shoppingList!.id;
+          assert.equal(key, again.prefs.shoppingList!.id);
+          assert.equal(needs(first, key).rows.filter((r) => r.name === 'Savon').length, 1);
+          const recipe = (await write({ action: 'recipe', data: r })).id!;
+          await write({
+            action: 'plan',
+            id: recipe,
+            day: start,
+            slot: 'soir',
+            servings: 2,
+            leftovers: true,
+          });
+          const buy = async () => needs(await state(), key).rows.find((r) => r.name === 'Chou')!;
+          const initial = await buy(),
+            check = {
+              week: key,
+              key: initial.key,
+              checked: true,
+              before: false,
+              quantity: 150,
+              unknown: false,
+            };
+          await syncChecks([check]);
+          await write({
+            action: 'plan',
+            id: recipe,
+            day: addDays(start, 13),
+            slot: 'soir',
+            servings: 2,
+            leftovers: true,
+          });
+          const extra = await buy();
+          assert.deepEqual([extra.buy, extra.bought, extra.checked], [300, 150, false]);
+          const before = await state(),
+            command = {
+              action: 'closeShoppingList' as const,
+              listId: key,
+              previewRevision: before.revision,
+            };
+          const done = await Promise.allSettled([
+            mutate(before.revision, command),
+            mutate(before.revision, command),
+          ]);
+          assert.equal(done.filter((v) => v.status === 'fulfilled').length, 1);
+          const closed = await state(),
+            next = closed.prefs.shoppingList!;
+          assert.deepEqual(next.from, { day: addDays(start, 14), slot: 'soir' });
+          assert.deepEqual(closed.meals, before.meals);
+          assert.equal(needs(closed, next.id).rows.length, 0);
+          await assert.rejects(syncChecks([check]), /clôturée/);
+          await write({
+            action: 'plan',
+            id: recipe,
+            day: next.from.day,
+            slot: 'soir',
+            servings: 2,
+            leftovers: true,
+          });
+          assert.equal(
+            needs(await state(), next.id).rows.find((row) => row.name === 'Chou')?.buy,
+            150,
+          );
+        });
       },
     );
   } finally {

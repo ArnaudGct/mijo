@@ -3,7 +3,7 @@ import { groceryName, fold, groceryMeasure } from './grocery-names';
 import { breakfastKey } from './breakfast-model';
 import { breakfastPlan, breakfastMeasure } from './breakfast';
 import { clean, normalize, rounded } from './ingredients';
-import { shoppingPreps, shoppingStart } from './shopping-period';
+import { groupedMeals, shoppingPreps, shoppingStart } from './shopping-period';
 import { addDays, today } from './dates';
 export type Need = {
   key: string;
@@ -17,6 +17,7 @@ export type Need = {
   stock: number;
   buy: number;
   scanned: number;
+  bought: number;
   checked: boolean;
   inPantry: boolean;
   bag: string;
@@ -26,9 +27,13 @@ export function needs(
   s: State,
   week: string,
   asOf = today(),
-  start = shoppingStart(s, week),
-  morningStart = addDays(start, 1),
+  requestedStart?: string,
+  requestedMorning?: string,
 ) {
+  const list = s.prefs.shoppingList?.id === week ? s.prefs.shoppingList : undefined;
+  const group = list && groupedMeals(s, list);
+  const start = list?.from.day ?? requestedStart ?? shoppingStart(s, week);
+  const morningStart = requestedMorning ?? (list?.from.slot === 'midi' ? start : addDays(start, 1));
   s = s.past?.[week] ? { ...s, ...s.past[week] } : s;
   const rows = new Map<string, Need>();
   const weekItems = s.items.filter((i) => i.week === week);
@@ -36,7 +41,16 @@ export function needs(
     weekItems.filter((i) => i.listEdit).map((i) => [fold(i.name), i.listEdit!]),
   );
   const incomplete: string[] = [];
-  const breakfast = breakfastPlan(s, morningStart, asOf, start);
+  const breakfast =
+    group && !group.end
+      ? []
+      : breakfastPlan(
+          s,
+          morningStart,
+          asOf,
+          start,
+          group?.end ? addDays(group.end.day, 1) : undefined,
+        );
   const byFood = new Map(breakfast.map((p) => [p.key, p]));
   const cookedBefore = new Map<string, number>();
   function include(
@@ -45,6 +59,7 @@ export function needs(
     title: string,
     manualKey?: string,
     day?: string,
+    prepId?: string,
   ) {
     const food = breakfastKey(i.name),
       product = byFood.get(food);
@@ -52,7 +67,13 @@ export function needs(
       ? breakfastMeasure(product, i.name, i.quantity ?? 0, i.unit)
       : groceryMeasure(i.name, i.quantity ?? 0, i.unit);
     const name = groceryName(i.name);
-    if (!manualKey && edits.get(fold(name))?.hideGenerated) return;
+    const edit = edits.get(fold(name));
+    if (
+      !manualKey &&
+      edit?.hideGenerated &&
+      (!edit.excludedPreps || (prepId && edit.excludedPreps.includes(prepId)))
+    )
+      return;
     const key = clean(name) + '|' + unit;
     if (
       product?.countedOn &&
@@ -75,6 +96,7 @@ export function needs(
       stock: 0,
       buy: 0,
       scanned: 0,
+      bought: 0,
       checked: false,
       inPantry: false,
       bag: ['Produits frais', 'Viandes et poissons', 'Surgelés'].includes(i.category)
@@ -89,19 +111,23 @@ export function needs(
     if (title && !row.recipes.includes(title)) row.recipes.push(title);
     rows.set(key, row);
   }
-  for (const p of shoppingPreps(s, start)) {
+  for (const p of group?.preps ?? shoppingPreps(s, start)) {
     const r = p.snapshot;
     if (!r.base || !r.ingredients.length) incomplete.push(r.title);
     for (const i of r.ingredients)
-      include(i, r.base ? p.servings / r.base : null, r.title, undefined, p.day);
+      include(i, r.base ? p.servings / r.base : null, r.title, undefined, p.day, p.id);
   }
   for (const i of weekItems.filter((i) => i.manual)) include(i, 1, '', i.key);
   for (const product of breakfast) {
-    if (product.quantity > 0)
+    const quantity = Math.max(
+      0,
+      product.quantity - (edits.get(fold(groceryName(product.name)))?.excludedBreakfast ?? 0),
+    );
+    if (quantity > 0)
       include(
         {
           name: product.name,
-          quantity: product.quantity,
+          quantity,
           unit: product.unit,
           category: product.category,
         },
@@ -141,12 +167,15 @@ export function needs(
       s.lots
         .filter(
           (lot) =>
-            lot.week === week &&
+            (lot.listId ?? lot.week) === week &&
             fold(groceryName(lot.name)) === fold(row.name) &&
             lot.unit === (row.unit || 'pièce'),
         )
         .reduce((sum, lot) => sum + lot.quantity, 0),
     );
+    const checkedAmount = saved?.checked ? saved.checkedAmount : undefined;
+    if (checkedAmount !== undefined && row.buy > checkedAmount) row.checked = false;
+    row.bought = Math.max(row.scanned, checkedAmount ?? 0);
     if (
       !row.unknown &&
       row.buy > 0 &&

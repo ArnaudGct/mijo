@@ -342,6 +342,7 @@ export function PlanForm({
             <Field label="Repas">
               <select
                 name="slot"
+                aria-label="Repas"
                 disabled={!!editing}
                 value={planSlot}
                 onChange={(e) => setPlanSlot(e.target.value as typeof slot)}

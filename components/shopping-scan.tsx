@@ -3,8 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ScanBarcode, CalendarDays, Pencil } from 'lucide-react';
 import { Dialog, Field, Form, api, quantity, type UI } from './common';
 import { type PurchaseLot } from '@/lib/model';
-import { labelDate, money, today } from '@/lib/dates';
-import { shoppingOpen } from '@/lib/shopping-period';
+import { labelDate, money } from '@/lib/dates';
 import { needs, type Need } from '@/lib/shopping';
 import { groceryName } from '@/lib/grocery-names';
 import { normalize } from '@/lib/ingredients';
@@ -268,7 +267,7 @@ function LotEditor({ ui, code, rows, existing, onSave, onBack }: EditorProps) {
                 action: 'purchaseLot',
                 data: {
                   id,
-                  week: ui.w,
+                  week: ui.s.prefs.shoppingList!.id,
                   barcode: code.barcode,
                   product: product || line?.name || label,
                   name: groceryName(label),
@@ -426,18 +425,15 @@ function ScanDialog({
 }
 export function ShoppingScan({ ui }: { ui: UI }) {
   const [editing, setEditing] = useState<PurchaseLot | 'new' | null>(null);
-  const lots = ui.s.lots.filter((l) => l.week === ui.w);
-  const active = shoppingOpen(ui.s, ui.w, today());
-  if (!active && !lots.length) return null;
+  const list = ui.s.prefs.shoppingList!;
+  const lots = ui.s.lots.filter((l) => (l.listId ?? l.week) === list.id);
   return (
     <section className="scan-shopping" aria-label="Achats en magasin">
-      {active && (
-        <div className="actions">
-          <button className="primary" onClick={() => setEditing('new')}>
-            <ScanBarcode size={18} /> Scanner un produit
-          </button>
-        </div>
-      )}
+      <div className="actions">
+        <button className="primary" onClick={() => setEditing('new')}>
+          <ScanBarcode size={18} /> Scanner un produit
+        </button>
+      </div>
       {lots.length > 0 && (
         <details className="scan-lots">
           <summary>Emballages scannés ({lots.length})</summary>
@@ -450,7 +446,7 @@ export function ShoppingScan({ ui }: { ui: UI }) {
                   {l.expires ? packageDate(l.dateKind, l.expires) : 'Sans date'}
                 </small>
               </div>
-              {active && !Object.keys(l.used ?? {}).length && (
+              {!Object.keys(l.used ?? {}).length && (
                 <button
                   className="icon"
                   aria-label={'Modifier ' + l.product}
@@ -467,7 +463,7 @@ export function ShoppingScan({ ui }: { ui: UI }) {
         <ScanDialog
           ui={ui}
           existing={editing === 'new' ? undefined : editing}
-          rows={needs(ui.s, ui.w)
+          rows={needs(ui.s, list.id)
             .rows.filter((r) => !r.inPantry && (r.buy > 0 || r.unknown))
             .sort((a, b) => a.name.localeCompare(b.name, 'fr'))}
           close={() => setEditing(null)}

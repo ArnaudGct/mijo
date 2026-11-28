@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
-import { PlanPreview } from './auto-plan';
-import { shoppingStart } from '@/lib/shopping-period';
+import { PlanForm } from './recipes';
+import { groupedMeals, momentLabel, nextMeal } from '@/lib/shopping-period';
 import { ShoppingScan } from './shopping-scan';
 import { useState } from 'react';
 import { Plus, Copy, Download, WifiOff, Pencil } from 'lucide-react';
@@ -15,12 +15,11 @@ import {
 import { fold, groceryName } from '@/lib/grocery-names';
 import { shoppingAisles, suggestAisle } from '@/lib/aisles';
 import { type State } from '@/lib/model';
-import { money, labelDate, addDays, inWeek, monday, today } from '@/lib/dates';
+import { money, labelDate, monday, today } from '@/lib/dates';
 import {
   Form,
   Field,
   Dialog,
-  WeekNav,
   PageTabs,
   usePageTab,
   Empty,
@@ -71,7 +70,7 @@ function Article({ ui, line }: { ui: UI; line?: ShoppingLine }) {
               await ui.run(
                 {
                   action: 'shoppingLine',
-                  week: ui.w,
+                  week: ui.s.prefs.shoppingList!.id,
                   source: line.parts[0].sourceName,
                   edit: { name: name.trim(), category, measures },
                 },
@@ -87,7 +86,7 @@ function Article({ ui, line }: { ui: UI; line?: ShoppingLine }) {
                 data: {
                   id,
                   key: 'manuel:' + id,
-                  week: ui.w,
+                  week: ui.s.prefs.shoppingList!.id,
                   name: name.trim(),
                   category,
                   quantity: measures[0].quantity,
@@ -177,7 +176,7 @@ function Article({ ui, line }: { ui: UI; line?: ShoppingLine }) {
               await ui.run(
                 {
                   action: 'shoppingLine',
-                  week: ui.w,
+                  week: ui.s.prefs.shoppingList!.id,
                   source: line.parts[0].sourceName,
                   edit: null,
                 },
@@ -254,47 +253,16 @@ const shoppingTabs = [
   ['liste', 'Liste'],
   ['placard', 'Placard'],
 ] as const;
-function ShoppingDate({ ui, start }: { ui: UI; start: string }) {
-  const [date, setDate] = useState(start);
-  return (
-    <Dialog title="Jour des courses" close={ui.close}>
-      <Form
-        button="Afficher cette liste"
-        onSave={async () => {
-          if (
-            date &&
-            (await ui.run(
-              { action: 'shoppingPeriod', start: date },
-              'Jour des courses enregistré.',
-            ))
-          ) {
-            ui.setW(monday(date));
-            ui.close();
-          }
-        }}
-      >
-        <Field label="Premier dîner">
-          <input type="date" required value={date} onChange={(e) => setDate(e.target.value)} />
-        </Field>
-        {date && (
-          <p>
-            Cette liste va du {labelDate(date)} soir au {labelDate(addDays(date, 7))} midi. Les
-            prochaines listes commenceront le même jour de la semaine.
-          </p>
-        )}
-      </Form>
-    </Dialog>
-  );
-}
 export function Shopping({ ui }: { ui: UI }) {
-  const { s, w } = ui;
+  const { s } = ui;
+  const list = s.prefs.shoppingList!;
+  const w = list.id;
+  const { preps, end } = groupedMeals(s, list);
+  const next = end ? nextMeal(end) : list.from;
+  const rangeLabel = end ? 'Jusqu’au ' + momentLabel(end) : 'À partir du ' + momentLabel(list.from);
   const tab = usePageTab(shoppingTabs);
-  const start = shoppingStart(s, w);
-  const rangeLabel =
-    'Du ' + labelDate(start) + ' soir au ' + labelDate(addDays(start, 7)) + ' midi';
-  const dinners = s.meals.filter((m) => m.slot === 'soir' && inWeek(m.day, start)).length;
-
-  const breakfastHref = '/semaine?week=' + w + '&onglet=petit-dejeuner';
+  const breakfastHref =
+    '/semaine?week=' + monday(end?.day ?? list.from.day) + '&onglet=petit-dejeuner';
   const [delivery, setDelivery] = useState(false);
   const [carrier, setCarrier] = useState<'leclerc' | 'monoprix'>('leclerc');
   const cart = marketBasket(s, w);
@@ -402,27 +370,27 @@ export function Shopping({ ui }: { ui: UI }) {
     <>
       <header className="page-heading">
         <h1>Mes courses</h1>
-        <WeekNav
-          ui={ui}
-          start={start}
-          editPeriod={() => ui.open(<ShoppingDate ui={ui} start={start} />)}
-        />
       </header>
       <PageTabs options={shoppingTabs} active={tab} />
       {tab === 'liste' && (
         <>
           <div className="shopping-coverage">
             <p>
-              Du <strong>{labelDate(start)} soir</strong> au{' '}
-              <strong>{labelDate(addDays(start, 7))} midi</strong>
-              <br />
-              {dinners} dîner{dinners > 1 ? 's' : ''} prévu{dinners > 1 ? 's' : ''} sur 7
+              {end ? (
+                <>
+                  <strong>{rangeLabel}</strong>
+                  <br />
+                  {preps.length} préparation{preps.length > 1 ? 's' : ''} dans cette liste
+                </>
+              ) : (
+                <>
+                  Prochain repas à couvrir · <strong>{momentLabel(list.from)}</strong>
+                </>
+              )}
             </p>
-            {addDays(start, 6) >= today() && (
-              <button onClick={() => ui.open(<PlanPreview ui={ui} initialStart={start} />)}>
-                Planifier ces repas
-              </button>
-            )}
+            <button onClick={() => ui.open(<PlanForm ui={ui} day={next.day} slot={next.slot} />)}>
+              Ajouter un repas
+            </button>
           </div>
           <ShoppingScan key={w} ui={ui} />
           <section className="basket-summary" aria-label="Estimation du panier">
@@ -569,6 +537,14 @@ export function Shopping({ ui }: { ui: UI }) {
                               : ''}
                           </small>
                         ))}
+                      {l.parts
+                        .filter((p) => !p.checked && p.bought > p.scanned && p.buy > p.bought)
+                        .map((p) => (
+                          <small key={p.key}>
+                            Déjà acheté · {quantity(p.bought)} {p.unit} · Reste à acheter{' '}
+                            {quantity(p.buy - p.bought)} {p.unit}
+                          </small>
+                        ))}
                       {l.parts.some((p) => p.stock > 0) && <small>Stock déduit du placard</small>}
                       {l.breakfast?.product.reserve && (
                         <Link className="pantry-link" href={breakfastHref}>
@@ -594,7 +570,7 @@ export function Shopping({ ui }: { ui: UI }) {
                                 },
                                 l.available
                                   ? 'Article remis dans les courses.'
-                                  : 'Couvert par le placard pour cette semaine.',
+                                  : 'Couvert par le placard pour cette liste.',
                               )
                             }
                           >
@@ -624,8 +600,57 @@ export function Shopping({ ui }: { ui: UI }) {
           })}
           {!cart.lines.length && (
             <Empty title="La liste de courses est vide">
-              <Link href={'/semaine?week=' + w}>Planifier une recette →</Link>
+              Les ingrédients apparaissent ici dès que tu ajoutes un repas.
             </Empty>
+          )}
+          {(preps.length > 0 ||
+            cart.lines.length > 0 ||
+            s.lots.some((l) => (l.listId ?? l.week) === w)) && (
+            <button
+              className="primary close-shopping"
+              onClick={() =>
+                ui.open(
+                  <Dialog title="Courses faites ?" close={ui.close}>
+                    <p>
+                      {end ? (
+                        <>
+                          Cette liste couvre les repas jusqu’au <strong>{momentLabel(end)}</strong>.
+                          La prochaine commencera le <strong>{momentLabel(next)}</strong>.
+                        </>
+                      ) : (
+                        'La prochaine liste commencera au même repas.'
+                      )}
+                    </p>
+                    {cart.lines.some((l) => l.buy.length && !l.checked) && (
+                      <p>Les articles non cochés resteront sur cette liste clôturée.</p>
+                    )}
+                    <div className="actions">
+                      <button onClick={ui.close}>Continuer mes courses</button>
+                      <button
+                        className="primary"
+                        onClick={async () => {
+                          if (
+                            await ui.run(
+                              {
+                                action: 'closeShoppingList',
+                                listId: w,
+                                previewRevision: s.revision,
+                              },
+                              'Courses enregistrées. La nouvelle liste est ouverte.',
+                            )
+                          )
+                            ui.close();
+                        }}
+                      >
+                        Confirmer les courses faites
+                      </button>
+                    </div>
+                  </Dialog>,
+                )
+              }
+            >
+              Courses faites
+            </button>
           )}
           <div className="actions">
             <button onClick={offline}>
@@ -634,7 +659,7 @@ export function Shopping({ ui }: { ui: UI }) {
             <button
               onClick={() =>
                 download(
-                  'courses-' + start + '.txt',
+                  'courses-' + list.from.day + '.txt',
                   rangeLabel +
                     '\n\n' +
                     sections

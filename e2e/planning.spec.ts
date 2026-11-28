@@ -360,9 +360,14 @@ test('petit-déjeuner : portions modifiables, relevé en briques et en pots, rep
   await expect(dialog.getByLabel('Nombre de formats · Banane')).toBeVisible();
   await dialog.getByRole('button', { name: 'Fermer', exact: true }).click();
   await page.getByRole('link', { name: 'Voir ma liste de courses' }).click();
-  await expect(
-    page.locator('.grocery').filter({ has: page.getByText('Banane', { exact: true }) }),
-  ).toHaveCount(1);
+  // Navigating to another calendar week does not extend the active shopping list.
+  const bananas = page.getByRole('button', { name: 'Modifier · Banane', exact: true });
+  await expect(bananas).toHaveCount(0);
+  await page.getByRole('button', { name: 'Ajouter un repas' }).click();
+  await dialog.getByRole('button', { name: /Tarte aux poireaux E2E/ }).click();
+  await dialog.getByLabel('Jour', { exact: true }).fill(addDays(week, 8));
+  await dialog.getByRole('button', { name: 'Ajouter au planning' }).click();
+  await expect(bananas).toBeVisible();
 });
 test('articles du quotidien, rayon personnalisé réutilisable, export et coches hors ligne', async ({
   page,
@@ -422,7 +427,7 @@ test('articles du quotidien, rayon personnalisé réutilisable, export et coches
   await office.getByRole('button', { name: 'Modifier · Cartouche bleue' }).click();
   await dialog.getByRole('button', { name: 'Retirer de la liste' }).click();
   await expect(office).toHaveCount(0);
-  await page.getByRole('button', { name: 'Semaine suivante' }).click();
+  await page.goto('/courses');
   await add.click();
   await expect(dialog.getByRole('option', { name: 'Bureau', exact: true })).toHaveCount(1);
   await dialog.getByLabel('Nom de l’article').fill('Cotons-tiges');
@@ -431,11 +436,11 @@ test('articles du quotidien, rayon personnalisé réutilisable, export et coches
   );
 });
 
-test('courses du mardi au mardi, semaines vides à la consultation et sources combinables', async ({
+test('une seule liste, dernier déjeuner, choix du dîner suivant et clôture explicite', async ({
   page,
 }) => {
   await page.goto('/');
-  await page.getByLabel('Adresse e-mail').fill('owner@mijo.test');
+  await page.getByLabel('Adresse e-mail').fill('grouped@mijo.test');
   await page.getByLabel('Mot de passe', { exact: true }).fill(process.env.TABLE_TEST_PASSWORD!);
   await page.getByRole('button', { name: 'Ouvrir mon carnet' }).click();
   await expect(page.getByRole('heading', { name: 'Mon tableau de bord' })).toBeVisible();
@@ -483,24 +488,11 @@ test('courses du mardi au mardi, semaines vides à la consultation et sources co
     w,
   );
   expect(legacy).toEqual({ changed: false });
-  await page.goto('/courses?week=' + w);
-  await page.getByRole('button', { name: 'Changer le jour des courses' }).click();
   const dialog = page.getByRole('dialog');
+  await page.getByRole('button', { name: 'Planifier', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Planifier ma semaine' }).click();
   await dialog.getByLabel('Premier dîner').fill(start);
-  await dialog.getByRole('button', { name: 'Afficher cette liste' }).click();
-  await expect(page.getByText('0 dîner prévu sur 7')).toBeVisible();
-  await page.getByRole('button', { name: 'Planifier ces repas' }).click();
-  await expect(dialog.getByLabel('Premier dîner')).toHaveValue(start);
-  await dialog.getByLabel('Mes favoris uniquement').check();
-  await expect(dialog.getByLabel('Toutes les sources')).toBeChecked();
-  await dialog.getByRole('button', { name: 'Fermer' }).click();
-  await page.getByRole('button', { name: 'Semaine suivante' }).click();
-  await expect(page.getByText('0 dîner prévu sur 7')).toBeVisible();
-  const after = await (await page.request.get('/api/state')).json();
-  expect(after.meals).toEqual(before.meals);
-  expect(after.preps).toEqual(before.preps);
-  await page.getByRole('button', { name: 'Semaine précédente' }).click();
-  await page.getByRole('button', { name: 'Planifier ces repas' }).click();
+  expect((await state()).meals).toEqual(before.meals);
   await dialog.getByLabel(source, { exact: true }).check();
   await dialog.getByLabel('Mes favoris uniquement').check();
   await dialog.getByLabel('Priorité').selectOption('economy');
@@ -508,7 +500,8 @@ test('courses du mardi au mardi, semaines vides à la consultation et sources co
   await expect(dialog.getByText('Cookies aux pépites', { exact: true })).toHaveCount(0);
   await dialog.getByRole('button', { name: 'Appliquer au planning' }).click();
   await expect(dialog).toHaveCount(0);
-  await expect(page.getByText('7 dîners prévus sur 7')).toBeVisible();
+  await page.goto('/courses?week=' + addDays(w, 70));
+  await expect(page.getByText('7 préparations dans cette liste')).toBeVisible();
   const planned = await state();
   const preps = planned.preps.filter((p) => p.day >= start && p.day < addDays(start, 7));
   expect(preps).toHaveLength(7);
@@ -520,4 +513,26 @@ test('courses du mardi au mardi, semaines vides à la consultation et sources co
     ),
   ).toBe(true);
   await expect(page.getByRole('button', { name: 'Modifier · Riz' })).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole('button', { name: 'Ajouter un repas' }).click();
+  await expect(dialog.getByLabel('Jour', { exact: true })).toHaveValue(addDays(start, 7));
+  await expect(dialog.getByLabel('Repas', { exact: true })).toHaveValue('soir');
+  await dialog.getByRole('button', { name: /Risotto du mardi/ }).click();
+  await dialog.getByLabel('Portions à préparer').fill('1');
+  await dialog.getByRole('button', { name: 'Ajouter au planning' }).click();
+  await expect(dialog).toHaveCount(0);
+  const withDinner = await state();
+  expect(withDinner.meals).toHaveLength(planned.meals.length + 1);
+  expect(withDinner.meals).toEqual(expect.arrayContaining(planned.meals));
+  await page.getByRole('button', { name: 'Courses faites', exact: true }).click();
+  await expect(dialog.getByText(/articles non cochés/i)).toBeVisible();
+  await dialog.getByRole('button', { name: 'Confirmer les courses faites' }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Modifier · Riz' })).toHaveCount(0);
+  const closed = await state();
+  expect(closed.prefs.shoppingList?.from).toEqual({ day: addDays(start, 8), slot: 'midi' });
+  expect(closed.meals).toEqual(withDinner.meals);
+  await page.getByRole('button', { name: 'Ajouter un repas' }).click();
+  await expect(dialog.getByLabel('Jour', { exact: true })).toHaveValue(addDays(start, 8));
+  await expect(dialog.getByLabel('Repas', { exact: true })).toHaveValue('midi');
 });

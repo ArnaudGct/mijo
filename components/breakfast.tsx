@@ -187,7 +187,7 @@ export function Breakfast({ ui }: { ui: UI }) {
       </div>
       <p className="breakfast-note">
         Ces achats tiennent compte de tes autres repas.{' '}
-        <Link className="text-link" href={'/courses?week=' + ui.w}>
+        <Link className="text-link" href="/courses">
           Voir ma liste de courses
         </Link>
       </p>

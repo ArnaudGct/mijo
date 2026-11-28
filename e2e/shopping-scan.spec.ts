@@ -163,7 +163,10 @@ test('caméra mobile, scan continu, abandon et achats partiels', async ({ page }
   await expect(dialog.getByLabel('Numéro du code-barres')).toBeVisible();
   await dialog.getByRole('button', { name: 'Fermer' }).click();
   await expect(page.getByText(/Reste à acheter 200 g/)).toBeVisible();
-  expect((await state()).lots.find((lot) => lot.week === week)).toMatchObject({
+  const scannedState = await state();
+  expect(
+    scannedState.lots.find((lot) => lot.week === scannedState.prefs.shoppingList!.id),
+  ).toMatchObject({
     expires: week,
     dateKind: null,
   });
@@ -232,7 +235,6 @@ test('une recette pour deux devient quatre repas avec une seule liste de courses
     expect(response.ok(), await response.text()).toBe(true);
   }
   await command({ action: 'clearWeek', week, previewRevision: (await state()).revision });
-  await command({ action: 'shoppingPeriod', start: week });
   const title = 'Hachis du test batch cooking';
   await command({
     action: 'recipe',

@@ -1,6 +1,10 @@
 import { accountId } from './account-scope';
 import type { PreferencesRow, EntityRow } from '../db/schema';
 import postgres from 'postgres';
+import { monday, today } from './dates';
+import { initialShoppingList } from './shopping-period';
+import { needs } from './shopping';
+import { groceryName, groceryMeasure } from './grocery-names';
 import { basis, settings, type State, type Recipe } from './model';
 const globalDb = globalThis as unknown as { tableSql?: ReturnType<typeof postgres> };
 export function db() {
@@ -46,7 +50,47 @@ export async function readState(tx: Tx, lock = false): Promise<State> {
   return state;
 }
 export async function state() {
-  return db().begin('isolation level repeatable read read only', (tx) => readState(tx));
+  const current = await db().begin('isolation level repeatable read read only', (tx) =>
+    readState(tx),
+  );
+  if (current.prefs.shoppingList) return current;
+  return db().begin(async (tx) => {
+    const s = await readState(tx, true);
+    if (s.prefs.shoppingList) return s;
+    const day = today();
+    const list = initialShoppingList(s, day);
+    const from = monday(list.from.day);
+    const items = new Map<string, State['items'][number]>();
+    // Keep legacy rows available for previous lists and backups. Copy active and future
+    // entries into the new list, plus any outstanding manual items from the current trip.
+    for (const week of new Set(
+      s.items.map((i) => i.week).filter((w) => w >= monday(day) && w.length === 10),
+    )) {
+      const rows = needs(s, week, day).rows;
+      for (const item of s.items.filter((i) => i.week === week)) {
+        const [, unit] = groceryMeasure(item.name, 0, item.unit);
+        const need = rows.find((r) => r.sourceName === groceryName(item.name) && r.unit === unit);
+        if (week < from && (!item.manual || need?.checked || item.checked)) continue;
+        const id = crypto.randomUUID();
+        const key = item.manual ? 'manuel:' + id : item.key;
+        const previous = items.get(key);
+        const acquired = item.checked ? (item.checkedAmount ?? need?.buy ?? 0) : 0;
+        items.set(key, {
+          ...item,
+          id,
+          week: list.id,
+          key,
+          checked: !!(previous?.checked || item.checked),
+          checkedAmount: (previous?.checkedAmount ?? 0) + acquired,
+        });
+      }
+    }
+    for (const row of items.values()) await put(tx, 'items', row);
+    for (const lot of s.lots.filter((l) => l.week.length === 10 && l.week >= from))
+      await put(tx, 'lots', { ...lot, listId: list.id });
+    await tx`update preferences set data=${tx.json({ ...s.prefs, shoppingList: list })} where account_id=${accountId()} and id=1`;
+    return readState(tx);
+  });
 }
 export async function put(tx: Tx, t: Table, row: State[Table][number]) {
   await tx`insert into ${tx(t)} (account_id,id,data) values(${accountId()},${row.id},${tx.json(JSON.parse(JSON.stringify(row)))}) on conflict(account_id,id) do update set data=excluded.data`;

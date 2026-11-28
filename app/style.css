@@ -2769,4 +2769,4 @@ html {
 .shopping-coverage p { margin: 0; }
 .planning-sources { min-width: 0; border: 1px solid var(--line); border-radius: 9px; padding: 12px; }
 .planning-sources label, .planning-favorites { display: inline-flex; align-items: center; gap: 6px; overflow-wrap: anywhere; }
-@media (max-width: 600px) { .shopping-coverage > button { width: 100%; } }
+@media (max-width: 600px) { .shopping-coverage > button, .close-shopping { width: 100%; } }

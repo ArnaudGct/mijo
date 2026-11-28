@@ -12,6 +12,11 @@ const text = z.string().trim().max(12000),
   label = z.string().trim().min(1).max(300);
 export const id = z.string().uuid();
 export const date = z.iso.date();
+export const shoppingKey = z.union([date, id]);
+export const mealMoment = z.object({ day: date, slot: z.enum(['midi', 'soir']) });
+export type MealMoment = z.infer<typeof mealMoment>;
+export const shoppingList = z.object({ id, from: mealMoment, legacyFrom: date.optional() });
+export type ShoppingList = z.infer<typeof shoppingList>;
 export const qty = z.number().finite().positive().max(10000000);
 export const portions = z.number().int().min(1).max(100);
 const minutes = z.number().int().min(0).max(10080).nullable().default(null);
@@ -67,6 +72,7 @@ export const aisleName = z
 export const settings = z.object({
   breakfast: breakfastSettings.optional(),
   customAisles: z.array(aisleName).default([]),
+  shoppingList: shoppingList.optional(),
   shoppingDays: z.record(date, z.number().int().min(0).max(6)).optional(),
   generatedWeeks: z.array(date).default([]),
   dismissedDiscoveries: z.array(z.string().max(3000)).default([]),
@@ -98,6 +104,7 @@ export const recipeRow = z.object({
   data: recipe,
 });
 export const preparation = z.object({
+  purchasedFor: id.optional(),
   batchPerMeal: portions.optional(),
   automatic: z.boolean().optional(),
   id,
@@ -143,8 +150,9 @@ export const offer = z.object({
   barcode: z.string().max(50),
 });
 export const purchaseLot = z.object({
+  listId: id.optional(),
   id,
-  week: date,
+  week: shoppingKey,
   barcode: z
     .string()
     .regex(/^(?:\d{8}|\d{12,14})$/)
@@ -162,13 +170,16 @@ export const item = z.object({
   listEdit: z
     .object({
       hideGenerated: z.boolean(),
+      excludedPreps: z.array(id).optional(),
+      excludedBreakfast: z.number().nonnegative().optional(),
       displayName: label.optional(),
       aisle: aisleName.optional(),
     })
     .optional(),
+  checkedAmount: z.number().nonnegative().optional(),
   scanBaseline: z.number().nonnegative().optional(),
   id,
-  week: date,
+  week: shoppingKey,
   key: z.string().max(600),
   name: label,
   quantity: qty.nullable(),

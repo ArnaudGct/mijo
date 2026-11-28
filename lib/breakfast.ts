@@ -40,11 +40,16 @@ function usage(routines: Routine[], food: string, start: string, end: string) {
   }
   return { quantity: rounded(total), days };
 }
-export function breakfastPlan(s: State, week: string, asOf = today(), purchaseDay = week) {
+export function breakfastPlan(
+  s: State,
+  week: string,
+  asOf = today(),
+  purchaseDay = week,
+  end = addDays(week, 7),
+) {
   const cfg = s.prefs.breakfast;
   if (!cfg?.routines.length) return [];
   const routines = [...cfg.routines].sort((a, b) => a.from.localeCompare(b.from));
-  const end = addDays(week, 7);
   const next = addDays(asOf, 1);
   const afterMorning = cfg.readings.some((r) => r.day === asOf && r.afterBreakfast);
   const currentStart = afterMorning ? next : asOf;

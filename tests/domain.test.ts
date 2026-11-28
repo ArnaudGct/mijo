@@ -1,3 +1,4 @@
+import { groupedMeals, nextMeal } from '../lib/shopping-period';
 import { mealsToClear, weekPlan } from '../lib/week-plan';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -610,4 +611,27 @@ test('vider la semaine garde le déjeuner issu du dimanche précédent et retire
     mealsToClear(s, day).map((m) => m.id),
     s.meals.slice(2).map((m) => m.id),
   );
+});
+
+test('la liste groupée suit le dernier déjeuner et le dîner suivant sur plusieurs semaines', () => {
+  const s = fixture(),
+    list = { id: id(), from: { day, slot: 'soir' as const } };
+  s.prefs.shoppingList = list;
+  const monday = planned(s.recipes[0], '2026-12-07', 2);
+  const dinner = planned(s.recipes[1], '2026-12-15', 1);
+  s.preps.push(monday, dinner);
+  s.meals.push(...defaultMeals(monday, true), ...defaultMeals(dinner, false));
+  const group = groupedMeals(s, list);
+  assert.equal(group.preps.length, 4);
+  assert.deepEqual(nextMeal(group.end!), { day: '2026-12-16', slot: 'midi' });
+  assert.equal(needs(s, list.id).rows[0].quantity, 600);
+  s.preps = s.preps.filter((p) => p.id !== dinner.id);
+  assert.deepEqual(nextMeal(groupedMeals(s, list).end!), { day: '2026-12-08', slot: 'soir' });
+  s.preps.forEach((p) => {
+    p.purchasedFor = list.id;
+  });
+  monday.day = '2026-12-18';
+  const next = { id: id(), from: { day: '2026-12-08', slot: 'soir' as const } };
+  s.prefs.shoppingList = next;
+  assert.equal(needs(s, next.id).rows.length, 0);
 });

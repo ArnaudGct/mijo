@@ -7,6 +7,7 @@ import {
   session,
   inventory,
   purchaseLot,
+  shoppingKey,
   offer,
   item,
   meal,
@@ -28,7 +29,7 @@ import {
 import { addDays, inWeek, monday, today } from './dates';
 import { sourceUrl } from './source-url';
 import { cookedLots, expiryPlan, type CheckoutReport } from './expiry-plan';
-import { shoppingOpen } from './shopping-period';
+import { groupedMeals, nextMeal, shoppingOpen } from './shopping-period';
 import { mealsToClear, weekPlan } from './week-plan';
 import { clean } from './ingredients';
 import { morningRoutine, pantryReading } from './breakfast-model';
@@ -126,7 +127,7 @@ export const input = z.discriminatedUnion('action', [
   z.object({ action: z.literal('session'), data: session }),
   z.object({
     action: z.literal('pantryWeek'),
-    week: date,
+    week: shoppingKey,
     name: z.string().trim().min(1).max(300),
     available: z.boolean(),
   }),
@@ -135,15 +136,23 @@ export const input = z.discriminatedUnion('action', [
     action: z.literal('breakfastStock'),
     readings: z.array(pantryReading).min(1).max(120),
   }),
-  z.object({ action: z.literal('purchaseLot'), data: purchaseLot.omit({ used: true }) }),
+  z.object({
+    action: z.literal('purchaseLot'),
+    data: purchaseLot.omit({ used: true, listId: true }),
+  }),
   z.object({ action: z.literal('removeLot'), id }),
+  z.object({
+    action: z.literal('closeShoppingList'),
+    listId: id,
+    previewRevision: z.number().int(),
+  }),
   z.object({ action: z.literal('finishShopping'), week: date }),
   z.object({ action: z.literal('stock'), data: inventory }),
   z.object({ action: z.literal('price'), data: offer }),
   z.object({ action: z.literal('item'), data: item.omit({ listEdit: true }) }),
   z.object({
     action: z.literal('shoppingLine'),
-    week: date,
+    week: shoppingKey,
     source: item.shape.name,
     edit: z
       .object({
@@ -182,6 +191,17 @@ export const input = z.discriminatedUnion('action', [
 ]);
 export type Command = z.input<typeof input>;
 export async function execute(tx: Tx, s: State, c: z.output<typeof input>) {
+  const listKey =
+    c.action === 'item' || c.action === 'purchaseLot'
+      ? c.data.week
+      : c.action === 'shoppingLine' || c.action === 'pantryWeek'
+        ? c.week
+        : undefined;
+  if (listKey && listKey.length !== 10)
+    requireThat(
+      listKey === s.prefs.shoppingList?.id,
+      'Cette liste est déjà clôturée. Rechargez les courses.',
+    );
   const findPrep = (id: string) => {
     const p = s.preps.find((x) => x.id === id);
     requireThat(p, 'Préparation introuvable.');
@@ -352,6 +372,18 @@ export async function execute(tx: Tx, s: State, c: z.output<typeof input>) {
         );
       await fillWeek(tx, s, c.week, !!c.optimize, c.variation);
       break;
+    case 'closeShoppingList': {
+      const list = s.prefs.shoppingList;
+      requireThat(
+        list && c.listId === list.id && c.previewRevision === s.revision,
+        'La liste a changé. Vérifiez son dernier repas avant de confirmer.',
+      );
+      const { preps, end } = groupedMeals(s, list);
+      for (const p of preps) await put(tx, 'preps', { ...p, purchasedFor: list.id });
+      const shoppingList = { id: uid(), from: end ? nextMeal(end) : list.from };
+      await tx`update preferences set data=${tx.json({ ...s.prefs, shoppingList })} where account_id=${accountId()} and id=1`;
+      break;
+    }
     case 'shoppingPeriod': {
       const week = monday(c.start);
       const day = (new Date(c.start + 'T12:00Z').getUTCDay() + 6) % 7;
@@ -550,6 +582,7 @@ export async function execute(tx: Tx, s: State, c: z.output<typeof input>) {
           ...p,
           id: key,
           day: shift(p.day),
+          purchasedFor: undefined,
           session: groups.get(p.session ?? '') ?? null,
           done: false,
           ticks: [],
@@ -568,8 +601,11 @@ export async function execute(tx: Tx, s: State, c: z.output<typeof input>) {
         free(next);
         await put(tx, 'meals', next);
       }
-      for (const i of s.items.filter((i) => i.week === c.week && !i.inPantry)) {
-        await put(tx, 'items', { ...i, id: uid(), week: c.to, checked: false });
+      // Legacy weekly entries are copied only for notebooks using the old weekly list.
+      if (!s.prefs.shoppingList) {
+        for (const i of s.items.filter((i) => i.week === c.week && !i.inPantry)) {
+          await put(tx, 'items', { ...i, id: uid(), week: c.to, checked: false });
+        }
       }
       break;
     }
@@ -629,7 +665,7 @@ export async function execute(tx: Tx, s: State, c: z.output<typeof input>) {
     case 'purchaseLot': {
       const old = s.lots.find((l) => l.id === c.data.id);
       requireThat(
-        !old || old.week === c.data.week,
+        !old || (old.listId ?? old.week) === c.data.week,
         'Cet emballage appartient à une autre semaine.',
       );
       requireThat(
@@ -637,16 +673,26 @@ export async function execute(tx: Tx, s: State, c: z.output<typeof input>) {
         'Cet emballage a déjà servi en cuisine.',
       );
       requireThat(
-        monday(c.data.week) === c.data.week && shoppingOpen(s, c.data.week, today()),
+        c.data.week === s.prefs.shoppingList?.id ||
+          (c.data.week.length === 10 &&
+            monday(c.data.week) === c.data.week &&
+            shoppingOpen(s, c.data.week, today())),
         'Choisissez une semaine présente ou future.',
       );
-      await put(tx, 'lots', c.data);
+      await put(
+        tx,
+        'lots',
+        old?.listId ? { ...c.data, week: old.week, listId: old.listId } : c.data,
+      );
       break;
     }
     case 'removeLot': {
       const old = s.lots.find((l) => l.id === c.id);
       requireThat(
-        old && !Object.keys(old.used ?? {}).length && shoppingOpen(s, old.week, today()),
+        old &&
+          !Object.keys(old.used ?? {}).length &&
+          ((old.listId ?? old.week) === s.prefs.shoppingList?.id ||
+            (!old.listId && old.week.length === 10 && shoppingOpen(s, old.week, today()))),
         'Cet emballage ne peut plus être retiré.',
       );
       await del('lots', c.id);
@@ -679,7 +725,7 @@ export async function execute(tx: Tx, s: State, c: z.output<typeof input>) {
     }
     case 'shoppingLine': {
       const source = fold(c.source);
-      const all = needs(s, c.week).rows;
+      const { rows: all, breakfast } = needs(s, c.week);
       const rows = all.filter((r) => fold(r.sourceName) === source);
       requireThat(rows.length, 'Cet article ne figure plus sur la liste.');
       const related = s.items.filter(
@@ -696,11 +742,24 @@ export async function execute(tx: Tx, s: State, c: z.output<typeof input>) {
         category: rows[0].category,
       };
       const metadata = { ...base, id: marker?.id ?? uid(), key: 'liste:' + source, manual: false };
+      const list = s.prefs.shoppingList;
+      const exclusions =
+        list?.id === c.week
+          ? {
+              excludedPreps: groupedMeals(s, list)
+                .preps.filter((p) =>
+                  p.snapshot.ingredients.some((i) => fold(groceryName(i.name)) === source),
+                )
+                .map((p) => p.id),
+              excludedBreakfast:
+                breakfast.find((b) => fold(groceryName(b.name)) === source)?.quantity ?? 0,
+            }
+          : {};
       const edit = c.edit;
       if (!edit) {
         for (const i of related) if (!i.listEdit) await del('items', i.id);
         if (rows.some((r) => !r.manual) || marker?.listEdit?.hideGenerated)
-          await put(tx, 'items', { ...metadata, listEdit: { hideGenerated: true } });
+          await put(tx, 'items', { ...metadata, listEdit: { hideGenerated: true, ...exclusions } });
         else if (marker) await del('items', marker.id);
         break;
       }
@@ -750,6 +809,7 @@ export async function execute(tx: Tx, s: State, c: z.output<typeof input>) {
       await put(tx, 'items', {
         ...metadata,
         listEdit: {
+          ...(changed ? exclusions : marker?.listEdit),
           hideGenerated: changed || !!marker?.listEdit?.hideGenerated,
           displayName: edit.name,
           aisle: category,
@@ -798,7 +858,7 @@ export async function execute(tx: Tx, s: State, c: z.output<typeof input>) {
         new Set(c.data.shops.map((x) => clean(x.name))).size === c.data.shops.length,
         'Deux magasins portent le même nom.',
       );
-      await tx`update preferences set data=${tx.json({ ...c.data, dismissedDiscoveries: s.prefs.dismissedDiscoveries, customAisles: s.prefs.customAisles, breakfast: s.prefs.breakfast, shoppingDays: s.prefs.shoppingDays, generatedWeeks: s.prefs.generatedWeeks })} where account_id=${accountId()} and id=1`;
+      await tx`update preferences set data=${tx.json({ ...c.data, dismissedDiscoveries: s.prefs.dismissedDiscoveries, customAisles: s.prefs.customAisles, breakfast: s.prefs.breakfast, shoppingDays: s.prefs.shoppingDays, shoppingList: s.prefs.shoppingList, generatedWeeks: s.prefs.generatedWeeks })} where account_id=${accountId()} and id=1`;
       break;
   }
 }
@@ -825,7 +885,10 @@ export async function mutate(revision: number, cmd: unknown) {
         409,
       );
     if (['prefs', 'stock', 'price', 'remove'].includes(c.action)) {
-      const weeks = new Set([...s.preps.map((p) => monday(p.day)), ...s.items.map((i) => i.week)]);
+      const weeks = new Set([
+        ...s.preps.map((p) => monday(p.day)),
+        ...s.items.map((i) => i.week).filter((w) => w.length === 10),
+      ]);
       for (const w of weeks) {
         if (!shoppingOpen(s, w, today()) && !s.past[w])
           await tx`insert into week_history(account_id,week,data) values(${accountId()},${w},${tx.json({ stock: s.stock, prices: s.prices, prefs: s.prefs })}) on conflict do nothing`;

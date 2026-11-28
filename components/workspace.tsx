@@ -22,7 +22,6 @@ import {
 } from 'lucide-react';
 import { type State, date } from '@/lib/model';
 import { today, monday, labelDate, inWeek, money } from '@/lib/dates';
-import { currentShoppingWeek } from '@/lib/shopping-period';
 import { marketBasket } from '@/lib/market';
 import { Feedback, Brand, WeekNav, Photo, api, useInteractive, type UI } from './common';
 import { DiscoveryCard, DiscoveryPreview, MoreDiscoveries } from './discoveries';
@@ -73,11 +72,7 @@ export function Workspace({
     [dialog, setDialog] = useState<ReactNode>(null),
     [message, setMessage] = useState<{ text: string } | null>(null),
     [busy, setBusy] = useState(false);
-  const w = requested.success
-    ? monday(requested.data)
-    : view === 'courses'
-      ? currentShoppingWeek(s, today())
-      : monday(today());
+  const w = monday(requested.success ? requested.data : today());
   const lock = useRef(false),
     latest = useRef(s);
   const notice = message?.text ?? '';
@@ -150,7 +145,8 @@ export function Workspace({
       }
     },
   };
-  const weekLink = (p: string) => '/' + p + (requested.success ? '?week=' + w : '');
+  const weekLink = (p: string) =>
+    '/' + p + (p !== 'courses' && requested.success ? '?week=' + w : '');
   const current = view === 'parametres' ? { n: 'Paramètres' } : nav.find((n) => n.p === view);
   if (!current) return children;
   return (
@@ -279,8 +275,7 @@ function Home({ ui }: { ui: UI }) {
     };
   }, [count, paused, interacting, focused]);
   const meals = s.meals.filter((m) => inWeek(m.day, w));
-  const listWeek = w === monday(today()) ? currentShoppingWeek(s, today()) : w;
-  const cart = marketBasket(s, listWeek);
+  const cart = marketBasket(s, s.prefs.shoppingList!.id);
   const openRecipe = () => {
     if (feature) ui.open(<DiscoveryPreview ui={ui} item={feature} />);
     else ui.open(<RecipeEditor ui={ui} />);
@@ -385,7 +380,7 @@ function Home({ ui }: { ui: UI }) {
         ].map((k) => (
           <Link
             className="stat"
-            href={'/' + k.p + '?week=' + (k.p === 'courses' ? listWeek : w)}
+            href={k.p === 'courses' ? '/courses' : '/' + k.p + '?week=' + w}
             key={k.n}
           >
             <div className="stat-icon">
